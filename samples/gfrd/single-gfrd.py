@@ -5,7 +5,7 @@ from gfrd import *
 from logger import *
 import sys
 
-s = ParticleSimulator()
+s = GFRDSimulator()
 s.setWorldSize( 1e-5 )
 S = Species( 'S', 2e-11, 5e-8 )
 s.addSpecies( S )
@@ -22,8 +22,8 @@ s.addReactionType( r2 )
 
 #s.setAllRepulsive()
 
-s.placeParticle( 'P', [0,0,0] )
-s.throwInParticles( 'S', 1 )
+s.placeParticle( P, [0,0,0] )
+s.throwInParticles( S, 1 )
 
 
 l = Logger( s, 'dimer' )
