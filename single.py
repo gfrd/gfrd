@@ -19,15 +19,23 @@ class Single( object ):
         self.k_tot = 0
 
         self.lastTime = 0.0
+        ### self.dt will be firstPassageTime or reactionTime when
+        ### updateNextEvent() is called.
         self.dt = 0.0
         self.eventType = None
 
+        ### So shell radius is particle radius.
+        ### This is enlarged once updateSingle() is called.
+        ### Note it's possible for a Single/Pair/Multi to have multiple
+        ### shells.
         self.shellList = [ Shell( self.particle.pos, self.getMinRadius() ), ]
 
         self.eventID = None
 
+        ### Green's function for particle inside absorbing sphere. C++.
         self.gf = FirstPassageGreensFunction( particle.species.D )
 
+        ### Total of all reaction constants.
         self.updatek_tot()
 
 
@@ -69,6 +77,7 @@ class Single( object ):
     radius = property( getRadius, setRadius )
 
 
+    ### This will also be the radius of a shell after initialization.
     def getMinRadius( self ):
 
         return self.particle.species.radius
@@ -130,10 +139,13 @@ class Single( object ):
                and self.eventType == EventType.ESCAPE
         
 
+    ### This is not free diffusion, but diffusion with absorbing boundary
+    ### conditions.
     def drawR( self, dt ):
         assert dt >= 0
 
         rnd = numpy.random.uniform()
+        ### Not needed, already in self.gf.drawR()?
         self.gf.seta( self.getMobilityRadius() )
 
         try:
@@ -146,6 +158,8 @@ class Single( object ):
 
 
 
+    ### Called by EGFRDSimulator::updateSingle() and 
+    ### EGFRDSimulator::fireSingle() (for immobile case only).
     def determineNextEvent( self, t ):
 
         if self.getD() == 0:
@@ -156,6 +170,7 @@ class Single( object ):
         reactionTime = self.drawReactionTime()
 
         if firstPassageTime <= reactionTime:
+            ### ! Here Single::dt is set.
             self.dt = firstPassageTime
             self.eventType = EventType.ESCAPE
         else:
@@ -165,6 +180,7 @@ class Single( object ):
         self.lastTime = t
 
 
+    ### Called by Single::determineNextEvent().
     def drawReactionTime( self ):
         
         if self.k_tot == 0:
@@ -174,11 +190,13 @@ class Single( object ):
             return 0.0
 
         rnd = numpy.random.uniform()
+        ### Notes December 1 2008.
         dt = ( 1.0 / self.k_tot ) * math.log( 1.0 / rnd )
 
         return dt
 
 
+    ### Called by Single::determineNextEvent().
     def drawEscapeTime( self ):
         
         rnd = numpy.random.uniform()
@@ -205,10 +223,13 @@ class Single( object ):
             self.k_tot += rt.k
 
 
+    ### Called by fireSingle().
     def drawReactionType( self ):
 
         k_array = [ rt.k for rt in self.reactiontypes ]
         k_array = numpy.add.accumulate( k_array )
+        ### This should be equal to self.k_tot? No, it's a cumulative addition
+        ### me thinks.
         k_max = k_array[-1]
 
         rnd = numpy.random.uniform()

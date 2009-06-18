@@ -6,6 +6,7 @@ from shell import *
 Used internally by Multi.
 '''
 
+### This is the simulator that is used for multis.
 class MultiBDCore( BDSimulatorCoreBase ):
     
     def __init__( self, main, multi ):
@@ -130,6 +131,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
         return [ n for n in neighbors if n not in ignore ]
 
 
+    ### Why don't we borrow this stuff from ParticleSimulatorBase?
     def getClosestParticle( self, pos, ignore=[] ):
 
         neighbors, distances =\
@@ -167,13 +169,16 @@ class MultiBDCore( BDSimulatorCoreBase ):
                 'not all particles within the shell.'
 
 
+### How can this be so much shorter than the Pair class?
 class Multi( object ):
 
     def __init__( self, main ):
 
+        ### A multi does not have a shell of itself.
         self.shellList = []
         self.eventID = None
 
+        ### Each multi has it's own BD simulator!
         self.sim = MultiBDCore( main, self )
 
 
@@ -197,6 +202,7 @@ class Multi( object ):
 
     multiplicity = property( getMultiplicity )
 
+    ### So a multi contains particles+their shells, but not singles.
     def addParticle( self, particle ):
         self.sim.addParticle( particle )
 

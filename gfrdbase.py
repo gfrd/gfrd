@@ -11,6 +11,8 @@ import scipy
 
 from utils import *
 #from surface import *
+### _gfrd is a module (library) that is written in C++ and pythonified using
+### Boost library.
 from _gfrd import *
 
 from cObjectMatrix import *
@@ -188,6 +190,8 @@ class Reaction:
 
 class Particle( object ):
 
+    ### Not only constructor, but can also be used to make a copy of a
+    ### particle by index or serial.
     def __init__( self, species, serial=None, index=None ):
 
         self.species = species
@@ -345,6 +349,7 @@ class ParticleSimulatorBase( object ):
     def __init__( self ):
 
         self.speciesList = {}
+        ### Per species key a list of reactiontypes.
         self.reactionTypeMap1 = {}
         self.reactionTypeMap2 = {}
 
@@ -411,6 +416,8 @@ class ParticleSimulatorBase( object ):
     def setMatrixSize( self, size ):
         self.particleMatrix.setMatrixSize( size )
 
+    ### So always use this method, instead of doing %= self.worldSize
+    ### manually. Periodic boundary conditions!
     def applyBoundary( self, pos ):
 
         pos %= self.worldSize
@@ -453,6 +460,7 @@ class ParticleSimulatorBase( object ):
             species1 = rt.reactants[0]
 
             if len( rt.products ) == 1:
+                ### why this check, and why *2 here?
                 if species1.radius * 2 < rt.products[0].radius:
                     raise RuntimeError,\
                         'radius of product must be smaller ' \
@@ -510,6 +518,7 @@ class ParticleSimulatorBase( object ):
 
     def placeParticle( self, species, pos ):
 
+        log.info( 'place %s particle at %s' % ( species.id, pos ) )
         pos = numpy.array( pos )
         radius = species.radius
 
@@ -547,6 +556,11 @@ class ParticleSimulatorBase( object ):
                                     pos, particle.species.radius )
 
 
+    ### checkOverlap return true if there are no particles within the
+    ### particles radius.
+    # In subSpaceSimulator called from: fireSingleReaction. Asserts in:
+    # propagateSingle, firePair, burstSingle, breakUpPair.
+    # Todo: we don't have to check for surfaces do we?
     def checkOverlap( self, pos, radius, ignore=[] ):
         
         particles, _ = \
@@ -600,6 +614,7 @@ class ParticleSimulatorBase( object ):
         return neighbors, d
 
     def getNeighborParticlesNoSort( self, pos, n=None ):
+        ### getNeighborsNoSort() does not have parameter n.
         n, d = self.particleMatrix.getNeighborsNoSort( pos, n )
         neighbors = [ Particle( i[0], i[1] ) for i in n ]
         return neighbors, d
@@ -650,15 +665,18 @@ class ParticleSimulatorBase( object ):
                 'self.worldSize != self.particleMatrix.worldSize'
 
 
+        ### why use numpy.array() here?
         total = numpy.array( [ species.pool.size for species 
                                in self.speciesList.values() ] ).sum()
 
 
+        ### Check number of particles.
         if total != self.particleMatrix.size:
             raise RuntimeError,\
                 'total number of particles %d != self.particleMatrix.size %d'\
                 % ( total, self.particleMatrix.size )
 
+        ### Check positions and radiuses of particles.
         for species in self.speciesList.values():
             for i in range( species.pool.size ):
                 particle = Particle( species, index=i )

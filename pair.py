@@ -10,6 +10,7 @@ SAFETY = 1.0 + 1e-5
 Just a free func ver of Pair.getCoM().
 '''
 
+### Called by formPair().
 def calculatePairCoM( pos1, pos2, D1, D2, worldSize ):
 
     pos2t = cyclicTranspose( pos2, pos1, worldSize )
@@ -20,16 +21,20 @@ def calculatePairCoM( pos1, pos2, D1, D2, worldSize ):
 class Pair( object ):
     global log
     
+    ### How does this work exactly?
     # CUTOFF_FACTOR is a threshold to choose between the real and approximate
     # Green's functions.
     # H = 4.0: ~3e-5, 4.26: ~1e-6, 5.0: ~3e-7, 5.2: ~1e-7,
     # 5.6: ~1e-8, 6.0: ~1e-9
     CUTOFF_FACTOR = 5.6
 
+    ### Why do we want to set the distance Function?
     def __init__( self, single1, single2, rt, distFunc, worldSize ):
 
         self.multiplicity = 2
 
+        ### So a pair is a combination of 2 singles! (individual shells are
+        ### preserved I suppose).
         # Order single1 and single2 so that D1 < D2.
         if single1.particle.species.D <= single2.particle.species.D:
             self.single1, self.single2 = single1, single2 
@@ -53,7 +58,9 @@ class Pair( object ):
         #                      particle2.species.radius )
         self.sigma = particle1.species.radius + particle2.species.radius
 
+        ### Green's function for particle inside absorbing sphere. C++.
         self.sgf = FirstPassageGreensFunction( self.D_geom )
+        ### Green's function for pair inside absorbing sphere? C++.
         self.pgf = FirstPassagePairGreensFunction( self.D_tot, 
                                                    rt.k, self.sigma )
 
@@ -77,6 +84,7 @@ class Pair( object ):
         self.dt = 0
         self.eventType = None
 
+    ### So the first shell determines the position of the pair.
     def setPos( self, pos ):
         self.shellList[0].pos = pos
 
@@ -108,6 +116,8 @@ class Pair( object ):
     to remain mobile.
     '''
 
+    ### Isn't this unneccesary, setting a minimum radius at instantiation?
+    ### Will be overwritten anyway by a call to setRadius().
     def getMinRadius( self ):
 
         pairDistance = self.distance( self.single1.pos,
@@ -123,6 +133,7 @@ class Pair( object ):
     Calculate and return the "Center of Mass" (== CoM) of this pair.
     '''
 
+    ### Used in constructor.
     def getCoM( self ):
 
         particle1 = self.single1.particle
@@ -131,6 +142,7 @@ class Pair( object ):
         pos1 = particle1.pos
         pos2 = particle2.pos
 
+        ### ?
         pos2t = cyclicTranspose( pos2, pos1, self.worldSize ) #FIXME:
         
         com = ( pos1 * self.D2 + pos2t * self.D1 ) / self.D_tot
@@ -138,8 +150,12 @@ class Pair( object ):
         return com % self.worldSize
 
 
+    ### Called by drawR_pair(), and drawTheta_pair().
+    ### Decides if an approximate green's function is used
+    ### ro is interparticle vector.
     def choosePairGreensFunction( self, r0, t ):
 
+        ### sigma is particle1.radius+particle2.radius.
         distanceFromSigma = r0 - self.sigma
         distanceFromShell = self.a_r - r0
 
@@ -148,6 +164,9 @@ class Pair( object ):
 
         if distanceFromSigma < thresholdDistance:
         
+            ### Is it fair to compare distanceFromSigma as well as
+            ### distanceFromShell to the same threshold value?
+            ### I guess it is. How close are shells to each other.
             if distanceFromShell < thresholdDistance:
                 # near both a and sigma;
                 # use FirstPassagePairGreensFunction
@@ -181,6 +200,10 @@ class Pair( object ):
 
     '''
 
+    ### Called by firePair() and breakUpPair().
+    ### newInterParticle is still something like [r, dtheta, dphi]. So here we
+    ### find out how much we have to rotate it (taking into account the
+    ### oldInterParticle) to get it's final orientation.
     def newPositions( self, CoM, newInterParticle, oldInterParticle ):
 
         #FIXME: need better handling of angles near zero and pi.
@@ -214,6 +237,7 @@ class Pair( object ):
         return newpos1, newpos2
         
 
+    ### Called by formPair().
     def determineNextEvent( self, t ):
         
         self.lastTime = t
@@ -241,6 +265,7 @@ class Pair( object ):
 
         # equalize expected mean t_r and t_R.
 
+        ### Determine a_r and a_R?
         qrrtD1D25 = ( D1    * D2**5 ) ** 0.25
         qrrtD15D2 = ( D1**5 * D2 ) ** 0.25
 
@@ -294,6 +319,7 @@ class Pair( object ):
         assert self.a_r > r0, '%g %g' % ( self.a_r, r0 )
         assert self.a_R > 0 or ( self.a_R == 0 and ( D1 == 0 or D2 == 0 ) )
 
+        ### Either com leaves it's PD.
         # draw t_R
         try:
             self.t_R = self.drawTime_single( self.a_R )
@@ -301,6 +327,7 @@ class Pair( object ):
             raise Exception, 'sgf.drawTime() failed; %s; %s' %\
                 ( str( e ), self.sgf.dump() )
 
+        ### Or r leaves it's PD.
         # draw t_r
         try:
             self.t_r = self.drawTime_pair( r0, self.a_r )
@@ -310,6 +337,7 @@ class Pair( object ):
                 ( str( e ), r0, self.pgf.dump() )
 
 
+        ### Or a single reacts.
         # draw t_reaction
         t_reaction1 = self.single1.drawReactionTime()
         t_reaction2 = self.single2.drawReactionTime()
@@ -321,6 +349,8 @@ class Pair( object ):
             self.t_single_reaction = t_reaction2
             self.reactingsingle = self.single2
 
+        ### Choose first event.
+        ### Here Pair.dt is set!
         self.dt = min( self.t_R, self.t_r, self.t_single_reaction )
 
         assert self.dt >= 0
@@ -345,12 +375,14 @@ class Pair( object ):
         #assert False
 
 
+    ### Called by determineNextEvent().
     def drawTime_single( self, a ):
         self.sgf.seta( a )
         rnd = numpy.random.uniform()
         return self.sgf.drawTime( rnd )
 
 
+    ### Called by determineNextEvent().
     def drawTime_pair( self, r0, a ):
         self.pgf.seta( a )
         rnd = numpy.random.uniform()
@@ -359,12 +391,16 @@ class Pair( object ):
         return self.pgf.drawTime( rnd, r0 )
 
 
+    ### Called by determineNextEvent().
     def drawEventType( self, r0, t, a ):
         rnd = numpy.random.uniform()
         self.pgf.seta( a )
+        ### Todo, this C++ function.
         return self.pgf.drawEventType( rnd, r0, t )
 
 
+    ### Called by firePair() and breakUpPair().
+    ### Draw R.
     def drawR_single( self, t, a ):
 
         self.sgf.seta( a )
@@ -373,10 +409,13 @@ class Pair( object ):
         try:
             r = self.sgf.drawR( rnd, t )
             while r > self.a_R: # redraw; shouldn't happen often
+                # Todo. Why could this ever happen? Because we didn't correct
+                # for radius of particle (like getMobilityRadius for single's)?
                 log.info( 'drawR_single: redraw' )
                 rnd = numpy.random.uniform()
                 r = self.sgf.drawR( rnd, t )
         except Exception, e:
+            # BUG. rnd is not subscribtable.
             raise Exception,\
                 'gf.drawR_single() failed; %s; rnd= %g, t= %g, %s' %\
                 ( str( e ), rnd[2], t, self.sgf.dump() )
@@ -387,6 +426,11 @@ class Pair( object ):
     '''
     Draw r for the pair inter-particle vector.
     '''
+    ### Called by firePair() and breakUpPair().
+    ### Draw r.
+    ### What's the point of passing those a's around, which always is self.a_r, 
+    ### if we use self.a_r directly in for example choosePairGreensFunction()
+    ### anyway?
     def drawR_pair( self, r0, t, a ):
 
         gf = self.choosePairGreensFunction( r0, t )
@@ -399,6 +443,9 @@ class Pair( object ):
             r = gf.drawR( rnd, r0, t )
             # redraw; shouldn't happen often
             while r >= self.a_r or r <= self.sigma: 
+                # Todo. Why could this ever happen? Because we didn't correct
+                # for radius of particle (like getMobilityRadius for single's)?
+                # Is it because we use approximate greensfunctions?
                 log.info( 'drawR_pair: redraw' )
                 #self.sim.rejectedMoves += 1  #FIXME:
                 rnd = numpy.random.uniform()
@@ -415,6 +462,7 @@ class Pair( object ):
     '''
     Draw theta for the pair inter-particle vector.
     '''
+    ### Called by firePair() and breakUpPair().
     def drawTheta_pair( self, rnd, r, r0, t, a ):
 
         #print 'r ', r, 'r0 ', r0, 't ', t, 'a ', a
@@ -434,6 +482,7 @@ class Pair( object ):
         return theta
 
 
+    ### Called by firePair() and breakUpPair().
     def checkNewpos( self, pos1, pos2, com ):
 
         species1 = self.single1.particle.species

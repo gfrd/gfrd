@@ -40,6 +40,9 @@ class BDSimulatorCoreBase( object ):
     - reactionTypes list (both 1 and 2)
     
     '''
+    ### Because BDSimulator inherits ParticleSimulatorBase. And BDSimulator
+    ### calls us by setting: self.core = BDSimulatorCore( self ), and we have
+    ### this self.main = weakref.proxy( main ) in our constructor. Somehow.
 
     def __init__( self, main ):
 
@@ -364,6 +367,7 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
 
     def __init__( self, main ):
 
+        ### main can be BDSimulator object. 
         BDSimulatorCoreBase.__init__( self, main )
 
         self.checkOverlap = self.main.checkOverlap
