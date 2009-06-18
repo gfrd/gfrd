@@ -11,6 +11,10 @@
 
 #include "utils.hpp"
 
+//// This is called from /object_matrix/src/object_container.hpp, where it 
+//// says: typedef vmap<Tkey_, mapped_type, MFget_mapper_> cell_type;
+//// What is not clear is why it seems another argument is needed here, namely 
+//// MFget_racntnr_, while it isn't provided.
 template<typename Tkey_, typename Tval_,
         template<typename, typename> class MFget_mapper_ =
             get_default_impl::std::template map,

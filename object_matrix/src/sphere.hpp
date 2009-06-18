@@ -4,6 +4,7 @@
 #include <ostream>
 #include "position.hpp"
 
+//// A sphere has a position and a radius.
 template<typename T_>
 struct sphere
 {
@@ -14,8 +15,19 @@ struct sphere
     sphere()
         : position(), radius(0) {}
 
+    //// Initialization list.
     sphere(const position_type& _position, const length_type& _radius)
         : position(_position), radius(_radius) {}
+
+    length_type calculateDistanceToSelf( position_type pos )
+    {
+        return pos.distance(position) - radius;
+    }
+
+    length_type calculateDistanceToSelfWithOffset( position_type pos, position_type offset )
+    {
+        return pos.distance(position + offset) - radius;
+    }
 
     bool operator==(const sphere& rhs) const
     {

@@ -118,5 +118,8 @@ BOOST_PYTHON_MODULE(object_matrix)
 #if OBJECTMATRIX_USE_ITERATOR
     peer::util::register_stop_iteration_exc_translator();
 #endif
-    peer::ObjectContainer::__register_class();
+    typedef sphere<double> default_mapped_type;
+    peer::ObjectContainer<default_mapped_type>::__register_class();
+    peer::SphereContainer::__register_class();
+    peer::CylinderContainer::__register_class();
 }

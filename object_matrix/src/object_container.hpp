@@ -8,34 +8,75 @@
 #include <boost/preprocessor/list/at.hpp>
 #include "array_helper.hpp"
 #include "vmap.hpp"
-#include "sphere.hpp"
 
 #include "utils.hpp"
 
-template<typename T_, typename Tkey_,
+
+//// This template is called from ../boost.python/peer/ObjectContainer.hpp 
+//// with the arguments: <double, key_type, mapped_type, get_mapper_mf>, and 
+//// is called impl_type then.
+//// MFget_mapper is from now on the type for a mapper, like for example 
+//// std::map.
+////
+//// This class seems to be competely generic. So for example nowhere it is 
+//// assumed the mapped_type is a necessarily a sphere.
+template<typename T_, typename Tkey_, typename Tmapped_type_,
         template<typename, typename> class MFget_mapper_ =
             get_default_impl::std::template map>
 class object_container
 {
 public:
+    //// length_type
+    //// For example micrometers.
     typedef T_ length_type;
+
+    //// key_type
+    //// For example a python object.
     typedef Tkey_ key_type;
-    typedef sphere<length_type> mapped_type;
+
+    typedef Tmapped_type_ mapped_type;
+
+    //// value_type
+    //// Pair of a key and a sphere.
     typedef std::pair<const key_type, mapped_type> value_type;
+
+    //// position_type
     typedef position<length_type> position_type;
+
+    //// cell_type
+    ////   + key: python object (in this case)
+    ////   + mapped_type: sphere (in this case)
+    ////   + MVget_mapper: mapper (see ObjectContainer.hpp)
     typedef vmap<Tkey_, mapped_type, MFget_mapper_> cell_type;
+
+    //// matrix_type
+    //// Matrix is a 3 dimensional array of type cell_type.
     typedef boost::multi_array<cell_type, 3> matrix_type;
+
+    //// size_type ...
     typedef typename cell_type::size_type size_type;
+
+    //// cell_index_type ...
     typedef boost::array<typename matrix_type::size_type, 3>
             cell_index_type;
+
+    //// cell_offset_type ...
     typedef boost::array<typename matrix_type::difference_type, 3>
             cell_offset_type;
+
     typedef typename cell_type::reference reference;
+
     typedef typename cell_type::const_reference const_reference;
+
     typedef typename MFget_mapper_<key_type, cell_type*>::type
             id_to_cell_mapper_type;
+
     typedef id_to_cell_mapper_type key_to_cell_mapper_type;
 
+
+
+
+    //// Iterator base.
     template<typename Thost_, typename Treftype_, typename Tcreftype_,
             typename Tciter_>
     class iterator_base
@@ -85,6 +126,9 @@ public:
         Tciter_ cell_iter_;
     };
 
+
+
+    //// Iterator.
     class iterator: public iterator_base<iterator, reference, const_reference,
             typename cell_type::iterator>
     {
@@ -99,6 +143,8 @@ public:
                 : base_type(cell_p, cell_iter_end, cell_iter) {}
     };
 
+
+    //// Const iterator base.
     class const_iterator: public iterator_base<const_iterator,
             const_reference, const_reference,
             typename cell_type::const_iterator>
@@ -118,6 +164,8 @@ public:
     };
 
 public:
+    //// Constructor.
+    //// Two paramaters: worldSize and matrixSize.
     object_container(length_type world_size = 1.0,
             typename matrix_type::size_type size = 1)
         : world_size_(world_size),
@@ -127,6 +175,8 @@ public:
     {
     }
 
+
+    //// Called from insert().
     inline cell_index_type index(const position_type& pos,
             double t = 1e-10) const
     {
@@ -139,6 +189,8 @@ public:
                 trunc( pos.z() / cell_size_ ) ) % matrix_.shape()[2] );
     }
 
+
+    //// Called from other file?
     inline cell_offset_type offset(const position_type& pos,
             double t = 1e-10) const
     {
@@ -148,6 +200,8 @@ public:
             trunc( pos.z() / cell_size ) );
     }
 
+
+    //// Called by each_neighbor_loops().
     inline bool offset_index(
             cell_index_type& i,
             const cell_offset_type& o) const
@@ -166,6 +220,7 @@ public:
         i[2] += o[2];
         return true;
     }
+
 
     inline position_type offset_index_cyclic(cell_index_type& i,
                                              const cell_offset_type& o)
@@ -244,38 +299,51 @@ public:
         return retval;
     }
 
+
     inline const cell_type& cell(const cell_index_type& i) const
     {
         return matrix_[i[0]][i[1]][i[2]];
     }
 
+
+    //// A cell is an element of a matrix, indexed by a cell_index_type.
     inline cell_type& cell(const cell_index_type& i)
     {
         return matrix_[i[0]][i[1]][i[2]];
     }
+
 
     inline length_type world_size() const
     {
         return world_size_;
     }
 
+
     inline length_type cell_size() const
     {
         return cell_size_;
     }
+
 
     inline typename matrix_type::size_type matrix_size() const
     {
         return matrix_.shape()[0];
     }
 
+
     inline size_type size() const
     {
         return size_;
     }
 
+
+    //// Called from ObjectContainer.hpp.
+    //// The actual insert.
     inline std::pair<iterator, bool> insert(const value_type& v)
     {
+        //// Construct a cell c.
+        //// typedef vmap<Tkey_, mapped_type, MFget_mapper_> cell_type;
+        //// Todo. I still don't understand this index business. 
         cell_type& c(cell(index(v.second.position)));
         typename key_to_cell_mapper_type::iterator kci(rmap_.find(v.first));
         if (rmap_.end() != kci)
@@ -296,6 +364,7 @@ public:
     }
 
 
+    //// Called by insert().
     inline bool erase(const key_type& k)
     {
         typename key_to_cell_mapper_type::iterator p(rmap_.find(k));
@@ -309,6 +378,8 @@ public:
         return true;
     }
 
+
+    //// Called by each_neighbor_loops() each_neighbour_cyclic_loop()
     inline iterator begin()
     {
         cell_type* cell_p(matrix_.origin());
@@ -322,12 +393,16 @@ public:
         return iterator(cell_p, cell_p->begin(), cell_p->begin());
     }
 
+
+    //// Called many times.
     inline iterator end()
     {
         cell_type* last(matrix_.origin() + matrix_.num_elements() - 1);
         return iterator(last, last->end(), last->end());
     }
 
+
+    //// Called by insert()/erase().
     inline iterator find(const key_type& k)
     {
         typename key_to_cell_mapper_type::iterator p(rmap_.find(k));
@@ -343,6 +418,8 @@ public:
         return iterator((*p).second, (*p).second->end(), i);
     }
 
+
+    //// Called by insert()/erase().
     inline const_iterator find(const key_type& k) const
     {
         typename key_to_cell_mapper_type::const_iterator p(rmap_.find(k));
@@ -358,12 +435,14 @@ public:
         return const_iterator((*p).second, (*p).second->end(), i);
     }
 
+
     template<typename Tcollect_>
     inline void each_neighbor(const cell_index_type& idx, Tcollect_& collector)
     {
         cell_offset_type _off;
         each_neighbor_loops<Tcollect_&>(3, _off, idx, collector);
     }
+
 
     template<typename Tcollect_>
     inline void each_neighbor(const cell_index_type& idx,
@@ -373,6 +452,10 @@ public:
         each_neighbor_loops<const Tcollect_&>(3, _off, idx, collector);
     }
 
+
+    //// Called via some steps from subSpaceSimulator.getNeighbors().
+    //// But also used for subSpaceSimulator.getNeighborsWithinRadiusNoSort(), 
+    //// but then called via take_neighbor_cyclic in filters.hpp.
     template<typename Tcollect_>
     inline void each_neighbor_cyclic(const cell_index_type& idx,
             Tcollect_& collector)
@@ -380,6 +463,7 @@ public:
         cell_offset_type _off;
         each_neighbor_cyclic_loops<Tcollect_&>(3, _off, idx, collector);
     }
+
 
     template<typename Tcollect_>
     inline void each_neighbor_cyclic(const cell_index_type& idx,
@@ -390,6 +474,7 @@ public:
     }
 
 private:
+
     template<typename Tcollect_>
     inline void each_neighbor_loops(const std::size_t depth,
             cell_offset_type& off, const cell_index_type& idx,
@@ -416,6 +501,9 @@ private:
         }
     }
 
+
+    //// Called via some steps from subSpaceSimulator.getNeighbors().
+    //// and subSpaceSimulator.getNeighborsWithinRadiusNoSort().
     template<typename Tcollect_>
     inline void each_neighbor_cyclic_loops(const std::size_t depth,
             cell_offset_type& off, const cell_index_type& idx,
@@ -435,6 +523,11 @@ private:
             cell_type& c(cell(_idx));
             for (typename cell_type::iterator i(c.begin()); i != c.end(); ++i) 
             {
+                //// Here finally the distance to the neighbor is calculated.
+                //// collector is all_neighbors_collector in 
+                //// ObjectContainer.hpp for getNeighbors(), but 
+                //// cyclic_neighbor_filter in filters.hpp for 
+                //// getNeighborsWithinRadiusNoSort().
                 collector(iterator(&c, c.end(), i), pos_off);
             }
         }
@@ -443,19 +536,21 @@ private:
 private:
     const length_type world_size_;
     const length_type cell_size_;
+    //// An object container has a matrix.
     matrix_type matrix_;
     id_to_cell_mapper_type rmap_;
     size_type size_;
 };
 
-template<typename T_, typename Tkey_,
+//// Operator +=.
+template<typename T_, typename Tkey_, typename mapped_type,
         template<typename, typename> class MFget_mapper_>
-static inline typename object_container<T_, Tkey_, MFget_mapper_>::cell_index_type&
+static inline typename object_container<T_, Tkey_, mapped_type, MFget_mapper_>::cell_index_type&
 operator+=(
        typename object_container<T_,
-                Tkey_, MFget_mapper_>::cell_index_type& lhs,
+                Tkey_, mapped_type, MFget_mapper_>::cell_index_type& lhs,
        const typename object_container<T_,
-                Tkey_, MFget_mapper_>::cell_offset_type& rhs)
+                Tkey_, mapped_type, MFget_mapper_>::cell_offset_type& rhs)
 {
     rhs[0] += lhs[0];
     rhs[1] += lhs[1];
