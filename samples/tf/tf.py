@@ -88,7 +88,7 @@ l.setInterval( 1e-3 )
 l.log()
 
 
-while s.t < 1000:
+while s.t < 5:
     s.step()
     s.dumpPopulation()
 

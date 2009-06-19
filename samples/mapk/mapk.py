@@ -66,7 +66,7 @@ l.setInterval( 1e-3 )
 l.log()
 
 
-while s.t < 100:
+while s.t < 0.005:
     s.step()
     s.dumpPopulation()
 
