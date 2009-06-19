@@ -9,6 +9,8 @@
 #include <boost/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 
+// Put Defs.hpp before the gsl includes because of HAVE_INLINE in config.h.
+#include "Defs.hpp"
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf_legendre.h>
