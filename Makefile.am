@@ -18,6 +18,8 @@ LIBPYTHON=-lpython$(PYTHON_VERSION)
 INCLUDES=${PYTHON_INCLUDES} -I${NUMPY_INCLUDE_DIR}
 AM_CXXFLAGS=@CXXFLAGS@ -Wall -g # -msse2 -mfpmath=sse  #-ffast-math 
 #AM_CXXFLAGS+= -ftree-vectorize -ftree-vectorizer-verbose=5
+ACLOCAL_AMFLAGS = -I m4
+
 
 LIBBOOSTPYTHON=-lboost_python
 
