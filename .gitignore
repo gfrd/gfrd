@@ -19,6 +19,15 @@ Makefile
 m4
 stamp-h1
 
+ltmain.sh
+config.sub
+config.guess
+    
+aclocal.m4
+config.h.in
+configure
+Makefile.in
+
 SphericalBesselTable.hpp
 DynamicPriorityQueue_test
 SphericalBesselGenerator_test
@@ -28,3 +37,4 @@ temp
 scratch
 tags
 lib
+
