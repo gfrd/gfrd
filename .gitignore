@@ -36,5 +36,6 @@ data
 temp
 scratch
 tags
+tags.python
 lib
 
