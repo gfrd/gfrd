@@ -56,8 +56,11 @@ class ObjectMatrix( object ):
 
         self.impl = object_matrix.SphereContainer( self.worldSize, 
                                                    self.matrixSize )
-        self.cylinderContainer = object_matrix.CylinderContainer( self.worldSize,
-                                                   self.matrixSize )
+
+        # Todo: fix Cylinder Container.
+        #self.cylinderContainer = object_matrix.CylinderContainer( self.worldSize,
+        #                                           self.matrixSize )
+        self.cylinderContainer = {}
 
 
 
@@ -92,9 +95,12 @@ class ObjectMatrix( object ):
 
         # Todo. Do something like this:
         # assert radius < self.cellSize * .5
-        assert not self.cylinderContainer.contains( key )
+        assert not self.cylinderContainer.__contains__( key )
 
-        self.cylinderContainer.insert( key, cylinder.pos, cylinder.orientation, cylinder.radius, cylinder.halfLength )
+        self.cylinderContainer[key] = cylinder
+        assert self.cylinderContainer.__contains__( key )
+        # Todo:
+        #self.cylinderContainer.insert( key, cylinder.pos, cylinder.orientation, cylinder.radius, cylinder.length / 2 )
 
     def remove( self, key ):
 
@@ -128,6 +134,18 @@ class ObjectMatrix( object ):
 
         return self.impl.get( key )
 
+    def getCylinders( self, pos ):
+        cylinderList = []
+        for key,cylinder in self.cylinderContainer.items() :
+            cylinderList.append(cylinder)
+
+        return cylinderList
+        # Todo:
+        #return self.cylinderContainer.all_neighbors_array_cyclic( pos )
+
+
+    # Sort yes/no:          all_neighbors_array_cyclic.
+    # Within radius yes/no: neighbors_array_cyclic.
 
     def getNeighborsCyclicNoSort( self, pos ):
 
@@ -163,6 +181,7 @@ class ObjectMatrix( object ):
         return neighbors.take( topargs ), distances.take( topargs )
 
 
+    ### Wrappers for sorted.
     ### Called from subSpaceSimulator.getNeighbors().
     def getNeighbors( self, pos, n=None ):
 

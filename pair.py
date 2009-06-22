@@ -101,12 +101,12 @@ class Pair( object ):
     def setRadius( self, radius ):
 
         assert radius - self.getMinRadius() >= 0.0
-        self.shellList[0].radius = radius
+        self.shellList[0].size = radius
 
 
     def getRadius( self ):
 
-        return self.shellList[0].radius
+        return self.shellList[0].size
 
     radius = property( getRadius, setRadius )
 
@@ -123,9 +123,9 @@ class Pair( object ):
         pairDistance = self.distance( self.single1.pos,
                                       self.single2.pos )
         minRadius = max( pairDistance * self.D1 /
-                         self.D_tot + self.single1.getMinRadius(),
+                         self.D_tot + self.single1.getMinSize(),
                          pairDistance * self.D2 /
-                         self.D_tot + self.single2.getMinRadius() )
+                         self.D_tot + self.single2.getMinSize() )
         return minRadius
 
 
@@ -410,7 +410,7 @@ class Pair( object ):
             r = self.sgf.drawR( rnd, t )
             while r > self.a_R: # redraw; shouldn't happen often
                 # Todo. Why could this ever happen? Because we didn't correct
-                # for radius of particle (like getMobilityRadius for single's)?
+                # for radius of particle (like getMobilitySize for single's)?
                 log.info( 'drawR_single: redraw' )
                 rnd = numpy.random.uniform()
                 r = self.sgf.drawR( rnd, t )
@@ -444,7 +444,7 @@ class Pair( object ):
             # redraw; shouldn't happen often
             while r >= self.a_r or r <= self.sigma: 
                 # Todo. Why could this ever happen? Because we didn't correct
-                # for radius of particle (like getMobilityRadius for single's)?
+                # for radius of particle (like getMobilitySize for single's)?
                 # Is it because we use approximate greensfunctions?
                 log.info( 'drawR_pair: redraw' )
                 #self.sim.rejectedMoves += 1  #FIXME:
