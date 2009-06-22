@@ -9,8 +9,9 @@ class EGFRDSimulator( EGFRDSimulator1 ):
     def createSingle( self, particle ):
         # Poissonian reactions.
         rt = self.getReactionType1( particle.species )
+        # The type of defaultSingle depends on the surface this particle is 
+        # on. Usually SphericalSingle or CylindricalSingle.
         single = particle.surface.defaultSingle( particle, rt )
-        #single = SphericalSingle( particle, rt )
         single.initialize( self.t )
         return single
 
@@ -99,7 +100,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
         burstedSingles = [ s for s in bursted if isinstance( s, Single ) ]
         self.restoreSingleShells( burstedSingles )
             
-        log.info( 'single shell %g dt %g.' % ( single.size, single.dt ) )
+        log.info( 'single shell %s %g dt %g.' % ( single.pos, single.size, single.dt ) )
 
         return single.dt
         # Reaction

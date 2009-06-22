@@ -14,7 +14,7 @@ import object_matrix
 
 from utils import *
 
-debug=1
+debug=0
 
 class ObjectMatrix( object ):
 
@@ -60,6 +60,8 @@ class ObjectMatrix( object ):
         # Todo: fix Cylinder Container.
         #self.cylinderContainer = object_matrix.CylinderContainer( self.worldSize,
         #                                           self.matrixSize )
+        
+        # For now a dictionary.
         self.cylinderContainer = {}
 
 
@@ -70,8 +72,7 @@ class ObjectMatrix( object ):
 
     ### Adds a single/pair to matrix.
     def add( self, key, pos, radius ):
-
-        if( debug ):
+        if debug:
             try:
                 # For pretty printing. Singles/Pairs/Cylinders:
                 object = key[0]
@@ -81,65 +82,76 @@ class ObjectMatrix( object ):
 
         assert radius < self.cellSize * .5
         assert not self.impl.contains( key )
-
         ### Calls insert() in ObjectContainer.hpp. 
         self.impl.insert( key, pos, radius )
 
-    def addCylinder( self, key, cylinder ):
 
-        if( debug ):
+    # Key is a (someSingle, index)-tuple.
+    def addCylinder( self, key, shell ):
+
+        if debug:
+            print 'New cylindricalShell: ', shell
             try:
                 object = key[0]
             except TypeError:
                 object = key
 
-        # Todo. Do something like this:
-        # assert radius < self.cellSize * .5
-        assert not self.cylinderContainer.__contains__( key )
-
-        self.cylinderContainer[key] = cylinder
-        assert self.cylinderContainer.__contains__( key )
-        # Todo:
+        # Todo. Do something like this, but more thorough.
+        #assert radius < self.cellSize * .5
         #self.cylinderContainer.insert( key, cylinder.pos, cylinder.orientation, cylinder.radius, cylinder.length / 2 )
+        assert not self.cylinderContainer.__contains__( key )
+        self.cylinderContainer[key] = shell
+
 
     def remove( self, key ):
-
         assert self.impl.contains( key )
-
         self.impl.erase( key )
 
 
-    def removeCylinder( self, cylinder ):
-        key = (cylinder, 0)
+    def removeCylinder( self, key ):
         assert self.cylinderContainer.contains( key )
-
-        self.cylinderContainer.erase( key )
+        del self.cylinderContainer[ key ]
+        #self.cylinderContainer.erase( key )
 
 
     def update( self, key, pos, radius ):
 
-        if( debug ):
+        if debug:
             try:
                 object = key[0]
             except TypeError:
                 object = key
 
         assert radius < self.cellSize * .5
-        assert self.impl.contains( key )
 
+        assert self.impl.contains( key )
         self.impl.update( key, pos, radius )
 
 
-    def get( self, key ):
+    def updateCylinder( self, key, shell ):
+        assert self.cylinderContainer.__contains__( key )
+        self.cylinderContainer[ key ] = shell 
 
+
+    def get( self, key ):
         return self.impl.get( key )
 
-    def getCylinders( self, pos ):
-        cylinderList = []
-        for key,cylinder in self.cylinderContainer.items() :
-            cylinderList.append(cylinder)
+        # Doesn't work, particleMatrix also calls this.
+        #if isinstance( key[0], Sphere ):
+        #elif isinstance( key[0], Cylinder ):
+        #    return self.cylinderContainer[ key ]
+        #else: raise KeyError, 'Objecttype does not exit'
 
-        return cylinderList
+
+    ### Todo. Stilll needed for vtklogger.
+    def getCylinders( self, pos ):
+        shellList = []
+        for key, shell in self.cylinderContainer.items() :
+            if debug:
+                print 'Get cylindricalShell: ', shell
+            shellList.append( shell )
+
+        return shellList
         # Todo:
         #return self.cylinderContainer.all_neighbors_array_cyclic( pos )
 

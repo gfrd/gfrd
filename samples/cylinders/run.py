@@ -17,19 +17,21 @@ def run( ):
 
 
     box1 = CuboidalSurface( [0,0,0], [L,L,L], 'world' )
-    s.throwInParticles( A, 6, box1 )
+
+    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,0,1], L, 'dna')
+    s.addSurface( dna )
+
+    s.throwInParticles( A, 1, dna )
 
     # Initialize before shellMatrix.addCylinder.
     s.initialize()
 
-    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,0,1], L, 'dna')
-    #s.addSurface( dna )
     #s.shellMatrix.addCylinder( (dna, 0), dna.outside )
 
     l = VTKLogger(s, 'run1')
-    for i in range(2):
-        s.step()
+    for i in range(1000):
         l.log()
+        s.step()
 
     l.stop()
     

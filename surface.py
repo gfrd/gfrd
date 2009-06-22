@@ -38,16 +38,16 @@ class DefaultSurface( Surface ):
 
 
 class CylindricalSurface( Surface ):
-    def __init__( self, origin, radius, orientation, length, name ):
+    def __init__( self, pos, radius, orientation, size, name ):
         Surface.__init__( self, name )
-        self.outside = Cylinder( origin, radius, orientation, length )
+        self.outside = Cylinder( pos, radius, orientation, size )
         self.defaultSingle = CylindricalSingle1D
 
     def projection( self, pos ):
         return self.outside.projection( pos )
 
     def randomPosition( self ):
-        return self.outside.origin + random.random() * self.outside.orientation
+        return self.outside.pos + random.uniform(-0.5, 0.5) * self.outside.orientation * self.outside.size
 
 
 

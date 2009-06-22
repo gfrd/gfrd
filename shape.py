@@ -13,13 +13,14 @@ class Sphere( Shape ):
     def signedDistance( self, pos ):
         return math.sqrt( ( ( pos - self.pos ) ** 2 ).sum() ) - self.size
 
+
 class Cylinder( Shape ):
     def __init__( self, pos, radius, orientation, size ):
-        self.pos = numpy.array( pos )           # middle
-        self.size = numpy.array( size )         # half length
+        self.pos = numpy.array( pos )           # Middle!
+        self.radius = radius
         # Todo: make sure orientation is normalized.
         self.orientation = numpy.array( orientation )
-        self.size = size
+        self.size = numpy.array( size )         # half length
 
     # Todo: this still assumes cylinder is infinitely long. Fix.
     def signedDistance( self, pos ):
@@ -31,3 +32,7 @@ class Cylinder( Shape ):
     # Return projection of 'pos' on the main axis of the cylinder.
     def projection( self, pos ):
         return self.pos + numpy.dot( (pos - self.pos), self.orientation ) * self.orientation
+
+    def __str__( self ):
+        return "Cylinder: " + str( self.pos ) + " " + str( self.radius ) + " " + \
+                              str( self.orientation ) + " " + str( self.size )

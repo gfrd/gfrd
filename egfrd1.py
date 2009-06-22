@@ -9,7 +9,7 @@ from gfrdbase import *
 from single import *
 from pair import *
 from multi import *
-
+from shape import Sphere, Cylinder
 
 class Delegate( object ):
 
@@ -210,17 +210,31 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
     def addToShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
-            self.shellMatrix.add( ( obj, i ), shell.pos, shell.size )
+            # Do logic here instead of in cObjectMatrix, because methods there 
+            # are also used by particleMatrix.
+            if isinstance( shell, Sphere ):
+                self.shellMatrix.add( ( obj, i ), shell.pos, shell.size )
+            elif isinstance( shell, Cylinder ):
+                self.shellMatrix.addCylinder( (obj, i), shell )
+            else: raise KeyError, 'Objecttype does not exit'
 
 
     def removeFromShellMatrix( self, obj ):
-        for i in range( len( obj.shellList ) ):
-            self.shellMatrix.remove( ( obj, i ) )
+        for i, shell in enumerate( obj.shellList ):
+            if isinstance( shell, Sphere ):
+                self.shellMatrix.remove( ( obj, i ) )
+            elif isinstance( shell, Cylinder ):
+                self.shellMatrix.removeCylinder( ( obj, i ) )
+            else: raise KeyError, 'Objecttype does not exit'
 
 
     def updateShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
-            self.shellMatrix.update( ( obj, i ), shell.pos, shell.size )
+            if isinstance( shell, Sphere ):
+                self.shellMatrix.update( ( obj, i ), shell.pos, shell.size )
+            elif isinstance( shell, Cylinder ):
+                self.shellMatrix.updateCylinder( (obj, i), shell )
+            else: raise KeyError, 'Objecttype does not exit'
 
 
     def addEvent( self, t, func, arg ):
@@ -1111,6 +1125,7 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
         if population != eventPopulation:
             raise RuntimeError, 'population %d != eventPopulation %d' %\
                   ( population, eventPopulation )
+
 
     def checkShellMatrix( self ):
 

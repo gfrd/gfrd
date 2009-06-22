@@ -1,4 +1,4 @@
- #!/usr/env python
+#!/usr/env python
 
 
 import math
@@ -519,10 +519,7 @@ class ParticleSimulatorBase( object ):
         log.info( 'throwing in %s %s particles' % ( n, species.id ) )
 
         for i in range( int( n ) ):
-
             while 1:
-
-                #position= numpy.random.uniform( 0, self.worldSize, 3 )
                 position = surface.randomPosition()
                 if self.checkOverlap( position, species.radius ):
                     break
@@ -703,12 +700,9 @@ class ParticleSimulatorBase( object ):
                 % ( total, self.particleMatrix.size )
 
         ### Check positions and radiuses of particles.
-        ### Check that each particle is on a surface.
         for species in self.speciesList.values():
             for i in range( species.pool.size ):
                 particle = Particle( species, index=i )
-                # Todo: why doesn't this work?
-                #print particle.surface
                 pos, radius = self.particleMatrix.get( particle )
 
                 if ( particle.pos - pos ).sum() != 0:

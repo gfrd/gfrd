@@ -1,5 +1,7 @@
 import numpy
+import random
 from _gfrd import EventType
+
 
 class Domain( object ):
     # Todo: bundle more stuff from 3 classes below.
@@ -31,7 +33,6 @@ class SimpleDomain( Domain ):
 
         rnd = numpy.random.uniform()
         self.gf.seta( self.size )
-	# For now. Particles always moves to right now in 1D.
         #if self.kInner == None and self.kOuter == 0:
             # FreeSingle.
 	try:
@@ -39,6 +40,10 @@ class SimpleDomain( Domain ):
 	except Exception, e:
 	    raise Exception, 'gf.drawR failed; %s; rnd=%g, t=%g, %s' %\
 		( str( e ), rnd, dt, self.gf.dump() )
+
+        if self.kInner != None:
+            r = r*random.choice( [-1,1] ) # Cartesian domain. Move either left or right.
+
 	return r
         #else:
             # General case.
@@ -74,7 +79,10 @@ class SimpleDomain( Domain ):
         #if self.kInner == None and self.kOuter == 0:
             # FreeSingle: sphere, circle.
 	self.active = True
-	self.newPos = self.size
+        r = self.size                     # New r
+        if self.kInner != None:
+            r = r * random.choice( [-1,1] ) # Cartesian domain. Move either left or right.
+	self.newPos = r
 	return EventType.ESCAPE
         #else:
             # General case:

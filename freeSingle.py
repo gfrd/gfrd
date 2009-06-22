@@ -1,5 +1,5 @@
 from single import Single
-from shape import Sphere
+from shape import Sphere, Cylinder
 from domain import SimpleDomain
 from utils import randomVector, length
 from _gfrd import EventType, FirstPassageGreensFunction
@@ -60,19 +60,19 @@ class SphericalSingle( FreeSingle ):
 
 
 class CylindricalSingle1D( FreeSingle ):
-    def __init__( self, particle, reactionTypes, surface ):
-        radius = surface.outside.radius
-        assert particle.radius < radius # Particle is absorbed in the DNA for now.
-        orientation = surface.outside.orientation
+    def __init__( self, particle, reactionTypes ):
+        assert particle.radius <= particle.surface.outside.radius # Particle is absorbed in the DNA for now.
         gf = FirstPassageGreensFunction( particle.species.D )
-        FreeSingle.__init__( self, particle, reactionTypes, gf )
-        self.shellList = [ Cylinder( particle.pos, radius, orientation, self.getMinSize() ), ]
+        # Split up radial and cartesian Singles after all?
+        Single.__init__( self, particle, reactionTypes, \
+                [ SimpleDomain( 0, 0, (0, 0), gf ) ] )
+        self.shellList = [ Cylinder( particle.pos, particle.radius, particle.surface.outside.orientation, self.getMinSize() ), ]
 
     def toExternal( self, domains ):
         # Note: you need to be apply self.applyBoundary after calling this.
         r = domains[0]
-        displacement = r*orientation
-        assert abs( length( displacement ) - r ) <= 1e-15 * r
+        displacement = r*self.shellList[0].orientation
+        assert abs( length( displacement ) - abs(r) ) <= 1e-15 * abs(r)
         newpos = self.pos + displacement
         return newpos
 
