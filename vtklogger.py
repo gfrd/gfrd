@@ -106,12 +106,28 @@ class VTKLogger:
         pos = numpy.array( [dnaL/2, dnaL/2, dnaL/2] )
         # Note: when scaling, setting radius has no effect.
         # Note: set scalemode to vector components!
-        scale = numpy.array([dnaR, dnaR, dnaL])
+        # Note: set radius to 1 in Paraview, also for particles.
+        scale = numpy.array( [dnaR, dnaR, dnaL])
         # Orientationlist should contain the number of degrees [0-360] of 
-        # rotation in each direction.
-        self.appendLists( posList, pos, radiusList, 0 , \
-                typeList, 0, lengthList, scale, orientationList, [0,0,0] )
+        # rotation in each direction. Not used. Commented out in 
+        # vtk_xml_serial_unstructured.
 
+        # Not by default at the moment.
+        #self.appendLists( posList, pos, radiusList, 0 , \
+        #        typeList, 0, lengthList, scale, orientationList, [0,0,0] )
+
+
+
+        # Get data from object matrix.
+        cylinders = self.sim.shellMatrix.getCylinders( [0,0,0] )
+        for cylinder in cylinders:
+            type = 1
+            scale = numpy.array([cylinder.radius, cylinder.radius, cylinder.size])
+            self.appendLists( posList, cylinder.pos, radiusList, cylinder.radius, typeList, type, lengthList, scale, orientationList, [0,0,0] )
+
+
+        # Get data from scheduler.
+        """
         for eventIndex in range( self.sim.scheduler.getSize() ):
             # Get event
             event = self.sim.scheduler.getEventByIndex( eventIndex )
@@ -131,6 +147,7 @@ class VTKLogger:
             except AttributeError:
                 # So this is not a cylinder.
                 pass
+        """
 
         # Initialize XML doc.
         doc, grid = self.vtk_writer.createDoc()
@@ -171,7 +188,7 @@ class VTKLogger:
                 try:
                     # Multi.
                     for single in object.shellList:
-                        self.appendLists( posList, single.pos, radiusList, single.radius, typeList, type )
+                        self.appendLists( posList, single.pos, radiusList, single.size, typeList, type )
                 except:
                     pass
 
@@ -195,16 +212,16 @@ class VTKLogger:
 
 
     # Helper.
-    def appendLists( self, posList, pos, radiusList, radius, typeList, type, lengthList=[], length=None, orientationList=[], orientation=None ):
+    def appendLists( self, posList, pos, radiusList, radius, typeList, type, lengthList=[], scale=None, orientationList=[], orientation=None ):
         # Convert all lengths to nanometers.
         factor = 1e9
 
         posList.append( pos * factor )
         radiusList.append( radius * factor )
         typeList.append( type )
-        if length != None:
-            length *= factor
-            lengthList.append( length )
+        if scale != None:
+            scale *= factor
+            lengthList.append( scale )
         #orientationList.append( orientation )
         orientationList.append( [0,0,0] )
 

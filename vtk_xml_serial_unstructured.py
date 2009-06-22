@@ -140,6 +140,7 @@ class VTK_XML_Serial_Unstructured:
             jumps.appendChild(jumpData)
 
         # Cylinder orientation
+        """
         if len(orientations) > 0:
             jumps = doc.createElementNS("VTK", "DataArray")
             jumps.setAttribute("Name", "orientation")
@@ -151,9 +152,10 @@ class VTK_XML_Serial_Unstructured:
             string = str()
             for orientation in orientations:
                 string = string + repr(orientation[0]) + ' ' + \
-                repr(orientation[1]) + ' ' + repr(orientation[2]) + ' '
+                repr(orientation[2]) + ' ' + repr(orientation[1]) + ' '
             jumpData = doc.createTextNode(string)
             jumps.appendChild(jumpData)
+        """
 
         # Particle radii
         if len(radii) > 0:
