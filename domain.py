@@ -7,20 +7,21 @@ class Domain( object ):
         pass
 
 
-# For example the x-domain, or the r-domain (x0=0).
+#     NUL IS HET MIDDEN (Nice!)
+
+#     Or split up radial and simple domain after all.
+
+# For example the x-domain, or the r-domain.
 class SimpleDomain( Domain ):
-    def __init__( self, x0, a, (k0, ka), gf ):
-        self.x0 = x0        # Initial position.
-        self.a = a          # Length or radius, a.k.a. size.
-                            # Note: this should be the mobilityRadius.
-        self.k0 = k0        # Inner interaction rate.
-                            # Todo: take into account mobility radius here as 
-                            # well. This is important. So subtract particle 
-                            # radius twice or something.
-        self.ka = ka        # Outer interaction rate.
+    def __init__( self, x0, size, (kInner, kOuter), gf ):
+        self.x0 = x0        # Initial position (usually 0).
+        self.size = size    # Half-length if cylindrical1D or radius if spherical.
+                            # Note: this should be the mobilitySize.
+        self.kInner = kInner# Inner interaction rate.
+        self.kOuter = kOuter# Outer interaction rate.
         self.gf = gf        # Green's function.
         self.active = True  # Flag for if there is an escape through this domain.
-        self.newPos = a     # Todo. FixMe.
+        self.newPos = size  # Todo. FixMe.
 
     def drawPosition( self, dt ):
         # Escape through this domain. We already know the new value.
@@ -29,33 +30,37 @@ class SimpleDomain( Domain ):
             return self.newPos
 
         rnd = numpy.random.uniform()
-        self.gf.seta( self.a )
-        if self.x0 == 0 and self.k0 == None and self.ka == 0:
+        self.gf.seta( self.size )
+	# For now. Particles always moves to right now in 1D.
+        #if self.kInner == None and self.kOuter == 0:
             # FreeSingle.
-            try:
-                r = self.gf.drawR( rnd , dt )
-            except Exception, e:
-                raise Exception, 'gf.drawR failed; %s; rnd=%g, t=%g, %s' %\
-                    ( str( e ), rnd, dt, self.gf.dump() )
-            return r
-        else:
+	try:
+	    r = self.gf.drawR( rnd , dt )
+	except Exception, e:
+	    raise Exception, 'gf.drawR failed; %s; rnd=%g, t=%g, %s' %\
+		( str( e ), rnd, dt, self.gf.dump() )
+	return r
+        #else:
             # General case.
-            return self.gf.drawR( numpy.random.uniform(), self.x0, self.k0, self.ka, dt )
+	#    return self.gf.drawR( numpy.random.uniform(), self.x0, 
+	#    self.kInner, self.kOuter, dt )
 
     def drawTime( self ):
-        self.gf.seta( self.a )
+        self.gf.seta( self.size )
         rnd = numpy.random.uniform()
-        if self.x0 == 0 and self.k0 == None and self.ka == 0:
+	# For now.
+        #if self.kInner == None and self.kOuter == 0:
             # FreeSingle.
-            try:
-                dt = self.gf.drawTime( rnd )
-            except Exception, e:
-                raise Exception, 'gf.drawTime() failed; %s; rnd=%g, %s' %\
-                    ( str( e ), rnd, self.gf.dump() )
-            return dt
-        else:
+	try:
+	    dt = self.gf.drawTime( rnd )
+	except Exception, e:
+	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g, %s' %\
+		( str( e ), rnd, self.gf.dump() )
+	return dt
+        #else:
             # General case.
-            return self.gf.drawTime( numpy.random.uniform(), self.x0, self.k0, self.ka )
+	#    return self.gf.drawTime( numpy.random.uniform(), self.x0, 
+	#    self.kInner, self.kOuter )
 
     # Returns the type of event and the position in this domain (which side)    
     # the particle will leave. The first return value should be either:
@@ -64,29 +69,31 @@ class SimpleDomain( Domain ):
     # at r=0)
     # * or EventType.ESCAPE
     def drawEventType( self, t ):
-        self.gf.seta( self.a )
-        if self.x0 == 0 and self.k0 == None and self.ka == 0:
-            # FreeSingle.
-            self.active = True
-            self.newPos = self.a
-            return EventType.ESCAPE
-        else:
+        self.gf.seta( self.size )
+	# For now.
+        #if self.kInner == None and self.kOuter == 0:
+            # FreeSingle: sphere, circle.
+	self.active = True
+	self.newPos = self.size
+	return EventType.ESCAPE
+        #else:
             # General case:
             # Todo, set:
             # self.newPos =
             # self.active =
-            return self.gf.drawEventType( numpy.random.uniform(), self.x0, self.k0, self.ka, t )
+	#    return self.gf.drawEventType( numpy.random.uniform(), self.x0, 
+	#    self.kInner, self.kOuter, t )
 
-
+"""
 
 # For example the (r-theta) domain.
 class CompositeDomain( Domain ):
-    def __init__( self, r0, sigma, a, (ksigma, ka), gf ):
+    def __init__( self, r0, sigma, a, (ksigma, kOuter), gf ):
         self.r0 = r0            # Initial position.
         self.sigma = sigma      # Inner radius.
         self.a = a              # Outer radius.
         self.ksigma = ksigma    # Inner interaction rate.
-        self.ka = ka            # Outer interaction rate.
+        self.kOuter = kOuter    # Outer interaction rate.
         self.gf = gf            # Green's function.
 
     def drawPosition( self, dt ):
@@ -105,12 +112,14 @@ class CompositeDomain( Domain ):
 
 
 
+"""
 
 
 
 ################## GRAVEYARD #####################
 
 
+"""
 # For example the r-domain.
 class RadialDomain( Domain ):
     def __init__( self, a, gf ): 
@@ -128,3 +137,4 @@ class Boundary( object ):
         self.k = k          # Reaction rate.
         self.s = surface    # Target surface.
 
+"""

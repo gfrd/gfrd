@@ -4,9 +4,11 @@ import numpy
 import random
 
 from shape import Cylinder
-from gfrdbase import ReactionType
+from freeSingle import SphericalSingle, CylindricalSingle1D
 
 class Surface( object ):
+    def __init__( self, name ):
+        self.name = name
     '''
     This method computes the absolute distance between pos and
     a closest point on the surface.
@@ -24,34 +26,36 @@ class Surface( object ):
     def signedDistance( self, pos ):
         return self.outside.signedDistance( pos )
 
+    def __str__( self ):
+        return self.name
+
+
+# The world.
+class DefaultSurface( Surface ):
+    def __init__( self ):
+        Surface.__init__( self, 'defaultSurface' )
+        self.defaultSingle = SphericalSingle
+
 
 class CylindricalSurface( Surface ):
-    def __init__( self, origin, radius, orientation, length ):
-        self.radius = radius
-        self.orientation = orientation
+    def __init__( self, origin, radius, orientation, length, name ):
+        Surface.__init__( self, name )
         self.outside = Cylinder( origin, radius, orientation, length )
+        self.defaultSingle = CylindricalSingle1D
 
     def projection( self, pos ):
         return self.outside.projection( pos )
 
-
-# Todo: setAllRepulsive equivalent.
-class SurfaceBindingReactionType( ReactionType ):
-    def __init__( self, s1, surface, k ):
-        ReactionType.__init__( self, [ s1, surface ], [ s1, ], k )
-
-
-# Unbinding is a Poisson process.
-class SurfaceUnbindingReactionType( ReactionType ):
-    def __init__( self, s1, surface, k ):
-        ReactionType.__init__( self, [ s1, ], [ s1, ], k )
+    def randomPosition( self ):
+        return self.outside.origin + random.random() * self.outside.orientation
 
 
 
-### Todo #################
+
 '''
 
 '''
+# The world basically.
 class CuboidalSurface( Surface ):
 
     '''
@@ -60,8 +64,10 @@ class CuboidalSurface( Surface ):
               point.
     '''
 
-    def __init__( self, origin, size ):
+    def __init__( self, origin, size, name='someCuboidalSurface' ):
+        Surface.__init__( self, name )
         self.setParams( origin, size )
+        self.defaultSingle = SphericalSingle
  
     def signedDistance( self, pos ):
         dists = numpy.concatenate( ( self.origin - pos,

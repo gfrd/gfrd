@@ -10,7 +10,7 @@ import scipy
 
 
 from utils import *
-#from surface import *
+from surface import DefaultSurface
 ### _gfrd is a module (library) that is written in C++ and pythonified using
 ### Boost library.
 from _gfrd import *
@@ -85,7 +85,7 @@ class Species( object ):
         self.id = id
         self.D = D
         self.radius = radius
-        self.pool = ParticlePool()
+        self.pool = ParticlePool() # Stores positions only.
 
 
     def newParticle( self, position ):
@@ -176,6 +176,18 @@ class UnbindingReactionType( ReactionType ):
         ReactionType.__init__( self, [ s1, ], [ p1, p2 ], k )
 
 
+### Todo #################
+# Todo: setAllRepulsive equivalent.
+class SurfaceBindingReactionType( ReactionType ):
+    def __init__( self, s1, surface, k ):
+        ReactionType.__init__( self, [ s1, surface ], [ s1, ], k )
+
+
+# Unbinding is a Poisson process.
+class SurfaceUnbindingReactionType( ReactionType ):
+    def __init__( self, s1, surface, k ):
+        ReactionType.__init__( self, [ s1, ], [ s1, ], k )
+
 
 class Reaction:
     def __init__( self, type, reactants, products ):
@@ -192,7 +204,7 @@ class Particle( object ):
 
     ### Not only constructor, but can also be used to make a copy of a
     ### particle by index or serial.
-    def __init__( self, species, serial=None, index=None ):
+    def __init__( self, species, serial=None, index=None, surface=None ):
 
         self.species = species
 
@@ -205,10 +217,11 @@ class Particle( object ):
 
         self.hash = hash( self.species ) ^ self.serial
 
+        self.surface = surface
 
     def __str__( self ):
 
-        return "( '" + self.species.id + "', " + str( self.serial ) + ' )'
+        return "( '" + self.species.id + "', " + str( self.serial ) + ", " + str( self.surface ) + ' )'
 
     def __repr__( self ):
 
@@ -265,6 +278,7 @@ class DummyParticle( object ):
 
 
 
+# Stores positions only.
 class ParticlePool( object ):
 
     def __init__( self ):
@@ -367,13 +381,15 @@ class ParticleSimulatorBase( object ):
         self.rejectedMoves = 0
         self.reactionEvents = 0
 
-        self.particleMatrix = ObjectMatrix()
-
+        self.particleMatrix = ObjectMatrix() # Stores complete particles (unlike particlePool).
 
         self.setWorldSize( INF )
 
         self.lastReaction = None
 
+        # Needed when creating a shell around a particle whose surface is not 
+        # specified.
+        self.defaultSurface = DefaultSurface()
 
     def initialize( self ):
         pass
@@ -499,7 +515,7 @@ class ParticleSimulatorBase( object ):
                                                                    species2 )
         
 
-    def throwInParticles( self, species, n, surface=[] ):
+    def throwInParticles( self, species, n, surface ):
         log.info( 'throwing in %s %s particles' % ( n, species.id ) )
 
         for i in range( int( n ) ):
@@ -513,10 +529,10 @@ class ParticleSimulatorBase( object ):
                 else:
                     log.info( '%d-th particle rejected.' %i )
             
-            self.createParticle( species, position )
+            self.createParticle( species, position, surface )
 
 
-    def placeParticle( self, species, pos ):
+    def placeParticle( self, species, pos, surface=None ):
 
         log.info( 'place %s particle at %s' % ( species.id, pos ) )
         pos = numpy.array( pos )
@@ -525,13 +541,16 @@ class ParticleSimulatorBase( object ):
         if not self.checkOverlap( pos, radius ):
             raise NoSpace, 'overlap check failed'
             
-        particle = self.createParticle( species, pos )
+        particle = self.createParticle( species, pos, surface )
         return particle
 
 
-    def createParticle( self, species, pos ):
+    def createParticle( self, species, pos, surface=None ):
         newserial = species.newParticle( pos )
-        newparticle = Particle( species, serial=newserial )
+        if surface == None:
+            # Particle in cytoplasm.
+            surface = self.defaultSurface
+        newparticle = Particle( species, serial=newserial, surface=surface )
         self.addToParticleMatrix( newparticle, pos )
         return newparticle
 
@@ -607,9 +626,16 @@ class ParticleSimulatorBase( object ):
     is a list of Particle objects.
     '''
 
+    # Thomas: there is a problem with these 5 methods: Particles can not be 
+    # indexed. And they are not used anyway. Maybe before with gfrd?
+    # In all these methods we try to get a reference to to the original 
+    # particle, since we don't just want the values that the particleMatrix 
+    # returns?
 
+    """
     def getNeighborParticles( self, pos, n=None ):
         n, d = self.particleMatrix.getNeighbors( pos, n )
+        # Todo. This doesn't seem right.
         neighbors = [ Particle( i[0], i[1] ) for i in n ]
         return neighbors, d
 
@@ -677,9 +703,12 @@ class ParticleSimulatorBase( object ):
                 % ( total, self.particleMatrix.size )
 
         ### Check positions and radiuses of particles.
+        ### Check that each particle is on a surface.
         for species in self.speciesList.values():
             for i in range( species.pool.size ):
                 particle = Particle( species, index=i )
+                # Todo: why doesn't this work?
+                #print particle.surface
                 pos, radius = self.particleMatrix.get( particle )
 
                 if ( particle.pos - pos ).sum() != 0:
@@ -693,6 +722,7 @@ class ParticleSimulatorBase( object ):
 
         self.checkParticleMatrix()
 
+    """
 
     def dumpPopulation( self ):
         buf = ''

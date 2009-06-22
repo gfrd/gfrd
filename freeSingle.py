@@ -8,6 +8,7 @@ from _gfrd import EventType, FirstPassageGreensFunction
 # Maybe remove this layer of abstraction later.
 class FreeSingle( Single ):
     def __init__( self, particle, reactionTypes, gf ):
+        # Create a domain with mobilitySize 0.
         Single.__init__( self, particle, reactionTypes, \
                 [ SimpleDomain( 0, 0, (None, 0), gf ) ] )
 
@@ -30,7 +31,8 @@ class FreeSingle( Single ):
     def setSize( self, size ):
         assert size - self.getMinSize() >= 0.0
         self.shellList[0].size = size
-        self.domains[0].a = self.getMobilitySize()
+        # Works for cylindricalSingle1D as well!
+        self.domains[0].size = self.getMobilitySize()
     def getSize( self ):
         return self.shellList[0].size
     size = property( getSize, setSize )
@@ -58,9 +60,10 @@ class SphericalSingle( FreeSingle ):
 
 
 class CylindricalSingle1D( FreeSingle ):
-    def __init__( self, particle, reactionTypes, cylindricalSurface ):
-        radius = cylindricalSurface.outside.radius
-        orientation = cylindricalSurface.outside.orientation
+    def __init__( self, particle, reactionTypes, surface ):
+        radius = surface.outside.radius
+        assert particle.radius < radius # Particle is absorbed in the DNA for now.
+        orientation = surface.outside.orientation
         gf = FirstPassageGreensFunction( particle.species.D )
         FreeSingle.__init__( self, particle, reactionTypes, gf )
         self.shellList = [ Cylinder( particle.pos, radius, orientation, self.getMinSize() ), ]

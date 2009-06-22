@@ -1,7 +1,5 @@
 from egfrd1 import *
-from freeSingle import SphericalSingle
 from itertools import izip
-#from cylinder import *
 
 class EGFRDSimulator( EGFRDSimulator1 ):
 
@@ -11,9 +9,11 @@ class EGFRDSimulator( EGFRDSimulator1 ):
     def createSingle( self, particle ):
         # Poissonian reactions.
         rt = self.getReactionType1( particle.species )
-        single = SphericalSingle( particle, rt )
+        single = particle.surface.defaultSingle( particle, rt )
+        #single = SphericalSingle( particle, rt )
         single.initialize( self.t )
         return single
+
 
     # Returns sorted list with elements:
     # - distance to surface
@@ -191,8 +191,9 @@ class EGFRDSimulator( EGFRDSimulator1 ):
                 log.info( 'no space for product particle.' )
                 raise NoSpace()
 
+            currentSurface = single.particle.surface
             self.removeParticle( single.particle )
-            newparticle = self.createParticle( productSpecies, oldpos )
+            newparticle = self.createParticle( productSpecies, oldpos, currentSurface )
             newsingle = self.createSingle( newparticle )
             self.addToShellMatrix( newsingle )
             self.addSingleEvent( newsingle )
@@ -251,10 +252,11 @@ class EGFRDSimulator( EGFRDSimulator1 ):
                 log.info( 'no space for product particles.' )
                 raise NoSpace()
 
+            currentSurface = single.particle.surface
             self.removeParticle( single.particle )
 
-            particle1 = self.createParticle( productSpecies1, newpos1 )
-            particle2 = self.createParticle( productSpecies2, newpos2 )
+            particle1 = self.createParticle( productSpecies1, newpos1, currentSurface )
+            particle2 = self.createParticle( productSpecies2, newpos2, currentSurface )
             newsingle1 = self.createSingle( particle1 )
             newsingle2 = self.createSingle( particle2 )
 

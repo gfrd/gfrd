@@ -1,17 +1,8 @@
 #!/usr/env python
 
-
 import weakref
-
 import math
-
 import numpy
-#import scipy
-#import scipy.optimize
-
-
-#from utils import *
-from surface import *
 
 from gfrdbase import *
 
@@ -114,12 +105,15 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
         self.scheduler.clear()
         self.shellMatrix.clear()
 
-        for species in self.speciesList.values():
-            for i in range( species.pool.size ):
-                particle = Particle( species, index=i )
-                single = self.createSingle( particle )
-                self.addToShellMatrix( single )
-                self.addSingleEvent( single )
+        # Get particle data from particleMatrix, because we need to know the 
+        # surface they are on.
+        particles, _ = self.particleMatrix.getNeighbors( numpy.array([0,0,0]) )
+        for p in particles:
+            # Get reference to real Particle. I think this is needed.
+            particle = Particle( p.species, serial=p.serial, surface=p.surface )
+            single = self.createSingle( particle )
+            self.addToShellMatrix( single )
+            self.addSingleEvent( single )
 
         self.isDirty = False
 
@@ -199,17 +193,6 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
         assert self.scheduler.getSize() != 0
 
-
-
-
-
-    def createSingle( self, particle ):
-
-        rt = self.getReactionType1( particle.species )
-        single = Single( particle, rt )
-        single.initialize( self.t )
-
-        return single
 
     def createMulti( self ):
 
@@ -432,12 +415,13 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
                     pair.radius
 
                 #FIXME: SURFACE
+                currentSurface = particle1.surface
                 self.applyBoundary( newCoM )
 
                 self.removeParticle( particle1 )
                 self.removeParticle( particle2 )
 
-                particle = self.createParticle( species3, newCoM )
+                particle = self.createParticle( species3, newCoM, currentSurface  )
                 newsingle = self.createSingle( particle )
                 self.addToShellMatrix( newsingle )
                 self.addSingleEvent( newsingle )

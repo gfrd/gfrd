@@ -16,13 +16,13 @@ def run( ):
     dnaR = sigma
 
 
-    box1 = CuboidalSurface( [0,0,0], [L,L,L] )
+    box1 = CuboidalSurface( [0,0,0], [L,L,L], 'world' )
     s.throwInParticles( A, 6, box1 )
 
     # Initialize before shellMatrix.addCylinder.
     s.initialize()
 
-    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,0,1], L)
+    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,0,1], L, 'dna')
     #s.addSurface( dna )
     #s.shellMatrix.addCylinder( (dna, 0), dna.outside )
 
