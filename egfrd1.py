@@ -28,7 +28,8 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
     
     def __init__( self ):
 
-        self.shellMatrix = ObjectMatrix()
+        self.sphereMatrix = SphereMatrix()
+        self.cylinderMatrix = CylinderMatrix()
         #self.sm2 = pObjectMatrix()
 
         ParticleSimulatorBase.__init__( self )
@@ -47,22 +48,24 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
 
     def setWorldSize( self, size ):
-
         if isinstance( size, list ) or isinstance( size, tuple ):
             size = numpy.array( size )
 
         ParticleSimulatorBase.setWorldSize( self, size )
-        self.shellMatrix.setWorldSize( size )
-        #self.sm2.setWorldSize( size )
+        self.sphereMatrix.setWorldSize( size )
+        self.cylinderMatrix.setWorldSize( size )
+
 
     def setMatrixSize( self, size ):
         ParticleSimulatorBase.setMatrixSize( self, size )
-        self.shellMatrix.setMatrixSize( size )
-        #self.sm2.setMatrixSize( size )
+        self.sphereMatrix.setMatrixSize( size )
+        self.cylinderMatrix.setMatrixSize( size )
+
 
     def getMatrixCellSize( self ):
+        assert self.sphereMatrix.cellSize == self.cylinderMatrix.cellSize
+        return self.sphereMatrix.cellSize
 
-        return self.shellMatrix.cellSize
 
     def getNextTime( self ):
 
@@ -85,7 +88,6 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
                     self.userMaxShellSize )
 
     def reset( self ):
-
         self.t = 0.0
         self.dt = 0.0
         self.stepCounter = 0
@@ -100,13 +102,13 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
         
 
     def initialize( self ):
-
         ParticleSimulatorBase.initialize( self )
 
         self.setAllRepulsive()
 
         self.scheduler.clear()
-        self.shellMatrix.clear()
+        self.sphereMatrix.clear()
+        self.cylinderMatrix.clear()
 
         # Get particle data from particleMatrix, because we need to know the 
         # surface they are on.
@@ -213,30 +215,33 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
     def addToShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
-            # Do logic here instead of in cObjectMatrix, because methods there 
-            # are also used by particleMatrix.
+            key = (obj, i)
             if isinstance( shell, Sphere ):
-                self.shellMatrix.add( ( obj, i ), shell.origin, shell.size )
+                self.sphereMatrix.add( key, shell.origin, shell.size )
             elif isinstance( shell, Cylinder ):
-                self.shellMatrix.addCylinder( (obj, i), shell )
+                self.cylinderMatrix.add( key, shell )
             else: raise KeyError, 'Objecttype does not exit'
 
 
     def removeFromShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
+            key = (obj, i)
+            # Check for type of shell -> remove key (is that the way to do 
+            # it?)
             if isinstance( shell, Sphere ):
-                self.shellMatrix.remove( ( obj, i ) )
+                self.sphereMatrix.remove( key )
             elif isinstance( shell, Cylinder ):
-                self.shellMatrix.removeCylinder( ( obj, i ) )
+                self.cylinderMatrix.remove( key )
             else: raise KeyError, 'Objecttype does not exit'
 
 
     def updateShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
+            key = (obj, i)
             if isinstance( shell, Sphere ):
-                self.shellMatrix.update( ( obj, i ), shell.origin, shell.size )
+                self.sphereMatrix.update( key, shell.origin, shell.size )
             elif isinstance( shell, Cylinder ):
-                self.shellMatrix.updateCylinder( (obj, i), shell )
+                self.cylinderMatrix.update( key, shell )
             else: raise KeyError, 'Objecttype does not exit'
 
 
@@ -966,7 +971,7 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
     # No radius (i.e. all), no ignore list.
     def getNeighborShells( self, pos, n=None ):
-        neighbors, distances = self.shellMatrix.getNeighbors( pos, n )
+        neighbors, distances = self.sphereMatrix.getNeighbors( pos, n )
 
         if len( neighbors ) == 0:
             # Dummy
@@ -975,22 +980,22 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
 
     def getNeighborShellsNoSort( self, pos, n=None ):
-        return self.shellMatrix.getNeighborsNoSort( pos, n )
+        return self.sphereMatrix.getNeighborsNoSort( pos, n )
 
 
     # Within radius.
     def getNeighborShellsWithinRadius( self, pos, radius ):
-        return self.shellMatrix.getNeighborsWithinRadius( pos, radius )
+        return self.sphereMatrix.getNeighborsWithinRadius( pos, radius )
 
 
     def getNeighborShellsWithinRadiusNoSort( self, pos, radius ):
-        return self.shellMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
+        return self.sphereMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
 
 
     # With radius and ignore list.
     def getNeighborsWithinRadius( self, pos, radius, ignore=[] ):
         shells, distances =\
-            self.shellMatrix.getNeighborsWithinRadius( pos, radius )
+            self.sphereMatrix.getNeighborsWithinRadius( pos, radius )
 
         neighbors = [ s[0] for s in shells if s[0] not in ignore ]
         neighbors = uniq( neighbors )
@@ -999,14 +1004,14 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
     def getNeighborsWithinRadiusNoSort( self, pos, radius, ignore=[] ):
         shells, distances =\
-            self.shellMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
+            self.sphereMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
 
         neighbors = uniq( [ s[0] for s in shells if s[0] not in ignore ] )
         return neighbors
 
 
     def getNeighbors( self, pos, radius=INF, ignore=[] ):
-        shells, dists = self.shellMatrix.getNeighbors( pos )
+        shells, dists = self.sphereMatrix.getNeighbors( pos )
 
         seen = dict.fromkeys( ignore )
         neighbors = []
@@ -1118,34 +1123,34 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
     def checkShellMatrix( self ):
 
-        if self.worldSize != self.shellMatrix.worldSize:
+        if self.worldSize != self.sphereMatrix.worldSize:
             raise RuntimeError,\
-                'self.worldSize != self.shellMatrix.worldSize'
+                'self.worldSize != self.sphereMatrix.worldSize'
 
         shellPopulation = 0
         for i in range( self.scheduler.getSize() ):
             obj = self.scheduler.getEventByIndex(i).getArg()
             shellPopulation += len( obj.shellList )
 
-        if shellPopulation != self.shellMatrix.size:
+        if shellPopulation != self.sphereMatrix.size:
             raise RuntimeError,\
-                'num shells != self.shellMatrix.size'
+                'num shells != self.sphereMatrix.size'
         
-        self.shellMatrix.check()
+        self.sphereMatrix.check()
 
         for k in range( self.scheduler.getSize() ):
             obj = self.scheduler.getEventByIndex(k).getArg()
             for i in range( len( obj.shellList ) ):
                 key = ( obj, i )
-                pos, size = self.shellMatrix.get( key )
+                pos, size = self.sphereMatrix.get( key )
 
                 if ( obj.shellList[i].origin - pos ).any():
                     raise RuntimeError, \
-                        '%s shellMatrix positions consistency broken' % str( key )
+                        '%s sphereMatrix positions consistency broken' % str( key )
 
                 if obj.shellList[i].size != size:
                     raise RuntimeError, \
-                        '%s shellMatrix radii consistency broken' % str( key )
+                        '%s sphereMatrix radii consistency broken' % str( key )
 
 
 

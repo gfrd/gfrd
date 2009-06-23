@@ -119,8 +119,10 @@ class VTKLogger:
 
 
         # Get data from object matrix.
-        cylinders = self.sim.shellMatrix.getCylinders( [0,0,0] )
-        for cylinder in cylinders:
+        keys, _ = self.sim.cylinderMatrix.getNeighbors( [0,0,0] )
+        for key in keys:
+            cylindricalSingle = key[0]
+            cylinder = cylindricalSingle.shellList[0]
             type = 1
             # Multiply cylinder.size by 2 because we are storing halfLengths 
             # and Paraview wants full length.

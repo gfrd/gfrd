@@ -381,7 +381,7 @@ class ParticleSimulatorBase( object ):
         self.rejectedMoves = 0
         self.reactionEvents = 0
 
-        self.particleMatrix = ObjectMatrix() # Stores complete particles (unlike particlePool).
+        self.particleMatrix = SphereMatrix() # Stores complete particles (unlike particlePool).
 
         self.setWorldSize( INF )
 

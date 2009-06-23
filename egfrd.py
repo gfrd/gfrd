@@ -6,6 +6,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
     def __init__( self ):
         EGFRDSimulator1.__init__( self )
 
+
     def createSingle( self, particle ):
         # Poissonian reactions.
         rt = self.getReactionType1( particle.species )
@@ -32,7 +33,6 @@ class EGFRDSimulator( EGFRDSimulator1 ):
 
 
     def fireSingle( self, single ):
-
         # Reaction.
         if single.eventType == EventType.REACTION:
 
@@ -162,7 +162,6 @@ class EGFRDSimulator( EGFRDSimulator1 ):
 
 
     def fireSingleReaction( self, single, interactionType = None ):
-
         reactantSpecies = single.particle.species
         oldpos = single.particle.pos.copy()
         
@@ -280,7 +279,6 @@ class EGFRDSimulator( EGFRDSimulator1 ):
 
 
     def createPair( self, single1, single2 ):
-
         assert single1.dt == 0.0
         assert single2.dt == 0.0
         assert single1.getMobilitySize() == 0.0
@@ -306,14 +304,13 @@ class EGFRDSimulator( EGFRDSimulator1 ):
 
 
     def addPairEvent( self, pair ):
-
         eventID = self.addEvent( self.t + pair.dt, 
                                  Delegate( self, EGFRDSimulator.firePair ), 
                                  pair )
         pair.eventID = eventID
 
-    def addMultiEvent( self, multi ):
 
+    def addMultiEvent( self, multi ):
         eventID = self.addEvent( self.t + multi.dt, 
                                  Delegate( self, EGFRDSimulator.fireMulti ), 
                                  multi )

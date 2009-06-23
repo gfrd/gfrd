@@ -19,13 +19,6 @@ class Single( object ):
         self.multiplicity = 1
 
 
-    def distanceTo( self, pos ):
-        dists = numpy.zeros( len( self.shellList ) )
-        for i, shell in enumerate( self.shellList ):
-            dists[i] = shell.distanceTo( pos )
-        return min( dists )
-
-
     def getD( self ):
         return self.particle.species.D
 

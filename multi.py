@@ -16,10 +16,10 @@ class MultiBDCore( BDSimulatorCoreBase ):
         # this has to be ref, not proxy, since it is used for comparison.
         self.multiref = weakref.ref( multi )
 
-        self.particleMatrix = ObjectMatrix()
+        self.particleMatrix = SphereMatrix()
         self.particleMatrix.setWorldSize( self.main.worldSize )
 
-        self.shellMatrix = ObjectMatrix()
+        self.shellMatrix = SphereMatrix()
         self.shellMatrix.setWorldSize( self.main.worldSize )
 
         self.escaped = False
