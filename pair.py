@@ -1,4 +1,5 @@
 from utils import *
+#from utils import cyclicTranspose, math, numpy, vectorAngleAgainstZAxis, crossproductAgainstZAxis, normalize, rotateVector, distance_Simple
 from shell import *
 from _gfrd import *
 from gfrdbase import log
@@ -28,7 +29,8 @@ class Pair( object ):
     # 5.6: ~1e-8, 6.0: ~1e-9
     CUTOFF_FACTOR = 5.6
 
-    ### Why do we want to set the distance Function?
+    # The distance function is passed to be able to take the boundary 
+    # conditions into account.
     def __init__( self, single1, single2, rt, distFunc, worldSize ):
 
         self.multiplicity = 2
@@ -86,11 +88,11 @@ class Pair( object ):
 
     ### So the first shell determines the position of the pair.
     def setPos( self, pos ):
-        self.shellList[0].pos = pos
+        self.shellList[0].origin = pos
 
     def getPos( self ):
 
-        return self.shellList[0].pos
+        return self.shellList[0].origin
 
     pos = property( getPos, setPos )
 

@@ -1,5 +1,6 @@
 #include <gsl/gsl_math.h>
 
+/* Note: methods starting with _ are not exported to Python. */
 const double _distanceSq( const double* const p1, const double* const p2 )
 {
     return gsl_pow_2( p1[0] - p2[0] ) 
@@ -50,6 +51,7 @@ const double _distance_Cyclic( const double* const p1,
 
 
 #include "wrapped_multi_array.hpp"
+// What the *** is a wrapped multi array, and why do we need it?
 
 const double 
 distanceSq( const wrapped_multi_array<double, 1>& a1,

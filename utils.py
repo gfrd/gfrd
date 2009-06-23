@@ -64,6 +64,8 @@ def distance( position1, position2, fsize = 0 ):
     return math.sqrt( distanceSq_Simple( position1, position2 ) )
 '''
 
+# These 4 functions are used if worldsize is a float in 
+# ParticleSimulatorBase.setWorldSize.
 def distanceSq_Simple( position1, position2, fsize = None ):
     return _gfrd.distanceSq( position1, position2 )
 
@@ -83,6 +85,7 @@ def distanceSq_Cyclic( position1, position2, fsize ):
     return numpy.dot( diff, diff )
 '''
 
+# These 4 functions are used if worldsize is.. Todo.
 def distanceSq_Cyclic( position1, position2, fsize ):
     return _gfrd.distanceSq_Cyclic( position1, position2, fsize )
 

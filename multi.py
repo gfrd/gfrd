@@ -53,7 +53,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
         self.shellMatrix.clear()
         for shell in self.multiref().shellList:
-            self.shellMatrix.add( shell, shell.pos, shell.size )
+            self.shellMatrix.add( shell, shell.origin, shell.size )
 
     def addParticle( self, particle ):
 
@@ -153,13 +153,13 @@ class MultiBDCore( BDSimulatorCoreBase ):
         # shellMatrix consistency
         for shell in self.multiref().shellList:
             pos, size = self.shellMatrix.get( shell )
-            assert not ( pos - shell.pos ).any()
+            assert not ( pos - shell.origin ).any()
             assert size == shell.size
 
 
         # shells are contiguous
         for shell in self.multiref().shellList:
-            n, d = self.shellMatrix.getNeighbors( shell.pos )
+            n, d = self.shellMatrix.getNeighbors( shell.origin )
             assert d[1] - shell.size < 0.0, 'shells are not contiguous.'
 
         # all particles within the shell.
@@ -206,8 +206,8 @@ class Multi( object ):
     def addParticle( self, particle ):
         self.sim.addParticle( particle )
 
-    def addShell( self, pos, size ):
-        self.shellList.append( Shell( pos, size ) )
+    def addShell( self, origin, size ):
+        self.shellList.append( Shell( origin, size ) )
 
 
     def check( self ):

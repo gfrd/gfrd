@@ -9,32 +9,38 @@ from freeSingle import SphericalSingle, CylindricalSingle1D
 class Surface( object ):
     def __init__( self, name ):
         self.name = name
+
+
     '''
     This method computes the absolute distance between pos and
     a closest point on the surface.
     '''
-    def distance( self, pos ):
-        return abs( self.signedDistance( pos ) )
+    def distanceTo( self, pos ):
+        return abs( self.signedDistanceTo( pos ) )
    
+
     '''
-    Same as distance(), but the return value is positive
+    Same as distanceTo(), but the return value is positive
     or negative depending on in which side the position is.
     
     When this surface defines a closed region in space,
     negative value means that the position is inside.
     '''
-    def signedDistance( self, pos ):
-        return self.outside.signedDistance( pos )
+    def signedDistanceTo( self, pos ):
+        return self.outside.signedDistanceTo( pos )
+
 
     def __str__( self ):
         return self.name
 
 
-# The world.
+
 class DefaultSurface( Surface ):
+    # If no surface is specified, particles are tagged with this one.
     def __init__( self ):
         Surface.__init__( self, 'defaultSurface' )
         self.defaultSingle = SphericalSingle
+
 
 
 class CylindricalSurface( Surface ):
@@ -43,39 +49,33 @@ class CylindricalSurface( Surface ):
         self.outside = Cylinder( pos, radius, orientation, size )
         self.defaultSingle = CylindricalSingle1D
 
-    def projection( self, pos ):
-        return self.outside.projection( pos )
 
     def randomPosition( self ):
-        return self.outside.pos + random.uniform(-0.5, 0.5) * self.outside.orientation * self.outside.size
+        return self.outside.origin + random.uniform(-0.5, 0.5) * self.outside.orientation * self.outside.size
 
 
 
 
-'''
-
-'''
-# The world basically.
 class CuboidalSurface( Surface ):
-
     '''
     origin -- = [ x0, y0, z0 ] is the origin.
     size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
               point.
     '''
-
     def __init__( self, origin, size, name='someCuboidalSurface' ):
         Surface.__init__( self, name )
         self.setParams( origin, size )
         self.defaultSingle = SphericalSingle
  
-    def signedDistance( self, pos ):
+
+    def signedDistanceTo( self, pos ):
         dists = numpy.concatenate( ( self.origin - pos,
                                      self.origin+self.size-pos ) )
         absdists = numpy.abs( dists )
         i = numpy.argmin( absdists )
 
         return dists[i]
+
 
     '''
     Returns a random position equidistributed within
@@ -88,7 +88,7 @@ class CuboidalSurface( Surface ):
                               random.uniform( self.origin[2], self.size[2] ) ]
                             )
 
-    
+
     def setParams( self, origin, size ):
 
         self.origin = numpy.array( origin )
@@ -99,24 +99,24 @@ class CuboidalSurface( Surface ):
         return self.params
 
 
+
 '''
 Planar boundary given by a x + b y + c z + d = 0
-
 '''
 class PlanarSurface( Surface ):
-
     '''
     params: [ a, b, c, d ] as in
     a x + b y + c z + d = 0
     where ( a, b, c ) is a normal vector of the plane.
-
     '''
     def __init__( self, params ):
         self.setParams( params )
 
-    def signedDistance( self, pos ):
+
+    def signedDistanceTo( self, pos ):
         return numpy.dot( self.hessianNormal,\
                           numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) )
+
 
     def setParams( self, params ):
         self.params = numpy.array( params )
@@ -129,6 +129,7 @@ class PlanarSurface( Surface ):
 
     def getParams( self ):
         return self.params
+
 
     def randomPosition( self ):
         raise 'not supported.  specified space has infinite volume.'
@@ -146,7 +147,7 @@ class SphericalSurface( Surface ):
     def __init__( self, origin, radius ):
         self.setParams( origin, radius )
 
-    def signedDistance( self, pos ):
+    def signedDistanceTo( self, pos ):
         return math.sqrt( ( ( pos - self.origin ) ** 2 ).sum() ) - self.radius
 
     def randomPosition( self ):
@@ -177,7 +178,7 @@ class OneDimensionalSurface( Surface ):
     def __init__( self, origin, orientation = [ 0, 0, 1 ] ):
         self.setParams( origin, orientation )
 
-    #def signedDistance( self, pos ):
+    #def signedDistanceTo( self, pos ):
     #    return math.sqrt( (pos[0] - self.origin[0])** 2 + (pos[1] - self.origin[1])**2 )
 
     def randomPosition( self ):

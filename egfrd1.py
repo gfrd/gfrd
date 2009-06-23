@@ -20,6 +20,9 @@ class Delegate( object ):
     def __call__( self, *arg ):
         return self.method( self.obj, *arg )
 
+# Notes:
+# EGFRDSimulator.distance takes into account the periodic boundary conditions.  
+# Very handy!
 
 class EGFRDSimulator1( ParticleSimulatorBase ):
     
@@ -213,7 +216,7 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
             # Do logic here instead of in cObjectMatrix, because methods there 
             # are also used by particleMatrix.
             if isinstance( shell, Sphere ):
-                self.shellMatrix.add( ( obj, i ), shell.pos, shell.size )
+                self.shellMatrix.add( ( obj, i ), shell.origin, shell.size )
             elif isinstance( shell, Cylinder ):
                 self.shellMatrix.addCylinder( (obj, i), shell )
             else: raise KeyError, 'Objecttype does not exit'
@@ -231,7 +234,7 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
     def updateShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
             if isinstance( shell, Sphere ):
-                self.shellMatrix.update( ( obj, i ), shell.pos, shell.size )
+                self.shellMatrix.update( ( obj, i ), shell.origin, shell.size )
             elif isinstance( shell, Cylinder ):
                 self.shellMatrix.updateCylinder( (obj, i), shell )
             else: raise KeyError, 'Objecttype does not exit'
@@ -683,6 +686,8 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
         # Then, a Multi.
         minShell = single.getMinSize() * ( 1.0 + self.MULTI_SHELL_FACTOR )
+        # Good example why side-effect free programming is a good idea.  Then 
+        # I would know for sure that formPair didn't do anything to neighbors. 
         neighborDists = self.objDistanceArray( single.pos, neighbors )
         neighbors = [ neighbors[i] for i in 
                       ( neighborDists <= minShell ).nonzero()[0] ]
@@ -944,7 +949,7 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
 
             multi2.addParticle( particle )
             shell = multi1.shellList[i]
-            multi2.addShell( shell.pos, shell.size )
+            multi2.addShell( shell.origin, shell.size )
 
         multi2.initialize( self.t )
 
@@ -955,20 +960,25 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
     This method returns a tuple ( neighbors, distances ).
     '''
 
-    def getNeighborShells( self, pos, n=None ):
+    # Sort yes/no.
+    # Within radius yes/no.
+    # With ignore list yes/no.
 
+    # No radius (i.e. all), no ignore list.
+    def getNeighborShells( self, pos, n=None ):
         neighbors, distances = self.shellMatrix.getNeighbors( pos, n )
 
         if len( neighbors ) == 0:
+            # Dummy
             return [( DummySingle(), 0 ),], [INF,]
         return neighbors, distances
 
 
     def getNeighborShellsNoSort( self, pos, n=None ):
-
         return self.shellMatrix.getNeighborsNoSort( pos, n )
 
 
+    # Within radius.
     def getNeighborShellsWithinRadius( self, pos, radius ):
         return self.shellMatrix.getNeighborsWithinRadius( pos, radius )
 
@@ -977,29 +987,25 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
         return self.shellMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
 
 
+    # With radius and ignore list.
     def getNeighborsWithinRadius( self, pos, radius, ignore=[] ):
-
         shells, distances =\
             self.shellMatrix.getNeighborsWithinRadius( pos, radius )
 
         neighbors = [ s[0] for s in shells if s[0] not in ignore ]
         neighbors = uniq( neighbors )
-
         return neighbors
 
 
     def getNeighborsWithinRadiusNoSort( self, pos, radius, ignore=[] ):
-
         shells, distances =\
             self.shellMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
 
         neighbors = uniq( [ s[0] for s in shells if s[0] not in ignore ] )
-
         return neighbors
 
 
     def getNeighbors( self, pos, radius=INF, ignore=[] ):
-
         shells, dists = self.shellMatrix.getNeighbors( pos )
 
         seen = dict.fromkeys( ignore )
@@ -1017,19 +1023,8 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
         return neighbors + [DummySingle()], numpy.concatenate( [ distances,
                                                                  [INF] ] )
 
-    def getClosestShell( self, pos, ignore=[] ):
-
-        neighbors, distances = self.getNeighborShells( pos )
-
-        for i, neighbor in enumerate( neighbors ):
-            if neighbor not in ignore:
-                return neighbor, distances[i]
-
-        return None, INF
-
 
     def getClosestObj( self, pos, ignore=[] ):
-
         shells, distances = self.getNeighborShells( pos )
 
         for i, shell in enumerate( shells ):
@@ -1040,43 +1035,37 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
         return DummySingle(), INF
 
 
-    '''
-    def getClosestNObjs( self, pos, n=1, ignore=[] ):
-
-        neighbors, distances = self.getNeighborShells( pos, len( ignore ) + n )
-
-        objs = []
-        dists = []
-
-        for i, neighbor in enumerate( neighbors ):
-            if neighbor[0] not in ignore:
-                objs += [neighbor[0]]
-                dists += [distances[i]]
-                if len( objs ) >= n:
-                    return objs, dists
-
-        return objs, dists
-    '''
-
+    # Todo: do better for cylinders.
     def objDistance( self, pos, obj ):
-        
         dists = numpy.zeros( len( obj.shellList ) )
         for i, shell in enumerate( obj.shellList ):
-            dists[i] = self.distance( pos, shell.pos ) - shell.size
-
+            dists[i] = self.distance( pos, shell.origin ) - shell.size
         return min( dists )
 
-    def objDistanceArray( self, pos, objs ):
+    """
+    def Single.distanceTo( self, pos ):
+        log.debug("Todo: better periodic boundary condition handling.")
+        # Note: needs to work for multis as well.
+        dists = numpy.zeros( len( self.shellList ) )
+        for i, shell in enumerate( self.shellList ):
+            dists[i] = shell.distanceTo( pos )
+        return min( dists )
+    """
 
+
+    def objDistanceArray( self, pos, objs ):
         dists = numpy.array( [ self.objDistance( pos, obj ) for obj in objs ] )
+        """
+        log.debug("Todo: better periodic boundary condition handling.")
+        dists = numpy.array( [ obj.distanceTo( pos ) for obj in objs ] )
+        """
         return dists
             
 
     #
     # consistency checkers
+    # Todo.
     #
-
-    
     def checkObj( self, obj ):
 
         obj.check()
@@ -1084,7 +1073,7 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
         allshells = [ ( obj, i ) for i in range( len( obj.shellList ) ) ]
         for i, shell in enumerate( obj.shellList ):
 
-            closest, distance = self.getClosestObj( shell.pos,
+            closest, distance = self.getClosestObj( shell.origin,
                                                     ignore = [obj] )
             size = shell.size
 
@@ -1150,7 +1139,7 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
                 key = ( obj, i )
                 pos, size = self.shellMatrix.get( key )
 
-                if ( obj.shellList[i].pos - pos ).any():
+                if ( obj.shellList[i].origin - pos ).any():
                     raise RuntimeError, \
                         '%s shellMatrix positions consistency broken' % str( key )
 
@@ -1195,4 +1184,36 @@ class EGFRDSimulator1( ParticleSimulatorBase ):
             print i, event.getTime(), event.getArg(), event.getArg().pos
 
 
+################ GRAVEYARD
+
+    # Not used.
+    """
+    def getClosestShell( self, pos, ignore=[] ):
+        neighbors, distances = self.getNeighborShells( pos )
+
+        for i, neighbor in enumerate( neighbors ):
+            if neighbor not in ignore:
+                return neighbor, distances[i]
+
+        return None, INF
+    """
+
+    # Not used.
+    '''
+    def getClosestNObjs( self, pos, n=1, ignore=[] ):
+
+        neighbors, distances = self.getNeighborShells( pos, len( ignore ) + n )
+
+        objs = []
+        dists = []
+
+        for i, neighbor in enumerate( neighbors ):
+            if neighbor[0] not in ignore:
+                objs += [neighbor[0]]
+                dists += [distances[i]]
+                if len( objs ) >= n:
+                    return objs, dists
+
+        return objs, dists
+    '''
 

@@ -11,8 +11,8 @@ import scipy
 
 from utils import *
 from surface import DefaultSurface
-### _gfrd is a module (library) that is written in C++ and pythonified using
-### Boost library.
+# _gfrd is a library that is written in C++ and pythonified using Boost 
+# library.
 from _gfrd import *
 
 from cObjectMatrix import *
@@ -415,12 +415,18 @@ class ParticleSimulatorBase( object ):
 
         self.particleMatrix.setWorldSize( size )
 
+        # Note: the underscored functions here do not map directly to the 
+        # underscored functions in distance.hpp.
+        # distance_Simple.. -> utils.py -> pyGFRD.cpp -> distance.hpp
+        # distance_Cyclic.. -> utils.py -> pyGFRD.cpp -> distance.hpp
         if isinstance( size, float ) and size == INF:
+            log.debug( 'distance_Simple.. is used' )
             self._distance = distance_Simple
             #self._distanceArray = distanceArray_Simple
             self._distanceSq = distanceSq_Simple
             self._distanceSqArray = distanceSqArray_Simple
         else:
+            log.debug( 'distance_Cyclic.. is used' )
             self._distance = distance_Cyclic
             #self._distanceArray = distanceSqArray_Cyclic
             self._distanceSq = distanceSq_Cyclic
@@ -432,10 +438,8 @@ class ParticleSimulatorBase( object ):
     def setMatrixSize( self, size ):
         self.particleMatrix.setMatrixSize( size )
 
-    ### So always use this method, instead of doing %= self.worldSize
-    ### manually. Periodic boundary conditions!
+    # Use this method to account for periodic boundary conditions.
     def applyBoundary( self, pos ):
-
         pos %= self.worldSize
 
     def getReactionType1( self, species ):

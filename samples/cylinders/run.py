@@ -29,7 +29,7 @@ def run( ):
     #s.shellMatrix.addCylinder( (dna, 0), dna.outside )
 
     l = VTKLogger(s, 'run1')
-    for i in range(1000):
+    for i in range(100):
         l.log()
         s.step()
 

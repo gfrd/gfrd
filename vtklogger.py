@@ -125,7 +125,7 @@ class VTKLogger:
             # Multiply cylinder.size by 2 because we are storing halfLengths 
             # and Paraview wants full length.
             scale = numpy.array([cylinder.radius, cylinder.radius, cylinder.size * 2])
-            self.appendLists( posList, cylinder.pos, radiusList, cylinder.radius, typeList, type, lengthList, scale, orientationList, [0,0,0] )
+            self.appendLists( posList, cylinder.origin, radiusList, cylinder.radius, typeList, type, lengthList, scale, orientationList, [0,0,0] )
 
 
         # Get data from scheduler.

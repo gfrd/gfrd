@@ -156,33 +156,25 @@ class ObjectMatrix( object ):
         #return self.cylinderContainer.all_neighbors_array_cyclic( pos )
 
 
-    # Sort yes/no:          all_neighbors_array_cyclic.
-    # Within radius yes/no: neighbors_array_cyclic.
-
-    def getNeighborsCyclicNoSort( self, pos ):
-
-        return self.impl.all_neighbors_array_cyclic( pos )
+    # Different getNeighbors methods. All returns neighbors and distances.
+    # Sort yes/no:          call impl.all_neighbors_array_cyclic.
+    # Within radius yes/no: call impl.neighbors_array_cyclic.
 
 
-    ### Called via some steps from subSpaceSimulator.getNeighborsWithinRadiusNoSort().
-    ### Returns neighbors and distances.
-    def getNeighborsWithinRadiusNoSort( self, pos, radius ):
-
-        assert radius < self.cellSize * .5
-        return self.impl.neighbors_array_cyclic( pos, radius )
-
-
-    ### Called via some steps from subSpaceSimulator.getNeighbors().
+    # No radius (i.e. all).
     def getNeighborsCyclic( self, pos, n=None ):
-
         neighbors, distances = self.impl.all_neighbors_array_cyclic( pos )
         topargs = distances.argsort()[:n]
 
         return neighbors.take( topargs ), distances.take( topargs )
 
 
-    def getNeighborsWithinRadius( self, pos, radius ):
+    def getNeighborsCyclicNoSort( self, pos ):
+        return self.impl.all_neighbors_array_cyclic( pos )
 
+
+    # Within radius.
+    def getNeighborsWithinRadius( self, pos, radius ):
         assert radius < self.cellSize * .5
 
         neighbors, distances = \
@@ -193,19 +185,20 @@ class ObjectMatrix( object ):
         return neighbors.take( topargs ), distances.take( topargs )
 
 
-    ### Wrappers for sorted.
-    ### Called from subSpaceSimulator.getNeighbors().
-    def getNeighbors( self, pos, n=None ):
+    def getNeighborsWithinRadiusNoSort( self, pos, radius ):
+        assert radius < self.cellSize * .5
+        return self.impl.neighbors_array_cyclic( pos, radius )
 
+
+    # Wrappers for 'no radius' methods above. Why?
+    def getNeighbors( self, pos, n=None ):
         return self.getNeighborsCyclic( pos, n )
 
 
     def getNeighborsNoSort( self, pos ):
-
         return self.getNeighborsCyclicNoSort( pos )
 
 
     def check( self ):
-
         pass
 

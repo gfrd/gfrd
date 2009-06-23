@@ -9,10 +9,9 @@ class Domain( object ):
         pass
 
 
+
 #     NUL IS HET MIDDEN (Nice!)
-
 #     Or split up radial and simple domain after all.
-
 # For example the x-domain, or the r-domain.
 class SimpleDomain( Domain ):
     def __init__( self, x0, size, (kInner, kOuter), gf ):
@@ -24,6 +23,7 @@ class SimpleDomain( Domain ):
         self.gf = gf        # Green's function.
         self.active = True  # Flag for if there is an escape through this domain.
         self.newPos = size  # Todo. FixMe.
+
 
     def drawPosition( self, dt ):
         # Escape through this domain. We already know the new value.
@@ -50,6 +50,7 @@ class SimpleDomain( Domain ):
 	#    return self.gf.drawR( numpy.random.uniform(), self.x0, 
 	#    self.kInner, self.kOuter, dt )
 
+
     def drawTime( self ):
         self.gf.seta( self.size )
         rnd = numpy.random.uniform()
@@ -66,6 +67,7 @@ class SimpleDomain( Domain ):
             # General case.
 	#    return self.gf.drawTime( numpy.random.uniform(), self.x0, 
 	#    self.kInner, self.kOuter )
+
 
     # Returns the type of event and the position in this domain (which side)    
     # the particle will leave. The first return value should be either:
@@ -91,6 +93,8 @@ class SimpleDomain( Domain ):
             # self.active =
 	#    return self.gf.drawEventType( numpy.random.uniform(), self.x0, 
 	#    self.kInner, self.kOuter, t )
+
+
 
 """
 

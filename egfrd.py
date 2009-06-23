@@ -11,7 +11,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
         rt = self.getReactionType1( particle.species )
         # The type of defaultSingle depends on the surface this particle is 
         # on. Usually SphericalSingle or CylindricalSingle.
-        single = particle.surface.defaultSingle( particle, rt )
+        single = particle.surface.defaultSingle( particle, rt, Delegate( self, EGFRDSimulator.distance ) )
         single.initialize( self.t )
         return single
 
@@ -24,6 +24,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
         surfaces = ( s for s in self.surfaceList )
         #interactions = ( s[1] for s in self.surfaceList )
         try:
+            # Todo: is this distance boundaries-safe?
             distances = ( (s.distance( pos ) ) for s in self.surfaceList )
             return min( izip( distances, surfaces ))
         except ValueError:
@@ -150,7 +151,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
         newpos = single.propagate(self.t - single.lastTime) 
         self.applyBoundary( newpos )
 
-        assert self.checkOverlap( newpos, single.getMinSize(),
+        assert self.checkOverlap( newpos, single.getMinSize(), \
                                   ignore = [ single.particle, ] )
 
         # Move particle.
@@ -319,7 +320,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
         multi.eventID = eventID
 
 
-# GRAVEYARD
+# GRAVEYARD / Todo.
     """
     # fireSingle is more or less surface proof.
     ### A single particle either reacts or leaves it's shell. Here these
@@ -524,7 +525,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
         bursted = self.burstNonMultis( allNeighbors )
         for neighbor in bursted:
             rhoi = neighbor.shellList[0].size
-            xiPrime = neighbor.shellList[0].pos - posPrime
+            xiPrime = neighbor.shellList[0].origin - posPrime
             zi = numpy.dot( xiPrime, orientation )
             dzi = abs(zi) - rhoi
             temp = zi*numpy.array(orientation)
@@ -557,7 +558,7 @@ class EGFRDSimulator( EGFRDSimulator1 ):
         self.shellMatrix.addCylinder( (cylinder, 0), cylinder.shellList[0] )
         cylinder.determineNextEvent( self.t )
         self.addCylinderEvent( cylinder )
-        log.info( 'cylinder shell pos %s radius %g halfLength %g dt %g' % (cylinder.pos, cylinder.radius, cylinder.halfLength, cylinder.dt) )
+        log.info( 'cylinder shell pos %s radius %g halfLength %g dt %g' % (cylinder.origin, cylinder.radius, cylinder.halfLength, cylinder.dt) )
         #Todo:
         #assert self.checkObj( cylinder )
         return cylinder
