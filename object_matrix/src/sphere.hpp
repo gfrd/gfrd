@@ -4,7 +4,7 @@
 #include <ostream>
 #include "position.hpp"
 
-//// A sphere has a position and a radius.
+/* A sphere has an origin and a size (radius). */
 template<typename T_>
 struct sphere
 {
@@ -13,25 +13,27 @@ struct sphere
     typedef T_ length_type;
 
     sphere()
-        : position(), radius(0) {}
+        : origin(), size(0) {}
 
-    //// Initialization list.
-    sphere(const position_type& _position, const length_type& _radius)
-        : position(_position), radius(_radius) {}
+    sphere(const position_type& _origin, const length_type& _size)
+        : origin(_origin), size(_size) {}
 
     length_type calculateDistanceToSelf( position_type pos )
     {
-        return pos.distance(position) - radius;
+        return pos.distance(origin) - size;
     }
 
     length_type calculateDistanceToSelfWithOffset( position_type pos, position_type offset )
     {
-        return pos.distance(position + offset) - radius;
+	// Because this sphere is on the other side of one of the periodic 
+	// boundaries compared to pos, add offset (for example (-L, 0, 0) to 
+	// origin before calculating distance between this sphere and pos. 
+        return pos.distance(origin + offset) - size;
     }
 
     bool operator==(const sphere& rhs) const
     {
-        return position == rhs.position && radius == rhs.radius;
+        return origin == rhs.origin && size == rhs.size;
     }
 
     bool operator!=(const sphere& rhs) const
@@ -39,15 +41,15 @@ struct sphere
         return !operator==(rhs);
     }
     
-    position_type position;
-    length_type radius;
+    position_type origin;
+    length_type size;
 };
 
 template<typename Tstrm_, typename T_>
 inline std::basic_ostream<Tstrm_>& operator<<(std::basic_ostream<Tstrm_>& strm,
         const sphere<T_>& v)
 {
-    strm << "{" << v.position <<  ", " << v.radius << "}";
+    strm << "{" << v.origin <<  ", " << v.size << "}";
     return strm;
 }
 

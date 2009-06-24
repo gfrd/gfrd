@@ -534,7 +534,6 @@ class ParticleSimulatorBase( object ):
 
 
     def placeParticle( self, species, pos, surface=None ):
-
         log.info( 'place %s particle at %s' % ( species.id, pos ) )
         pos = numpy.array( pos )
         radius = species.radius
@@ -589,6 +588,7 @@ class ParticleSimulatorBase( object ):
             return True
 
         if [ p for p in particles if p not in ignore ]:
+            #log.error( "Overlap with particle %s at position %s" % (p, pos) )
             return False
         else:
             return True

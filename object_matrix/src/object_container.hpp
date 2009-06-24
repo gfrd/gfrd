@@ -8,75 +8,102 @@
 #include <boost/preprocessor/list/at.hpp>
 #include "array_helper.hpp"
 #include "vmap.hpp"
-
+#include "position.hpp"
 #include "utils.hpp"
+#include <iostream>
 
-
-//// This template is called from ../boost.python/peer/ObjectContainer.hpp 
-//// with the arguments: <double, key_type, mapped_type, get_mapper_mf>, and 
-//// is called impl_type then.
-//// MFget_mapper is from now on the type for a mapper, like for example 
-//// std::map.
-////
-//// This class seems to be competely generic. So for example nowhere it is 
-//// assumed the mapped_type is a necessarily a sphere.
+/* 
+ * This is the base object_container class. It is quite generic, so for 
+ * example nowhere it is assumed the mapped_type is necessarily a sphere or a 
+ * cylinder.
+ *
+ * This template class is instantiated from 
+ * boost.python/peer/ObjectContainer.hpp with the arguments
+ * <double, key_type, mapped_type, get_mapper_mf>, and is called impl_type 
+ * then.
+ *
+ * Template arguments:
+ *   + T_ (length_type). For example double.
+     + key. For example a type of python object.
+ *   + Tmapped_type_. For example cylinder.
+ *   + MVget_mapper: A class that can be used to create (it specifies) a 
+ *   mapper function between that Tkey_ and that Tmapped_type_. If it is not 
+ *   specified, ::std::map is used.
+ *
+ * Note: a combination of a key and an object is referred to as a value.
+ */
 template<typename T_, typename Tkey_, typename Tmapped_type_,
         template<typename, typename> class MFget_mapper_ =
             get_default_impl::std::template map>
 class object_container
 {
 public:
-    //// length_type
-    //// For example micrometers.
+    /* length_type. For example double. */
     typedef T_ length_type;
 
-    //// key_type
-    //// For example a python object.
+    /* key_type. For example string. */
     typedef Tkey_ key_type;
 
+    /* mapped_type. For example cylinder. */
     typedef Tmapped_type_ mapped_type;
 
-    //// value_type
-    //// Pair of a key and a sphere.
+    /* value_type: pair of (key, mapped-type value. For example a key and a 
+     * cylinder.  */
     typedef std::pair<const key_type, mapped_type> value_type;
 
-    //// position_type
+    /* position_type. For example an array of 3 doubles. */
     typedef position<length_type> position_type;
 
-    //// cell_type
-    ////   + key: python object (in this case)
-    ////   + mapped_type: sphere (in this case)
-    ////   + MVget_mapper: mapper (see ObjectContainer.hpp)
+    /* cell_type.
+     * A random access key->object storage mechanism, produced by vmap.
+     *   + key. For example a type of python object.
+     *   + mapped_type. For example a cylinder.
+     *   + MVget_mapper: A class that specifies a map function between a key 
+     *   and an object, with which you can retrieve the objects from this 
+     *   cell. */
     typedef vmap<Tkey_, mapped_type, MFget_mapper_> cell_type;
 
-    //// matrix_type
-    //// Matrix is a 3 dimensional array of type cell_type.
+    /* matrix_type. The object_container contains 1 matrix, which is a 3 
+     * dimensional array of cells of type cell_type. */
     typedef boost::multi_array<cell_type, 3> matrix_type;
 
-    //// size_type ...
+    /* size_type. The number of (key-object) pairs stored in the 
+     * object_container is a number of type size_type (same type as used for 
+     * individual cells). For example int. */
     typedef typename cell_type::size_type size_type;
 
-    //// cell_index_type ...
+    /* cell_index_type. Cells are index by an array of size 3 of for example 
+     * ints. */
     typedef boost::array<typename matrix_type::size_type, 3>
             cell_index_type;
 
-    //// cell_offset_type ...
+    /* cell_offset_type. The difference between 2 cell indices is again an 
+     * array of size 3 of ints. */
     typedef boost::array<typename matrix_type::difference_type, 3>
             cell_offset_type;
 
+    /* reference. A pointer to a key-object pair. */
     typedef typename cell_type::reference reference;
 
     typedef typename cell_type::const_reference const_reference;
 
+    /* key_to_cell_mapper_type. MFget_mapper is reused to make a mapper that 
+     * is called rmap_ internally that maps between keys and cell references.
+     * This is used for checking if a key that is inserted is not already 
+     * there (i.e. an update). */
     typedef typename MFget_mapper_<key_type, cell_type*>::type
-            id_to_cell_mapper_type;
+            key_to_cell_mapper_type;
 
-    typedef id_to_cell_mapper_type key_to_cell_mapper_type;
+    /* Why was it called id_to_cell_mapper_type before? */
+    //typedef id_to_cell_mapper_type key_to_cell_mapper_type;
 
 
 
 
-    //// Iterator base.
+    /* Iterator base clase.
+     *
+     * Children: iterator and const_iterator. Todo.
+     */
     template<typename Thost_, typename Treftype_, typename Tcreftype_,
             typename Tciter_>
     class iterator_base
@@ -91,6 +118,8 @@ public:
                 : cell_p_(cell_p), cell_iter_end_(cell_iter_end),
                   cell_iter_(cell_iter) {}
 
+	/* Two meta cell iterators are the same if the refer to the same cell 
+	 * and the cell iterators themself are also the same. */
         bool operator==(const Thost_& rhs)
         {
             return cell_p_ == rhs.cell_p_ &&
@@ -128,7 +157,13 @@ public:
 
 
 
-    //// Iterator.
+    /* iterator for cells. Todo.
+     *
+     * Constructor arguments:
+     *	+ pointer to a cell (a cell is a vmap)
+     *	+ cell-iterator to end.
+     *	+ cell-iterator to a specific ((key-index)+container) in the cell. 
+     */
     class iterator: public iterator_base<iterator, reference, const_reference,
             typename cell_type::iterator>
     {
@@ -144,7 +179,8 @@ public:
     };
 
 
-    //// Const iterator base.
+    /* const iterator for cells.
+     */
     class const_iterator: public iterator_base<const_iterator,
             const_reference, const_reference,
             typename cell_type::const_iterator>
@@ -163,9 +199,11 @@ public:
                 : base_type(that.cell_p_, that.cell_iter_end_, that.cell_iter_) {}
     };
 
+
+
 public:
-    //// Constructor.
-    //// Two paramaters: worldSize and matrixSize.
+    /* Constructor.
+     * Two paramaters: worldSize and matrixSize. */
     object_container(length_type world_size = 1.0,
             typename matrix_type::size_type size = 1)
         : world_size_(world_size),
@@ -176,7 +214,8 @@ public:
     }
 
 
-    //// Called from insert().
+    /* Returns which cell this position is in, taking periodic boundary 
+     * conditions into account. Called from insert(). */
     inline cell_index_type index(const position_type& pos,
             double t = 1e-10) const
     {
@@ -190,7 +229,9 @@ public:
     }
 
 
-    //// Called from other file?
+    /* Not taking periodic boundary conditions into account, return the index  
+     * of the cell this position is in (so return value is not necessarely a 
+     * valid cell_index).  Called from other file?  */
     inline cell_offset_type offset(const position_type& pos,
             double t = 1e-10) const
     {
@@ -300,13 +341,14 @@ public:
     }
 
 
+    /* Return a reference to a cell in the matrix given some index. */
     inline const cell_type& cell(const cell_index_type& i) const
     {
         return matrix_[i[0]][i[1]][i[2]];
     }
 
 
-    //// A cell is an element of a matrix, indexed by a cell_index_type.
+    /* A cell is an element of the matrix, indexed by a cell_index_type. */
     inline cell_type& cell(const cell_index_type& i)
     {
         return matrix_[i[0]][i[1]][i[2]];
@@ -337,42 +379,59 @@ public:
     }
 
 
-    //// Called from ObjectContainer.hpp.
-    //// The actual insert.
+    /* insert
+     */
     inline std::pair<iterator, bool> insert(const value_type& v)
     {
-        //// Construct a cell c.
-        //// typedef vmap<Tkey_, mapped_type, MFget_mapper_> cell_type;
-        //// Todo. I still don't understand this index business. 
-        cell_type& c(cell(index(v.second.position)));
+	/* Find cell this key-object pair is going to be in. */
+        cell_type& c(cell(index(v.second.origin)));
+	/* Look for the key in the rmap_ (key to cell mapper). kci is now an 
+	 * iterator for a (key-cell)-pair. */
         typename key_to_cell_mapper_type::iterator kci(rmap_.find(v.first));
         if (rmap_.end() != kci)
         {
+	    // Key is already present in cell. Update.
             if (&c != (*kci).second)
             {
+		// Key was in a different cell. Remove it there first.
                 (*kci).second->erase(v.first);
+		// Remove key from rmap.
                 rmap_.erase(v.first);
+		// Reinsert it into rmap, now using the correct cell.
                 rmap_.insert(std::make_pair(v.first, &c));
             }
+	    // Update key-object pair in cell c. 
             std::pair<typename cell_type::iterator, bool> ir(c.insert(v));
+	    /* Return a meta cell iterator (defined above) to the inserted 
+	     * value, and ir.second signals that this was an update (false).  
+	     * */
             return std::make_pair(iterator(&c, c.end(), ir.first), false);
         }
+	// Insert v in cell c. Returns an iterator and a return value.
         std::pair<typename cell_type::iterator, bool> ir(c.insert(v));
+	// Insert also an entry for the key and the cell in the rmap_.
         rmap_.insert(std::make_pair(v.first, &c));
         ++size_;
+	/* Return a meta cell iterator (defined above) to the inserted value, 
+	 * and ir.second signals if this was an update (false) or a normal 
+	 * insert (true). */
         return std::make_pair(iterator(&c, c.end(), ir.first), ir.second);
     }
 
 
-    //// Called by insert().
+    /* erase
+     */
     inline bool erase(const key_type& k)
     {
         typename key_to_cell_mapper_type::iterator p(rmap_.find(k));
         if (rmap_.end() == p)
         {
+	    // Key does not exist in rmap.
             return false;
         }
+	// Remove key from cell.
         (*p).second->erase(k);
+	// Remove key from rmap.
         rmap_.erase(p);
         --size_;
         return true;
@@ -402,19 +461,25 @@ public:
     }
 
 
-    //// Called by insert()/erase().
+    // Return iterator to key
     inline iterator find(const key_type& k)
     {
+	// Find which cell the key is in by searching rmap. p is now an 
+	// iterator to a (key-cell)-pair.
         typename key_to_cell_mapper_type::iterator p(rmap_.find(k));
         if (rmap_.end() == p)
         {
+	    // Key does not exist in rmap.
             return end();
         }
+	// Seach key in cell. i is now an iterator to a 
         typename cell_type::iterator i((*p).second->find(k));
         if ((*p).second->end() == i)
         {
+	    // Key does not exist in cell.
             return end();
         }
+	// Return a meta cell iterator.
         return iterator((*p).second, (*p).second->end(), i);
     }
 
@@ -536,13 +601,12 @@ private:
 private:
     const length_type world_size_;
     const length_type cell_size_;
-    //// An object container has a matrix.
     matrix_type matrix_;
-    id_to_cell_mapper_type rmap_;
+    key_to_cell_mapper_type rmap_;
     size_type size_;
 };
 
-//// Operator +=.
+/* Operator += for a cell_index and a cell_offset. */
 template<typename T_, typename Tkey_, typename mapped_type,
         template<typename, typename> class MFget_mapper_>
 static inline typename object_container<T_, Tkey_, mapped_type, MFget_mapper_>::cell_index_type&

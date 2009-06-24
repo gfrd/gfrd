@@ -4,7 +4,6 @@ from shell import *
 from _gfrd import *
 from gfrdbase import log
 
-SAFETY = 1.0 + 1e-5
 
 
 '''

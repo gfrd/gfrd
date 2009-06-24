@@ -6,14 +6,14 @@
 #include <algorithm>
 #include <cmath>
 
-//// An array class that has the same interface as STL containers, but unlike
-//// vector has a fixed number of elements (so faster).
+// An array has the same interface as STL containers, but unlike vector has a 
+// fixed number of elements (so faster).
 #include <boost/array.hpp>
 #include <boost/range/begin.hpp>
 #include <boost/range/end.hpp>
 
 
-//// A position is an array of lenght 3 of type T_. 
+// A position is an array of lenght 3 of T_'s. 
 template<typename T_>
 struct position: public boost::array<T_, 3>
 {
@@ -23,27 +23,27 @@ struct position: public boost::array<T_, 3>
 
     position()
     {
-        //// This works because position derives from boost::array.
+	// This works because position derives from boost::array.
         (*this)[0] = 0;
         (*this)[1] = 0;
         (*this)[2] = 0;
     }
 
-    //// constructors
-    //// 1. If a is a reference to an array of type T_, cast it to a pointer 
-    //// to a base_type (why the extra *?), which is a boost array of length 3  
-    //// in this case, and instantiate such an array (initialization list).
+    // Constructors.
+    // 1. If a is a reference to an array of type T_, cast it to a pointer to 
+    // a base_type (why the extra *?), which is a boost array of length 3 in 
+    // this case, and instantiate such an array (initialization list).
     position(const T_ (&a)[3]): base_type(
             *reinterpret_cast<const base_type*>(&a)) {}
 
-    //// 2. argument is an array of type T_
+    // 2. Argument is an array of type T_.
     position(const T_ a[3]): base_type(
             *reinterpret_cast<const base_type*>(a)) {}
 
-    //// 3. argument is a reference to a boost array
+    // 3. argument is a reference to a boost array.
     position(const base_type& a): base_type(a) {}
 
-    //// 4. 3 value arguments specified.
+    // 4. 3 value arguments specified.
     position(value_type x, value_type y, value_type z)
     {
         (*this)[0] = x;
@@ -91,13 +91,21 @@ struct position: public boost::array<T_, 3>
             + std::pow((*this)[2] - that[2], 2);
     }
 
+    // Distance between this point and that point. Always >= 0.
     const value_type distance(const position& that) const
     {
         return std::sqrt(distance_sq(that));
     }
 
-    // Todo. Why are we defining our own vector class really? Should use some 
-    // library.
+    // If this position is used a vector, what is it's length.
+    const value_type length( ) const{
+        return std::sqrt( std::pow((*this)[0], 2)
+			+ std::pow((*this)[1], 2)
+			+ std::pow((*this)[2], 2));
+    }
+
+
+    // Shouldn't we use some pre-defined vector class?
     value_type dot_product(const position& that) const
     {
         position temp;

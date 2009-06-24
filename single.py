@@ -82,7 +82,7 @@ class Single( object ):
 
 
     def __str__( self ):
-        return 'Shell' + str( self.particle )
+        return 'Shell' + str( self.particle ) + (" (%3.1f %3.1f %3.1f)" % (self.pos[0], self.pos[1], self.pos[2]) )
 
 
 

@@ -1,4 +1,5 @@
 import numpy
+from utils import length, normalize
 
 debug = 1
 
@@ -43,24 +44,22 @@ class Cylinder( Shape ):
         # over other options that we can make use of symmetry sometimes.
         self.origin = numpy.array( origin )
         self.radius = radius
-        self.orientation = numpy.array( orientation ) / numpy.linalg.norm( orientation )
+        self.orientation = normalize( numpy.array( orientation ) )
         # Size is the half length of the cylinder!
-        self.size = numpy.array( size ) 
+        self.size = size 
 
 
-    # Look mom: no caps!
     def signedDistanceTo( self, pos ):
         posVector, zUnitVector, z, rUnitVector, r = self.toInternal( pos )
-        zAbs = abs(z)
-
-        if zAbs > self.size:
+        dz = abs(z) - self.size
+        if dz > 0:
             # pos is (either) to the right or to the left of the cylinder.
             if r < self.radius:
-                distance = zAbs
+                distance = dz
             else:
                 # Difficult case. Compute distance to edge.
-                edgVector = self.size * zUnitVector + self.radius * rUnitVector
-                distance = numpy.norm( posVector - edgeVector )
+                edgeVector = self.size * zUnitVector + self.radius * rUnitVector
+                distance = length( posVector - edgeVector )
         else:
             # pos is somewhere 'parellel' to the cylinder.
             distance = r - self.radius
@@ -75,12 +74,12 @@ class Cylinder( Shape ):
     def toInternal( self, pos ):
         posVector = pos - self.origin
 
-        z = numpy.dot( posVector, self.orientation )
+        z = numpy.dot( posVector, self.orientation ) # Can be <0.
         zUnitVector = self.orientation # By definition.
         zVector = z*zUnitVector
 
         rVector = posVector - zVector
-        r = numpy.norm( rVector )
+        r = length( rVector )       # Always >= 0.
         rUnitVector = rVector / r
 
         assert pos == self.origin + zVector + rVector

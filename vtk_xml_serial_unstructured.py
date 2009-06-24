@@ -79,10 +79,8 @@ class VTK_XML_Serial_Unstructured:
 
         string = str()
         for pos in posList:
-            # Interchange y and z, because by default cylinders are oriented
-            # along y-axis in Paraview. Hack.
-            string = string + repr(pos[0]) + ' ' + repr(pos[2]) \
-                    + ' ' + repr(pos[1]) + ' '
+            string = string + repr(pos[0]) + ' ' + repr(pos[1]) \
+                    + ' ' + repr(pos[2]) + ' '
         point_coords_data = doc.createTextNode(string)
         point_coords.appendChild(point_coords_data)
 
@@ -132,15 +130,12 @@ class VTK_XML_Serial_Unstructured:
 
             string = str()
             for length in lengths:
-                # By default cylinders are oriented along y-axis in Paraview.
-                # Just sing along.
-                string = string + repr(length[0]) + ' ' + repr(length[2]) \
-                        + ' ' + repr(length[1]) + ' '
+                string = string + repr(length[0]) + ' ' + repr(length[1]) \
+                        + ' ' + repr(length[2]) + ' '
             jumpData = doc.createTextNode(string)
             jumps.appendChild(jumpData)
 
         # Cylinder orientation
-        """
         if len(orientations) > 0:
             jumps = doc.createElementNS("VTK", "DataArray")
             jumps.setAttribute("Name", "orientation")
@@ -152,10 +147,9 @@ class VTK_XML_Serial_Unstructured:
             string = str()
             for orientation in orientations:
                 string = string + repr(orientation[0]) + ' ' + \
-                repr(orientation[2]) + ' ' + repr(orientation[1]) + ' '
+                repr(orientation[1]) + ' ' + repr(orientation[2]) + ' '
             jumpData = doc.createTextNode(string)
             jumps.appendChild(jumpData)
-        """
 
         # Particle radii
         if len(radii) > 0:

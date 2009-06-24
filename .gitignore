@@ -38,4 +38,5 @@ scratch
 tags
 tags.python
 lib
+*_test
 

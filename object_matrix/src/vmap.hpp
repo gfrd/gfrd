@@ -11,10 +11,26 @@
 
 #include "utils.hpp"
 
-//// This is called from /object_matrix/src/object_container.hpp, where it 
-//// says: typedef vmap<Tkey_, mapped_type, MFget_mapper_> cell_type;
-//// What is not clear is why it seems another argument is needed here, namely 
-//// MFget_racntnr_, while it isn't provided.
+
+/* 
+ * vmap
+ *
+ * A random access key->object storage mechanism. 
+ * 
+ * vmap is used in object_container.hpp as:
+ * typedef vmap<Tkey_, mapped_type, MFget_mapper_> cell_type;
+ *
+ * If MFget_mapper_ and MFget_racntr_ are not specified, defaults are used 
+ * from utils.hpp. Those are ::std::map and ::std::vector. 
+ *
+ * racntr stands for random_accessible_container (i.e. a vector).
+ *
+ *       mapper
+ * key   -----> index
+ * 
+ *	 container
+ * index --------> object
+ */
 template<typename Tkey_, typename Tval_,
         template<typename, typename> class MFget_mapper_ =
             get_default_impl::std::template map,
@@ -37,25 +53,43 @@ public:
         Tsecond_ second;
     };
 
+    /* The objects get stored in a container of this type. */
     typedef typename MFget_racntnr_<Tval_>::type
             random_accessible_container_type;
+    
+    /* Keys are stored in a mapper together with an index into the previously 
+     * mentioned container for the corresponding object. */
     typedef typename MFget_mapper_<Tkey_,
             typename random_accessible_container_type::size_type>::type
                  mapper_type;
+
+    /* To retrieve a key given a certain object, we use a reverse mapper 
+     * called rmapper_, which is of this type. */
     typedef typename MFget_racntnr_<typename mapper_type::key_type>::type
             reverse_mapper_type;
+
     typedef Tval_ mapped_type;
     typedef Tkey_ key_type;
+
+    /* The number of (key-index) pairs stored in the mapper is a number of 
+     * type size_type. */
     typedef typename mapper_type::size_type size_type;
     typedef typename mapper_type::difference_type difference_type;
+
+    /* Value = key + object. */
     typedef std::pair<const Tkey_, Tval_> value_type;
     typedef pair<const Tkey_&, Tval_&> reference;
     typedef pair<const Tkey_&, const Tval_&> const_reference;
+    
+    /* Todo. Why all this is needed instead of using whatever mapper 
+     * MFget_mapper returns may have something to do with the iterators that 
+     * are being constructed here? */
     typedef typename random_accessible_container_type::iterator value_iterator;
     typedef typename random_accessible_container_type::const_iterator const_value_iterator;
     typedef boost::iterator_range<value_iterator> value_range;
     typedef boost::iterator_range<const_value_iterator> const_value_range;
 
+    /* iterator base. */
     template<typename Thost_, typename Treftype_, typename Tcreftype_,
                 typename Tmiter_, typename Tracntnr_>
     class iterator_base
@@ -131,6 +165,9 @@ public:
         Tracntnr_& racntnr_;
     };
 
+    /* iterator.
+     * Builds an iterator given an iterator to a (key-index)-pair called miter  
+     * and a container. */
     class iterator: public iterator_base<iterator, reference, const_reference,
             typename mapper_type::iterator,
             random_accessible_container_type>
@@ -147,6 +184,7 @@ public:
         iterator(const iterator& that): base_type(that) {}
     };
 
+    /* const iterators. */
     class const_iterator
         : public iterator_base<const_iterator, const_reference, const_reference,
             typename mapper_type::const_iterator,
@@ -271,19 +309,46 @@ public:
         return value_range(racntnr_.begin(), racntnr_.end());
     }
 
+    /* Insert a new key-object pair into this cell.
+     * Returns an iterator to the object that was inserted (I think)
+     * and flags if it was an update (false) or a normal insert (true). */
     std::pair<iterator, bool> insert(const value_type& v)
     {
+	/* Insert the key into the mapper together with the current size of 
+	 * the container which will serve as index.
+	 * ir.first = (key,index)-pair iterator
+	 * if.second = update (false) or insert (true) signaller. */
         std::pair<typename mapper_type::iterator, bool> ir(
                 mapper_.insert(
                     std::make_pair(v.first, racntnr_.size())));
+	/* From http://www.cplusplus.com/reference/stl/map/insert/
+	 *
+	 * Because map containers do not allow for duplicate key values, the 
+	 * insertion operation checks for each element inserted whether 
+	 * another element exists already in the container with the same key 
+	 * value, if so, the element is not inserted and its mapped value is 
+	 * not changed in any way.
+	 *
+	 * Returns a pair, with its member pair::first set to an iterator 
+	 * pointing to either the newly inserted element or to the element 
+	 * that already had its same value in the map. The pair::second 
+	 * element in the pair is set to true if a new element was inserted or 
+	 * false if an element with the same value existed.*/
         if (!ir.second)
         {
+	    /* Update or overwrite. Key already exists in mapper. Extract 
+	     * index (the .second) and store the new object in the container 
+	     * at that index. */
             racntnr_[(*ir.first).second] = v.second;
             return make_pair(iterator(ir.first, racntnr_), false);
         }
-
+	/* Add object at end of vector container. */
         racntnr_.push_back(v.second);
+	/* Todo. */
         rmapper_.push_back(v.first);
+	/* Make a new iterator given the iterator to the inserted 
+	 * (key-index)-pair in the mapper and a reference to the container.  
+	 * Also return false or true to signal update or not.  */
         return make_pair(iterator(ir.first, racntnr_), true);
     }
 

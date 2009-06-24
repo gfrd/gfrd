@@ -25,7 +25,7 @@ class VTKLogger:
             os.makedirs(datadir)
 
         self.dir = 'data/' + dir + '/'
-        self.shellsPrefix = 'shells'
+        self.spheresPrefix = 'spheres'
         self.cylindersPrefix = 'cylinders'
         self.particlesPrefix = 'particles'
         self.fileNamesShells = []    # For .pvd file.
@@ -34,7 +34,8 @@ class VTKLogger:
 
         self.i = 0          # Counter.
         self.times = []     # Store times for .pvd file.
-        self.deltaT = 1e-13 # Needed for hack.
+        self.deltaT = 1e-11 # Needed for hack.
+        # Note: don't make too small, should be relative to max time.
         self.lastTime = 0   # Needed for hack.
 
 
@@ -47,31 +48,35 @@ class VTKLogger:
 
     def log( self ):
         time = self.sim.t
-        if (abs(time - self.lastTime) < 1e-10):
+        if (abs(time - self.lastTime) < 1e-9):
             # Hack to make Paraview understand this is a different step but
             # with the same time.
+            # 1. During multi global time is not updated.
+            # 2. During initialization time is 0.
+            # And I want every step recorded, so I can find out what happened 
+            # in which step (divide by 2 actually).
             if BROWNIAN != True:
                 time = self.lastTime + self.deltaT
 
         # Get and process data.
         particlesDoc = self.getParticleData( )
         if BROWNIAN != True:
-            shellsDoc    = self.getShellData( )
+            spheresDoc    = self.getShellData( )
             cylindersDoc = self.getCylinderData( )
 
             if self.i == 0:
-                self.previousShellsDoc = shellsDoc
+                self.previousShellsDoc = spheresDoc
                 self.previousCylindersDoc = cylindersDoc
 
             # First a snapshot with only the particles updated.
             # Don't use new docs, but previousShellsDoc and previousCylindersDoc.
             self.times.append(time)
             self.makeSnapshot( self.particlesPrefix, self.fileNamesParticles, self.i, time, particlesDoc )
-            self.makeSnapshot( self.shellsPrefix, self.fileNamesShells, self.i, time, self.previousShellsDoc )
+            self.makeSnapshot( self.spheresPrefix, self.fileNamesShells, self.i, time, self.previousShellsDoc )
             self.makeSnapshot( self.cylindersPrefix, self.fileNamesCylinders, self.i, time, self.previousCylindersDoc )
             self.i += 1
             time += self.deltaT  # Hack.
-            self.previousShellsDoc = shellsDoc
+            self.previousShellsDoc = spheresDoc
             self.previousCylindersDoc = cylindersDoc
 
 
@@ -79,7 +84,7 @@ class VTKLogger:
         self.times.append(time)
         self.makeSnapshot( self.particlesPrefix, self.fileNamesParticles, self.i, time, particlesDoc )
         if BROWNIAN != True:
-            self.makeSnapshot( self.shellsPrefix, self.fileNamesShells, self.i, time, shellsDoc )
+            self.makeSnapshot( self.spheresPrefix, self.fileNamesShells, self.i, time, spheresDoc )
             self.makeSnapshot( self.cylindersPrefix, self.fileNamesCylinders, self.i, time, cylindersDoc )
         self.i += 1
         self.lastTime = time
@@ -87,7 +92,7 @@ class VTKLogger:
 
     def stop( self ):
         self.vtk_writer.writePVD(self.dir + self.particlesPrefix + '.pvd', self.fileNamesParticles, self.times)
-        self.vtk_writer.writePVD(self.dir + self.shellsPrefix + '.pvd', self.fileNamesShells, self.times)
+        self.vtk_writer.writePVD(self.dir + self.spheresPrefix + '.pvd', self.fileNamesShells, self.times)
         self.vtk_writer.writePVD(self.dir + self.cylindersPrefix + '.pvd', self.fileNamesCylinders, self.times)
 
     
@@ -96,8 +101,12 @@ class VTKLogger:
     def getCylinderData( self ):
         posList, radiusList, typeList, lengthList, orientationList = [], [], [], [], []
 
-        topTime = self.sim.scheduler.getTopTime()
 
+        # If DNA is along the z-axis in userscript, then in Paraview it should 
+        # be drawn along the y-asis. No rotation needed, just set origin to 
+        # [500,500,500], height to 10000 and radius to 25.
+
+        """
         # Add DNA by default.
         dnaL = 1e-6
         sigma = 2.5e-8
@@ -115,23 +124,26 @@ class VTKLogger:
         # Not by default at the moment.
         #self.appendLists( posList, pos, radiusList, 0 , \
         #        typeList, 0, lengthList, scale, orientationList, [0,0,0] )
+        """
 
 
 
         # Get data from object matrix.
-        keys, _ = self.sim.cylinderMatrix.getNeighbors( [0,0,0] )
+        keys = self.sim.cylinderMatrix.getAll( )
         for key in keys:
-            cylindricalSingle = key[0]
-            cylinder = cylindricalSingle.shellList[0]
+            single = key[0]
+            #try:
+            cylinder = single.shellList[0]
+            #except: 
+            #    cylinder = single.outside
             type = 1
-            # Multiply cylinder.size by 2 because we are storing halfLengths 
-            # and Paraview wants full length.
-            scale = numpy.array([cylinder.radius, cylinder.radius, cylinder.size * 2])
+            scale = numpy.array([cylinder.radius, cylinder.radius, cylinder.size])
             self.appendLists( posList, cylinder.origin, radiusList, cylinder.radius, typeList, type, lengthList, scale, orientationList, [0,0,0] )
 
 
         # Get data from scheduler.
         """
+        topTime = self.sim.scheduler.getTopTime()
         for eventIndex in range( self.sim.scheduler.getSize() ):
             # Get event
             event = self.sim.scheduler.getEventByIndex( eventIndex )
@@ -163,8 +175,16 @@ class VTKLogger:
     def getShellData( self ):
         posList, radiusList, typeList, lengthList = [], [], [], []
 
-        topTime = self.sim.scheduler.getTopTime()
+        # Get data from object matrix.
+        keys = self.sim.sphereMatrix.getAll( )
+        for key in keys:
+            single = key[0]
+            sphere = single.shellList[0]
+            type = 1
+            self.appendLists( posList, sphere.origin, radiusList, sphere.size, typeList, type )
 
+        """
+        topTime = self.sim.scheduler.getTopTime()
         for eventIndex in range( self.sim.scheduler.getSize() ):
             # Get event
             event = self.sim.scheduler.getEventByIndex( eventIndex )
@@ -183,18 +203,19 @@ class VTKLogger:
                 # Fixme. How do I find if this object is a single/pair/multi?
                 # Single or Pair.
                 try:
-                    if len(object.pos) ==3: # Ugliest hack ever. Todo.
-                        self.appendLists( posList, object.pos, radiusList, object.radius, typeList, type )
+                    if len(object.origin) ==3: # Ugliest hack ever. Todo.
+                        self.appendLists( posList, object.origin, radiusList, object.radius, typeList, type )
                 except:
-                    # This is one of those 1dim shells that I have to think
+                    # This is one of those 1dim spheres that I have to think
                     # about still.
                     pass
                 try:
                     # Multi.
                     for single in object.shellList:
-                        self.appendLists( posList, single.pos, radiusList, single.size, typeList, type )
+                        self.appendLists( posList, single.origin, radiusList, single.size, typeList, type )
                 except:
                     pass
+        """
 
         # Initialize XML doc.
         doc, grid = self.vtk_writer.createDoc()
@@ -219,14 +240,18 @@ class VTKLogger:
     def appendLists( self, posList, pos, radiusList, radius, typeList, type, lengthList=[], scale=None, orientationList=[], orientation=None ):
         # Convert all lengths to nanometers.
         factor = 1e9
+        factor = 1
 
+        # Multiply radii and lenghts by by 2 because Paraview set radius to 
+        # 0.5 by default, and it wants full lengths for cylinders and we are 
+        # storing half lengths.
         posList.append( pos * factor )
-        radiusList.append( radius * factor )
+        radiusList.append( radius * 2 * factor )
         typeList.append( type )
         if scale != None:
-            scale *= factor
+            scale *= 2 * factor
             lengthList.append( scale )
-        #orientationList.append( orientation )
-        orientationList.append( [0,0,0] )
+        orientationList.append( orientation )
+        #orientationList.append( [0,0,0] )
 
 

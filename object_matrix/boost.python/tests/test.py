@@ -4,6 +4,7 @@ import math
 from random import shuffle
 from decimal import Decimal, Context, ROUND_UP
 from sys import getrefcount
+from shape import Sphere
 
 def float_cmp(lhs, rhs, tolerance):
     if lhs - rhs < tolerance or rhs - lhs < tolerance or lhs == rhs:
@@ -16,8 +17,8 @@ def float_cmp(lhs, rhs, tolerance):
 c = ObjectContainer(1.0, 10)
 assert c.matrix_size == 10
 assert c.cell_size == 0.1
-assert len(c) == 0
-c[0] = Sphere((0.5, 0.3, 0.2), 0.08)
+assert c.size() == 0
+c.add(0, Sphere((0.5, 0.3, 0.2), 0.08))
 assert len(c) == 1
 assert float_cmp(c[0].x, 0.5, 1e-8) == 0 and \
        float_cmp(c[0].y, 0.3, 1e-8) == 0 and \

@@ -4,7 +4,8 @@ import numpy
 import random
 
 from shape import Cylinder
-from freeSingle import SphericalSingle, CylindricalSingle1D
+from freeSingle import SphericalSingle, CylindricalSingle1D, CylindricalSingle2D
+from utils import length, normalize
 
 class Surface( object ):
     def __init__( self, name ):
@@ -44,15 +45,44 @@ class DefaultSurface( Surface ):
 
 
 class CylindricalSurface( Surface ):
-    def __init__( self, pos, radius, orientation, size, name ):
+    def __init__( self, origin, radius, orientation, size, name ):
         Surface.__init__( self, name )
-        self.outside = Cylinder( pos, radius, orientation, size )
+        self.outside = Cylinder( origin, radius, orientation, size )
         self.defaultSingle = CylindricalSingle1D
 
 
     def randomPosition( self ):
         return self.outside.origin + random.uniform(-0.5, 0.5) * self.outside.orientation * self.outside.size
 
+
+
+class PlanarSurface( Surface ):
+    def __init__( self, origin, xVector, yVector, name ):
+        Surface.__init__( self, name )
+        # Maybe inconsistent, but no need to say self.outside.origin etc.
+        self.origin = numpy.array(origin)
+        assert numpy.dot( xVector, yVector ) == 0   # Todo. To doubles.
+        self.xVector = numpy.array(xVector)
+        self.xUnitVector = normalize(self.xVector)
+        self.yVector = numpy.array(yVector)
+        self.yUnitVector = normalize(self.yVector)
+
+        normal = numpy.cross( xVector, yVector )
+        self.normal = normalize( normal )
+
+        # Hessian normal form [ nx, ny, nz, p ].
+        self.hessianNormal = [ normal[0], normal[1], normal[2], length(self.origin) ]
+
+        self.defaultSingle = CylindricalSingle2D
+
+
+    def signedDistance( self, pos ):
+        return numpy.dot( self.hessianNormal,\
+                          numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) )
+
+
+    def randomPosition( self ):
+        return self.origin + random.random()*self.xVector + random.random()*self.yVector
 
 
 
@@ -98,41 +128,6 @@ class CuboidalSurface( Surface ):
     def getParams( self ):
         return self.params
 
-
-
-'''
-Planar boundary given by a x + b y + c z + d = 0
-'''
-class PlanarSurface( Surface ):
-    '''
-    params: [ a, b, c, d ] as in
-    a x + b y + c z + d = 0
-    where ( a, b, c ) is a normal vector of the plane.
-    '''
-    def __init__( self, params ):
-        self.setParams( params )
-
-
-    def signedDistanceTo( self, pos ):
-        return numpy.dot( self.hessianNormal,\
-                          numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) )
-
-
-    def setParams( self, params ):
-        self.params = numpy.array( params )
-
-        scaling = length( self.params[:3] )
-
-        # Hessian normal form [ nx, ny, nz, p ].
-        self.hessianNormal = self.params / scaling
-
-
-    def getParams( self ):
-        return self.params
-
-
-    def randomPosition( self ):
-        raise 'not supported.  specified space has infinite volume.'
     
 
 """
@@ -162,7 +157,6 @@ class SphericalSurface( Surface ):
     def getParams( self ):
         return self.params
 
-"""
 
 
 
@@ -202,3 +196,4 @@ class OneDimensionalSurface( Surface ):
     def location2Position( self, location ):
         
         return numpy.multiply( location, self.orientation )
+"""

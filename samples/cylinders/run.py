@@ -4,36 +4,44 @@ from egfrd import *
 from vtklogger import VTKLogger
 
 def run( ):
-    s = EGFRDSimulator()
-    L = 1e-6
+    s = EGFRDSimulator('run')
+    factor = 1e9
+    L = factor * 1e-6
     s.setWorldSize( L )
 
-    D = 1e-12
-    sigma = 2.5e-8
+    D = factor * factor * 1e-12
+    sigma = factor * 2.5e-8
+    O = Species( 'O', 0, sigma )
+    s.addSpecies( O )
     A = Species( 'A', D, sigma )
     s.addSpecies( A )
 
     dnaR = sigma
 
-
     box1 = CuboidalSurface( [0,0,0], [L,L,L], 'world' )
 
-    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,0,1], L, 'dna')
+    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,1,0], L, 'dna')
     s.addSurface( dna )
 
-    s.throwInParticles( A, 1, dna )
+    membrane = PlanarSurface( [0,0,0], [L,0,0], [0,L,0], 'membrane' )
+    s.addSurface( membrane )
 
-    # Initialize before shellMatrix.addCylinder.
+    #s.throwInParticles( A, 2, box1 )
+    #s.throwInParticles( A, 2, dna )
+    s.throwInParticles( A, 2, membrane )
+    #s.placeParticle( O, [L/2,L/2,L/2], dna )
+    #s.placeParticle( A, [100,100,0], membrane )
+    #s.placeParticle( A, [100,200,0], membrane )
+
+    # Initialize before s.cylinderMatrix.add.
     s.initialize()
 
-    #s.shellMatrix.addCylinder( (dna, 0), dna.outside )
+    #s.cylinderMatrix.add( (dna, 0), dna.outside )
 
-    l = VTKLogger(s, 'run1')
     for i in range(100):
-        l.log()
         s.step()
 
-    l.stop()
+    s.stop( s.t )
     
 if __name__ == '__main__':
     run( )

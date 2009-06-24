@@ -47,7 +47,11 @@
 
 namespace peer {
 
-//// The definition of the mapper.
+/* get_mapper_mf
+ *
+ * Can be used to *produce* a mapper function between keys of type TKey_ and 
+ * objects of type Tval_.
+ */
 template<typename Tkey_, typename Tval_>
 struct get_mapper_mf
 {
@@ -62,8 +66,10 @@ struct get_mapper_mf
 #endif
 };
 
-//// Other definition of the mapper, with (partial) template specialization.  
-//// This one is used if key is a python object instead of of type Tkey_.
+/* Partial template specialization of get_mapper_mf.
+ *
+ * Keys are python objects.
+ */
 template<typename Tval_>
 struct get_mapper_mf<boost::python::object, Tval_>
 {
@@ -92,26 +98,29 @@ struct get_mapper_mf<boost::python::object, Tval_>
 #endif
 };
 
+
+/* This class is exported to Python. */
 template<typename Tmapped_type_>
 class ObjectContainer
 {
 public:
     typedef boost::python::object key_type;
-    // Mapped_type now a ObjectContainer template argument.
+    // Mapped_type is a template argument to ObjectContainer now.
     typedef Tmapped_type_ mapped_type;
     typedef typename mapped_type::length_type length_type;
     typedef typename mapped_type::position_type position_type;
-    //// An impl_type instance is an implemented object_container.
-    ////    + length_type = usually double
-    ////    + key_type = python::object
-    ////    + mapped_type = sphere or cylinder
-    ////    + mapper = get_mapper_mf
+    /* An impl_type instance is an implemented object_container.
+     *    + length_type = usually double
+     *    + key_type = python::object
+     *    + mapped_type = sphere or cylinder
+     *    + mapper = get_mapper_mf
+     */
     typedef ::object_container<length_type, key_type, mapped_type, get_mapper_mf> impl_type;
     typedef typename impl_type::size_type size_type;
     typedef typename impl_type::matrix_type::size_type matrix_size_type;
 
-    // sphere_type is only used for finding objects within a certain radius of 
-    // a point. It has nothing to do with the used mapped_type.
+    // Note: sphere_type is only used for finding objects within a certain 
+    // radius of a point. It has nothing to do with the used mapped_type.
     typedef const sphere<length_type> sphere_type;
 
 #ifdef OBJECTMATRIX_USE_ITERATOR
@@ -127,7 +136,7 @@ public:
                 impl_type::reference, position_type::value_type, void>
         {
         public:
-            //// These 2 typedefs are not used.
+	    // These 2 typedefs are not used?
             typedef impl_type::iterator first_argument_type;
             typedef position_type::value_type second_argument_type;
             typedef void result_type;
@@ -153,9 +162,9 @@ public:
         };
 
     public:
-        //// Todo.
-        //// When converting from spheres to cylinders, don't care about these  
-        //// 2 methods, they are called from a part we're not using.
+	// Todo.
+	// When converting from spheres to cylinders, don't care about these  
+	// 2 methods, they are called from a part we're not using.
         inline static Enumerator<const result_type&>* enumerate_neighbors(
             ObjectContainer<sphere<double>>& cntnr, const typename mapped_type& sphere)
         {
@@ -214,24 +223,23 @@ public:
         struct collector: public std::binary_function<
                 typename impl_type::reference, typename position_type::value_type, void>
         {
-            //// These 2 typedefs are not used.
+	    // These 2 typedefs are not used?
             typedef typename impl_type::iterator first_argument_type;
             typedef typename position_type::value_type second_argument_type;
             typedef void result_type;
         public:
-            //// Used in build_neighbors_array_cyclic.
-            //// Difference between this collector and the 
-            //// all_neighbors_collector is that this one doesn't do any 
-            //// distance calculations, but just collects.
+	    // Used in build_neighbors_array_cyclic.
+	    // Difference between this collector and the 
+	    // all_neighbors_collector is that this one doesn't do any 
+	    // distance calculations, but just collects.
             inline collector(typename Builders::result_type& result)
                 : //sa_(boost::get<0>(result)),
                 ka_(boost::get<0>(result)),
                 da_(boost::get<1>(result)) {}
 
-            //// This operator is called from cyclic_neighbor_filter in 
-            //// filters.hpp. Arguments are the i-th object in the matrix and 
-            //// the distance d towards it (calculated in 
-            //// cyclic_neighbor_filter).
+	    // Used by cyclic_neighbor_filter in filters.hpp. Arguments are 
+	    // the i-th object in the matrix and the distance d towards it 
+	    // (calculated in cyclic_neighbor_filter).
             inline void operator()(typename impl_type::iterator i,
                     const typename position_type::value_type& d)
             {
@@ -384,6 +392,20 @@ public:
     }
 #endif /* OBJECTMATRIX_USE_ITERATOR */
 
+
+    /* 
+     * Find nearest neighbors.
+     *
+     * These are the 4 different neighbor finders. Make sure you understand 
+     * what they do and how they are different.
+     * + cyclic: use periodic boundary conditions.
+     * + all: don't specify a radius in which to search.
+     * They return the distance to the *shell* of the object.
+     *
+     * neighbors_array and neighbors_array_cyclic use via some steps 
+     * filters.hpp.
+     */
+
     boost::shared_ptr<typename Builders::result_type>
     //neighbors_array(const sphere& sphere)
     neighbors_array(const position_type& pos, const double radius)
@@ -489,7 +511,7 @@ public:
         return impl_;
     }
 
-    //// Pythonify.
+    // Pythonify.
     inline static void __register_class()
     {
         using namespace boost::python;
@@ -542,12 +564,13 @@ public:
     }
 
 protected:
-    //// Implementation type of an object container, once all templates are 
-    //// specified.
+    /* Implementation type of an object container, once all templates are  
+     * specified. */
     impl_type impl_;
 };
 
 
+/* This class is exported to Python. */
 class SphereContainer: public ObjectContainer< sphere<double> >
 {
 public:
@@ -556,6 +579,8 @@ public:
     SphereContainer(length_type world_size, matrix_size_type size)
         : ObjectContainer<mapped_type>(world_size, size) {}
 
+    // get returns the origin and the size of the sphere that was stored with 
+    // key k. It has no equivalent for cylinders.
     const boost::tuple<position_type,double> get( const key_type& k )
     {
         impl_type::iterator i(impl_.find(k));
@@ -564,25 +589,25 @@ public:
             throw std::runtime_error( "key not found." );
         }
 
-        return boost::make_tuple( (*i).second.position, 
-                                  (*i).second.radius );
+        return boost::make_tuple( (*i).second.origin, 
+                                  (*i).second.size );
     }
 
 
-    void insert( const key_type& key, const position_type& p, const double r )
+    void insert( const key_type& key, const position_type& origin, const double size )
     {
-        //// Called from cObjectMatrix.py.
-        //// Calls insert() in object_container.hpp, after first making an 
-        //// instance of the value_type, which has arguments:
-        //// + key type: a python object (single/pair).
-        //// + mapped type: a *sphere* at position p with radius r.
-        impl_.insert(impl_type::value_type(key, mapped_type(p,r)));
+	// Called from cObjectMatrix.py.
+	// Calls insert() in object_container.hpp, after first making an  
+	// instance of type value_type, which has arguments:
+	// + key type: a python object (single/pair).
+	// + mapped type: a *sphere* at position origin with radius size.
+        impl_.insert(impl_type::value_type(key, mapped_type(origin,size)));
     }
 
 
-    void update( const key_type& key, const position_type& p, const double r )
+    void update( const key_type& key, const position_type& origin, const double size )
     {
-        impl_.insert(impl_type::value_type(key, mapped_type(p,r)));
+        impl_.insert(impl_type::value_type(key, mapped_type(origin,size)));
     }
 
 
@@ -595,12 +620,12 @@ public:
             .def(init<SphereContainer::length_type, SphereContainer::matrix_size_type>())
             .def("insert", &SphereContainer::insert)
             .def("update", &SphereContainer::update)
-            .def("get", &SphereContainer::get);
-    
+	    .def("get", &SphereContainer::get);
     }
 };
 
 
+/* This class is exported to Python. */
 class CylinderContainer: public ObjectContainer< cylinder<double> >
 {
 public:
@@ -609,14 +634,15 @@ public:
     CylinderContainer(length_type world_size, matrix_size_type size)
         : ObjectContainer< mapped_type >(world_size, size) {}
 
-    void insert( const key_type& key, const position_type& position, const position_type& orientation, const double radius, const double halfLength )
+    void insert( const key_type& key, const position_type& origin, const double size, const position_type& orientation, const double halfLength )
     {
-        impl_.insert(impl_type::value_type(key, mapped_type(position, orientation, radius, halfLength)));
+	// mapped type is a cylinder.
+        impl_.insert(impl_type::value_type(key, mapped_type(origin, size, orientation, halfLength)));
     }
 
-    void update( const key_type& key, const position_type& position, const position_type& orientation, const double radius, const double halfLength )
+    void update( const key_type& key, const position_type& origin, const double size, const position_type& orientation, const double halfLength )
     {
-        impl_.insert(impl_type::value_type(key, mapped_type(position, orientation, radius, halfLength)));
+        impl_.insert(impl_type::value_type(key, mapped_type(origin, size, orientation, halfLength)));
     }
 
     inline static void __register_class()
