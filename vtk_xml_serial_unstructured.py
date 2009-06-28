@@ -1,45 +1,14 @@
 #!/usr/bin/env python
+import xml.dom.minidom
+#import xml.dom.ext # python 2.5 and later        
+
 class VTK_XML_Serial_Unstructured:
-    """
-    USAGE:
-    vtk_writer = VTK_XML_Serial_Unstructured()
-    vtk_writer.snapshot("filename.vtu", x, y, z, optional arguments...)
-    vtk_writer.writePVD("filename.pvd")
-    """
     def __init__(self):
         pass
 
-    # I split this up so I can add multiple pieces to the same snapshot by
-    # manually calling createDoc, addPiece and writeDoc.
-    def snapshot(self, filename, posList, lengths=[], radii=[], colors=[], time=None):
 
-        doc, grid = self.createDoc()
-        doc = self.addPiece(doc, grid, posList, lengths, radii, colors)
-        self.writeDoc(doc, filename, time)
-
-        """
-        ARGUMENTS:
-        fileName        file name and/or path/filename
-        x               array of x coordinates of particle centers
-        y               array of y coordinates of particle centers
-        z               array of z coordinates of particle centers
-        x_jump          optional array of x components of particle jump vectors
-        y_jump          optional array of y components of particle jump vectors
-        z_jump          optional array of z components of particle jump vectors
-        x_force         optional array of x components of force vectors
-        y_force         optional array of y components of force vectors
-        z_force         optional array of z components of force vectors
-        radii           optional array of particle radii
-        colors          optional array of scalars to use to set particle colors 
-                        The exact colors will depend on the color map you set up in Paraview.
-        """
-
-
-    def createDoc(self):
-
-        import xml.dom.minidom
-        #import xml.dom.ext # python 2.5 and later        
-
+    def createDoc(self, posList, radii=[], colors=[], orientations=[], 
+            scales=[], tensors=[]):
         # Document and root element
         doc = xml.dom.minidom.Document()
         root_element = doc.createElementNS("VTK", "VTKFile")
@@ -52,21 +21,19 @@ class VTK_XML_Serial_Unstructured:
         unstructuredGrid = doc.createElementNS("VTK", "UnstructuredGrid")
         root_element.appendChild(unstructuredGrid)
 
-        return doc, unstructuredGrid
-
-
-    def addPiece(self, doc, unstructuredGrid, posList, orientations=[], lengths=[], \
-            radii=[], colors=[] ):
-
-        import xml.dom.minidom
-
         # Piece 0 (only one)
+        # The "Piece" elements are meant for multiple pieces of *geometry*.  
+        # They are meant for streaming computation to reduce memory usage.  
+        # All the pieces have to have the same set of data arrays.
+        # So we can not use that to group particles, spheres and cylinders 
+        # into 1 file.
         piece = doc.createElementNS("VTK", "Piece")
         piece.setAttribute("NumberOfPoints", str(len(posList)))
         piece.setAttribute("NumberOfCells", "0")
         unstructuredGrid.appendChild(piece)
 
-        ### Points ####
+
+        ### Points
         points = doc.createElementNS("VTK", "Points")
         piece.appendChild(points)
 
@@ -84,7 +51,9 @@ class VTK_XML_Serial_Unstructured:
         point_coords_data = doc.createTextNode(string)
         point_coords.appendChild(point_coords_data)
 
-        #### Cells ####
+
+        #### Cells
+        # Don't remove.
         cells = doc.createElementNS("VTK", "Cells")
         piece.appendChild(cells)
 
@@ -115,41 +84,10 @@ class VTK_XML_Serial_Unstructured:
         types = doc.createTextNode("1")
         cell_types.appendChild(types)
 
-        #### Data at Points ####
+
+        #### Data at Points
         point_data = doc.createElementNS("VTK", "PointData")
         piece.appendChild(point_data)
-
-        # Cylinder length
-        if len(lengths) > 0:
-            jumps = doc.createElementNS("VTK", "DataArray")
-            jumps.setAttribute("Name", "length")
-            jumps.setAttribute("NumberOfComponents", "3")
-            jumps.setAttribute("type", "Float32")
-            jumps.setAttribute("format", "ascii")
-            point_data.appendChild(jumps)
-
-            string = str()
-            for length in lengths:
-                string = string + repr(length[0]) + ' ' + repr(length[1]) \
-                        + ' ' + repr(length[2]) + ' '
-            jumpData = doc.createTextNode(string)
-            jumps.appendChild(jumpData)
-
-        # Cylinder orientation
-        if len(orientations) > 0:
-            jumps = doc.createElementNS("VTK", "DataArray")
-            jumps.setAttribute("Name", "orientation")
-            jumps.setAttribute("NumberOfComponents", "3")
-            jumps.setAttribute("type", "Float32")
-            jumps.setAttribute("format", "ascii")
-            point_data.appendChild(jumps)
-
-            string = str()
-            for orientation in orientations:
-                string = string + repr(orientation[0]) + ' ' + \
-                repr(orientation[1]) + ' ' + repr(orientation[2]) + ' '
-            jumpData = doc.createTextNode(string)
-            jumps.appendChild(jumpData)
 
         # Particle radii
         if len(radii) > 0:
@@ -179,6 +117,55 @@ class VTK_XML_Serial_Unstructured:
             color_Data = doc.createTextNode(string)
             colorNode.appendChild(color_Data)
 
+        # Cylinder orientation
+        if len(orientations) > 0:
+            jumps = doc.createElementNS("VTK", "DataArray")
+            jumps.setAttribute("Name", "orientation")
+            jumps.setAttribute("NumberOfComponents", "3")
+            jumps.setAttribute("type", "Float32")
+            jumps.setAttribute("format", "ascii")
+            point_data.appendChild(jumps)
+
+            string = str()
+            for orientation in orientations:
+                string = string + repr(orientation[0]) + ' ' + \
+                repr(orientation[1]) + ' ' + repr(orientation[2]) + ' '
+            jumpData = doc.createTextNode(string)
+            jumps.appendChild(jumpData)
+
+        # Cylinder scale
+        if len(scales) > 0:
+            jumps = doc.createElementNS("VTK", "DataArray")
+            jumps.setAttribute("Name", "scale")
+            jumps.setAttribute("NumberOfComponents", "3")
+            jumps.setAttribute("type", "Float32")
+            jumps.setAttribute("format", "ascii")
+            point_data.appendChild(jumps)
+
+            string = str()
+            for scale in scales:
+                string = string + repr(scale[0]) + ' ' + repr(scale[1]) \
+                        + ' ' + repr(scale[2]) + ' '
+            jumpData = doc.createTextNode(string)
+            jumps.appendChild(jumpData)
+
+        if len(tensors) > 0:
+            jumps = doc.createElementNS("VTK", "DataArray")
+            jumps.setAttribute("Name", "tensors")
+            jumps.setAttribute("NumberOfComponents", "9")
+            jumps.setAttribute("type", "Float32")
+            jumps.setAttribute("format", "ascii")
+            point_data.appendChild(jumps)
+
+            string = str()
+            for tensor in tensors:
+                for value in tensor:
+                    # A 'tensor' is represented as a list of 9 values.
+                    string = string + repr(value) + ' '
+            jumpData = doc.createTextNode(string)
+            jumps.appendChild(jumpData)
+
+
         #### Cell data (dummy) ####
         cell_data = doc.createElementNS("VTK", "CellData")
         piece.appendChild(cell_data)
@@ -186,7 +173,7 @@ class VTK_XML_Serial_Unstructured:
         return doc
 
 
-    def writeDoc(self, doc, fileName, time=None):
+    def writeDoc(self, doc, fileName):
         # Write to file and exit
         outFile = open(fileName, 'w')
         # xml.dom.ext.PrettyPrint(doc, file)
@@ -194,9 +181,8 @@ class VTK_XML_Serial_Unstructured:
         outFile.close()
 
 
-    def writePVD(self, fileName, fileNames, times):
-        outFile = open(fileName, 'w')
-        import xml.dom.minidom
+    def writePVD(self, file, fileList):
+        outFile = open(file, 'w')
 
         pvd = xml.dom.minidom.Document()
         pvd_root = pvd.createElementNS("VTK", "VTKFile")
@@ -208,19 +194,60 @@ class VTK_XML_Serial_Unstructured:
         collection = pvd.createElementNS("VTK", "Collection")
         pvd_root.appendChild(collection)
 
-        for i in range(len(fileNames)):
-            dataSet = pvd.createElementNS("VTK", "DataSet")
-            if times[i] == None:
-                # Use timestep if no real times specified.
-                times[i] = i
-            dataSet.setAttribute("timestep", str(times[i]))
-            dataSet.setAttribute("group", "")
-            dataSet.setAttribute("part", "0")
-            dataSet.setAttribute("file", str(fileNames[i]))
-            collection.appendChild(dataSet)
+        # Fix order. Use ordered dict in future.
+        for type in ['particles', 'spheres', 'cylinders', 'cylindricalSurfaces', 'planarSurfaces']:
+            for index, (fileName, time) in enumerate(fileList[type]):
+                dataSet = pvd.createElementNS("VTK", "DataSet")
+                #if times[i] == None:
+                #    # Use timestep if no real times specified.
+                #    times[i] = i
+                # Problem with time is that TimestepValues is not updated in 
+                # Proxy group="misc" in .pvsm file after a reload.
+                #time = str(time)
+                time = str(index)
+                dataSet.setAttribute("timestep", time)
+                dataSet.setAttribute("group", "")
+                dataSet.setAttribute("part", type)
+                dataSet.setAttribute("file", fileName)
+                collection.appendChild(dataSet)
 
-        outFile = open(fileName, 'w')
+        outFile = open(file, 'w')
         pvd.writexml(outFile, newl='\n')
         outFile.close()
 
+
+    """
+    USAGE:
+    vtk_writer = VTK_XML_Serial_Unstructured()
+    vtk_writer.snapshot("filename.vtu", x, y, z, optional arguments...)
+    vtk_writer.writePVD("filename.pvd")
+    """
+    """
+    # I split this up so I can add multiple pieces to the same snapshot by
+    # manually calling createDoc, addPiece and writeDoc.
+    def snapshot(self, filename, posList, lengths=[], radii=[], colors=[], time=None):
+
+        doc, grid = self.createDoc()
+        doc = self.addPiece(doc, grid, posList, lengths, radii, colors)
+        self.writeDoc(doc, filename, time)
+    """
+
+    """
+        ARGUMENTS:
+        fileName        file name and/or path/filename
+        x               array of x coordinates of particle centers
+        y               array of y coordinates of particle centers
+        z               array of z coordinates of particle centers
+        x_jump          optional array of x components of particle jump vectors
+        y_jump          optional array of y components of particle jump vectors
+        z_jump          optional array of z components of particle jump vectors
+        x_force         optional array of x components of force vectors
+        y_force         optional array of y components of force vectors
+        z_force         optional array of z components of force vectors
+        radii           optional array of particle radii
+        colors          optional array of scalars to use to set particle colors 
+                        The exact colors will depend on the color map you set up in Paraview.
+    """
+    """
+    """
 

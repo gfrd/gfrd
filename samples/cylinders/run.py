@@ -20,14 +20,14 @@ def run( ):
 
     box1 = CuboidalSurface( [0,0,0], [L,L,L], 'world' )
 
-    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,1,0], L, 'dna')
+    dna = CylindricalSurface( [L/2,L/2,L/2], sigma, [0,1,0], L/2, 'dna')
     s.addSurface( dna )
 
-    membrane = PlanarSurface( [0,0,0], [L,0,0], [0,L,0], 'membrane' )
+    membrane = PlanarSurface( [L/2,L/2,0], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
     s.addSurface( membrane )
 
     #s.throwInParticles( A, 2, box1 )
-    #s.throwInParticles( A, 2, dna )
+    s.throwInParticles( A, 2, dna )
     s.throwInParticles( A, 2, membrane )
     #s.placeParticle( O, [L/2,L/2,L/2], dna )
     #s.placeParticle( A, [100,100,0], membrane )
@@ -38,7 +38,7 @@ def run( ):
 
     #s.cylinderMatrix.add( (dna, 0), dna.outside )
 
-    for i in range(100):
+    for i in range(50):
         s.step()
 
     s.stop( s.t )

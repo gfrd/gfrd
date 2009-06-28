@@ -101,7 +101,7 @@ class CylindricalSingle2D( FreeSingle ):
     def __init__( self, particle, reactionTypes, distFunc ):
         minSize = particle.radius # self.getMinSize()
         shell = Cylinder( particle.pos, minSize, particle.surface.normal, particle.radius, distFunc )
-        print particle.surface.normal
+        #print 'particle.surface.normal = ', particle.surface.normal
         # Todo.
         gf = FirstPassageGreensFunction( particle.species.D )
         FreeSingle.__init__( self, particle, shell, reactionTypes, gf )
@@ -123,7 +123,7 @@ class CylindricalSingle2D( FreeSingle ):
         # Note: you need to apply self.applyBoundary after calling this.
         r = domains[0]
         x, y = randomVector2D(r)
-        displacement = x*self.particle.surface.xUnitVector + y*self.particle.surface.yUnitVector
+        displacement = x*self.particle.surface.outside.xUnitVector + y*self.particle.surface.outside.yUnitVector
         # Note: don't use length(), that assumes 3D.
         assert abs( numpy.linalg.norm( displacement ) - r ) <= 1e-15 * r
         newpos = self.pos + displacement

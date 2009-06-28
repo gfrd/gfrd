@@ -164,10 +164,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def step( self ):
-        try:
+        if self.vtklogger:
             self.vtklogger.log()
-        except:
-            pass
 
         self.lastReaction = None
 

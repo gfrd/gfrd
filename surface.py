@@ -3,7 +3,7 @@ import math
 import numpy
 import random
 
-from shape import Cylinder
+from shape import Cylinder, Box
 from freeSingle import SphericalSingle, CylindricalSingle1D, CylindricalSingle2D
 from utils import length, normalize
 
@@ -45,44 +45,39 @@ class DefaultSurface( Surface ):
 
 
 class CylindricalSurface( Surface ):
-    def __init__( self, origin, radius, orientation, size, name ):
+    def __init__( self, origin, radius, orientation, size, name="CylindricalSurface" ):
         Surface.__init__( self, name )
         self.outside = Cylinder( origin, radius, orientation, size )
         self.defaultSingle = CylindricalSingle1D
 
 
     def randomPosition( self ):
-        return self.outside.origin + random.uniform(-0.5, 0.5) * self.outside.orientation * self.outside.size
+        return self.outside.origin + random.uniform(-1, 1) * self.outside.orientation * self.outside.size
 
 
 
 class PlanarSurface( Surface ):
-    def __init__( self, origin, xVector, yVector, name ):
+    def __init__( self, origin, xVector, yVector, Lx, Ly, Lz=None, name="PlanarSurface" ):
         Surface.__init__( self, name )
-        # Maybe inconsistent, but no need to say self.outside.origin etc.
-        self.origin = numpy.array(origin)
-        assert numpy.dot( xVector, yVector ) == 0   # Todo. To doubles.
-        self.xVector = numpy.array(xVector)
-        self.xUnitVector = normalize(self.xVector)
-        self.yVector = numpy.array(yVector)
-        self.yUnitVector = normalize(self.yVector)
 
-        normal = numpy.cross( xVector, yVector )
-        self.normal = normalize( normal )
+        assert numpy.dot( xVector, yVector ) == 0 # Todo. To doubles.
+        zVector = numpy.cross( xVector, yVector )
+        self.outside = Box( origin, xVector, yVector, zVector, Lx, Ly, Lz ) 
+        self.defaultSingle = CylindricalSingle2D
 
         # Hessian normal form [ nx, ny, nz, p ].
-        self.hessianNormal = [ normal[0], normal[1], normal[2], length(self.origin) ]
+        self.normal = self.outside.zUnitVector # Extra.
+        self.hessianNormal = [ self.normal[0], self.normal[1], self.normal[2], length(self.outside.origin) ]
 
-        self.defaultSingle = CylindricalSingle2D
 
 
     def signedDistance( self, pos ):
         return numpy.dot( self.hessianNormal,\
-                          numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) )
+                  numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) ) - self.outside.Lz
 
 
     def randomPosition( self ):
-        return self.origin + random.random()*self.xVector + random.random()*self.yVector
+        return self.outside.origin + random.uniform(-1,1)*self.outside.xVector + random.uniform(-1,1)*self.outside.yVector
 
 
 
