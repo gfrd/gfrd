@@ -7,6 +7,7 @@
 
 
 from egfrd import *
+import numpy
 
 def run( outfilename, T, S, N ):
     print outfilename
@@ -17,7 +18,6 @@ def run( outfilename, T, S, N ):
         d, t = singlerun( T, S )
         outfile.write( '%g\n' % d )
 
-        print i
         assert t == T
 
     outfile.close()
@@ -46,7 +46,7 @@ def singlerun( T, S ):
             break
         s.step()
 
-    distance = s.distance( [0,0,0], particleA.pos )
+    distance = s.distance( numpy.array([0,0,0]), particleA.pos )
 
     return distance, s.t
     

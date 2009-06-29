@@ -1,16 +1,12 @@
 
 def createMulti( self ):
     multi = Multi( self )
-
     #multi.initialize( self.t )
-
     return multi
 
 
 def fireMulti( self, multi ):
-    
     sim = multi.sim
-
     sim.step()
     #sim.sync()
 
@@ -30,34 +26,25 @@ def fireMulti( self, multi ):
 
     #log.info( 'multi stepped %d steps, duration %g, dt = %g' %
     #          ( additionalSteps + 1, sim.t - startT + sim.dt, dt ) )
-
     return multi.dt
 
 
 def breakUpMulti( self, multi ):
-
     self.removeFromShellMatrix( multi )
-
     singles = []
     for particle in multi.sim.particleList:
         single = self.createSingle( particle )
-        self.addToShellMatrix( single )
-        self.addSingleEvent( single )
         singles.append( single )
-
     return singles
 
 
 def burstMulti( self, multi ):
-    
     #multi.sim.sync()
     singles = self.breakUpMulti( multi )
-
     return singles
 
 
 def addToMultiRecursive( self, obj, multi ):
-    
     if isinstance( obj, Single ):
         if obj.particle in multi.sim.particleList:  # Already in the Multi.
             return
@@ -100,21 +87,17 @@ def addToMulti( self, single, multi ):
 
 
 '''
-    merge multi1 into multi2
+merge multi1 into multi2
 '''
 def mergeMultis( self, multi1, multi2 ):
-
     log.info( 'merging %s to %s' % ( multi1, multi2 ) )
-
     assert not multi1.sim.particleList[0] in multi2.sim.particleList
 
     for i, particle in enumerate( multi1.sim.particleList ):
-        
         # FIXME: shells should be renewed
-
         multi2.addParticle( particle )
         shell = multi1.shellList[i]
-        multi2.addShell( shell.origin, shell.size )
+        multi2.addShell( shell.origin, shell.radius )
 
     multi2.initialize( self.t )
 

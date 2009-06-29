@@ -28,7 +28,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
         
     def updateParticle( self, particle, pos ):
 
-        self.particleMatrix.update( particle, pos, particle.radius )
+        self.particleMatrix.add( particle, pos, particle.radius, True )
         self.main.updateOnParticleMatrix( particle, pos )
 
     def initialize( self ):
@@ -53,7 +53,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
         self.shellMatrix.clear()
         for shell in self.multiref().shellList:
-            self.shellMatrix.add( shell, shell.origin, shell.size )
+            self.shellMatrix.add( shell, shell.origin, shell.radius )
 
     def addParticle( self, particle ):
 
@@ -68,13 +68,13 @@ class MultiBDCore( BDSimulatorCoreBase ):
         self.particleMatrix.remove( particle )
 
 
-    def createParticle( self, species, pos ):
+    def createParticle( self, species, pos, surface=None ):
 
         #if not self.withinShell( pos, species.radius ):
         #    self.escaped = True
         #    self.clearOuterVolume( pos, species.radius )
 
-        particle = self.main.createParticle( species, pos )
+        particle = self.main.createParticle( species, pos, surface )
         self.addParticle( particle )
 
         return particle
@@ -152,15 +152,15 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
         # shellMatrix consistency
         for shell in self.multiref().shellList:
-            pos, size = self.shellMatrix.get( shell )
+            pos, radius = self.shellMatrix.get( shell )
             assert not ( pos - shell.origin ).any()
-            assert size == shell.size
+            assert radius == shell.radius
 
 
         # shells are contiguous
         for shell in self.multiref().shellList:
             n, d = self.shellMatrix.getNeighbors( shell.origin )
-            assert d[1] - shell.size < 0.0, 'shells are not contiguous.'
+            assert d[1] - shell.radius < 0.0, 'shells are not contiguous.'
 
         # all particles within the shell.
                 
@@ -206,8 +206,8 @@ class Multi( object ):
     def addParticle( self, particle ):
         self.sim.addParticle( particle )
 
-    def addShell( self, origin, size ):
-        self.shellList.append( Shell( origin, size ) )
+    def addShell( self, origin, radius ):
+        self.shellList.append( Sphere( origin, radius ) )
 
 
     def check( self ):

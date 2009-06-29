@@ -220,6 +220,7 @@ class BDSimulatorCoreBase( object ):
 
 
     def fireReaction1( self, particle, rt ):
+        newSurface = particle.surface
         
         oldpos = particle.pos.copy()
 
@@ -242,7 +243,7 @@ class BDSimulatorCoreBase( object ):
             self.clearVolume( oldpos, radius, ignore = [ particle ] )
                 
             self.removeParticle( particle )
-            newparticle = self.createParticle( productSpecies, oldpos )
+            newparticle = self.createParticle( productSpecies, oldpos, newSurface )
 
             self.lastReaction = Reaction( rt, [particle], [newparticle] )
 
@@ -295,8 +296,8 @@ class BDSimulatorCoreBase( object ):
             # move accepted
             self.removeParticle( particle )
 
-            newparticle1 = self.createParticle( productSpecies1, newpos1 )
-            newparticle2 = self.createParticle( productSpecies2, newpos2 )
+            newparticle1 = self.createParticle( productSpecies1, newpos1, newSurface )
+            newparticle2 = self.createParticle( productSpecies2, newpos2, newSurface )
 
             self.lastReaction = Reaction( rt, [particle], 
                                           [newparticle1, newparticle2] )
@@ -310,6 +311,8 @@ class BDSimulatorCoreBase( object ):
 
 
     def fireReaction2( self, particle1, particle2, rt ):
+        assert particle1.surface == particle2.surface
+        newSurface = particle1.surface
 
         pos1 = particle1.pos.copy()
         pos2 = particle2.pos.copy()
@@ -333,7 +336,7 @@ class BDSimulatorCoreBase( object ):
 
             self.removeParticle( particle1 )
             self.removeParticle( particle2 )
-            newparticle = self.createParticle( productSpecies, newPos )
+            newparticle = self.createParticle( productSpecies, newPos, newSurface )
 
             try:
                 self.particlesToStep.remove( particle2 )
@@ -401,8 +404,8 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
         self.main.removeParticle( particle )
         self.removeFromParticleList( particle )
 
-    def createParticle( self, species, pos ):
-        particle = self.main.createParticle( species, pos )
+    def createParticle( self, species, pos, surface ):
+        particle = self.main.createParticle( species, pos, surface )
         self.addToParticleList( particle )
 
 

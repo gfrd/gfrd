@@ -3,7 +3,7 @@
 .PHONY: all
 all : bd gfrd hardbody irreversible mapk pushpull rebind reversible tf
 
-DATA=data/run
+DATA=data/run/files.pvd data/run/files/*
 
 .PHONY: bd
 bd:
@@ -51,25 +51,15 @@ reversible:
 	echo
 	cd reversible && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python run.py data/output.out 0.05 5
 
+
+.PHONY: single
+single:
+	echo
+	cd single && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python run.py single.0.out 5e-4 3e-8 100
+
+
 .PHONY: tf
 tf:
 	echo
 	cd tf && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python tf.py
-
-
-
-
-
-
-
-### Graveyard
-
-#Dirlist=$(find -mindepth 1 -maxdepth 1 -type d)
-#for direc in $Dirlist ;
-#do
-#    cd $direc
-#    echo $direc
-#    make
-#    echo cd ../
-#done
 

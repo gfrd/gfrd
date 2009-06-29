@@ -5,6 +5,7 @@ from egfrd import *
 from logger import *
 import sys
 
+#s = EGFRDSimulator('run')
 s = EGFRDSimulator()
 s.setWorldSize( 1e-5 )
 
@@ -65,10 +66,12 @@ l = Logger( s, 'dimer' )
 l.setInterval( 1e-3 )
 l.log()
 
+s.initialize()
 
 while s.t < 0.005:
     s.step()
     s.dumpPopulation()
+
 
 #    l.log()
     

@@ -16,7 +16,7 @@ ZEROPOS = numpy.array( [ 0., 0., 0. ] )
 NOWHERE = numpy.array( ( INF, INF, INF ) )
 
 # Should be smaller than SINGLE_SHELL_FACTOR.
-SAFETY = 1.0 + 1e-2 #1e-5 #Todo.
+SAFETY = 1.0 + 1e-5 #5e-2 is too big! Todo.
 
 class NeverGetHere( Exception ):
     pass
@@ -131,15 +131,14 @@ def randomUnitVectorS():
 
 
 def randomUnitVector():
-
     v = numpy.random.uniform( -1, 1, 3 )
     return v / _gfrd.distance( ZEROPOS, v )
 
 
 def randomVector( r ):
-
     v = numpy.random.uniform( -1, 1, 3 )
     return v * ( r / _gfrd.distance( ZEROPOS, v ) )
+
 
 # Return a random 2D cartesian vector of length r.
 def randomVector2D( r ):
@@ -147,9 +146,11 @@ def randomVector2D( r ):
     norm = numpy.linalg.norm(v)
     return v * ( r / norm )
 
+
 def length( a ):
     #return math.sqrt( numpy.dot( a, a ) )
     return _gfrd.distance( ZEROPOS, a )
+
 
 def normalize( a ):
     return a / length( a )

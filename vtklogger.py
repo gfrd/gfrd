@@ -37,7 +37,6 @@ class VTKLogger:
 
     def log( self ):
         time = self.sim.t
-        #print 'log called, time = ', time
         if (abs(time - self.lastTime) < 1e-9):
             # Hack to make Paraview understand this is a different simulator 
             # step but with the same time.
@@ -55,7 +54,7 @@ class VTKLogger:
         cylindricalSurfacesDoc = self.getCylindricalSurfaceData()
         planarSurfacesDoc = self.getPlanarSurfaceData()
         if BROWNIAN != True:
-            spheresDoc   = self.getShellData( )
+            spheresDoc   = self.getShellDataFromScheduler( )
             cylindersDoc = self.getCylinderData( )
 
             if self.i == 0:
@@ -104,7 +103,7 @@ class VTKLogger:
         for speciesIndex,species in enumerate(self.sim.speciesList.values()):
             for particlePos in species.pool.positions:
                 self.appendLists( posList, particlePos, radiusList,
-                        species.radius, typeList, speciesIndex * 2)
+                        species.radius, typeList, 2 + speciesIndex)
 
         return self.vtk_writer.createDoc(posList, radii=radiusList, 
                 colors=typeList )
@@ -119,8 +118,47 @@ class VTKLogger:
             single = key[0]
             sphere = single.shellList[0]
             type = 1
-            self.appendLists( posList, sphere.origin, radiusList, sphere.size, 
+            self.appendLists( posList, sphere.origin, radiusList, sphere.radius, 
                     typeList, type )
+
+        return self.vtk_writer.createDoc(posList, radii=radiusList, 
+                colors=typeList )
+
+
+    def getShellDataFromScheduler( self ):
+        posList, radiusList, typeList = [], [], []
+
+        topTime = self.sim.scheduler.getTopTime()
+        for eventIndex in range( self.sim.scheduler.getSize() ):
+            # Get event
+            event = self.sim.scheduler.getEventByIndex( eventIndex )
+            object = event.getArg()
+
+            # Give different color to singles/paires/multis.
+            type = object.multiplicity
+            # Highlight topEvent.
+            if event.getTime() == topTime:
+                type = 0
+
+            try:
+                # Don't show sphere for cylinder.
+                length = object.size  # Only cylinders have length.
+            except:
+                # Fixme. How do I find if this object is a single/pair/multi?
+                # Single or Pair.
+                try:
+                    if len(object.origin) ==3: # Ugliest hack ever. Todo.
+                        self.appendLists( posList, object.origin, radiusList, 
+                                object.radius, typeList, type )
+                except:
+                    pass
+                try:
+                    # Multi.
+                    for single in object.shellList:
+                        self.appendLists( posList, single.origin, radiusList, 
+                                single.radius, typeList, type )
+                except:
+                    pass
 
         return self.vtk_writer.createDoc(posList, radii=radiusList, 
                 colors=typeList )
@@ -137,6 +175,7 @@ class VTKLogger:
         cylinders = [ surface.outside for surface in self.sim.surfaceList if isinstance(surface.outside, Cylinder) ]
         return self.processCylinders( cylinders )
 
+
     def getPlanarSurfaceData( self ):
         posList, radiusList, typeList, scaleList, orientationList, tensorList = \
                 [], [], [], [], [], []
@@ -148,9 +187,7 @@ class VTKLogger:
 
         type = 1
         for box in boxes:
-            #print 'box = ', box
             tensor = numpy.concatenate((box.xVector, box.yVector, box.zVector))
-            #print 'tensor = ', tensor
             self.appendLists(posList, box.origin, typeList, type, tensorList=tensorList, 
                     tensor=tensor) 
 
@@ -199,15 +236,14 @@ class VTKLogger:
                 colors=typeList, orientations=orientationList, 
                 scales=scaleList, tensors=tensorList )
 
-    
 
     # Helper.
     def appendLists(self, posList, pos, radiusList=[], radius=None, 
             typeList=[], type=None, scaleList=[], scale=None, 
             orientationList=[], orientation=None, tensorList=[], tensor=None):
         # Convert all lengths to nanometers.
-        #factor = 1e9
         factor = 1
+        #factor = 1e8
 
         # Multiply radii and lenghts by by 2 because Paraview sets radius to 
         # 0.5 by default, and it wants full lengths for cylinders and we are 
@@ -223,37 +259,13 @@ class VTKLogger:
             scaleList.append( scale * 2 * factor )
 
         if tensor != None:
-            #print 'tensor = ', tensor
             tensor = tensor * 2 * factor
-            #print 'tensor = ', tensor
             
             tensorList.append( tensor )
 
 
 
 
-        """
-        # If DNA is along the z-axis in userscript, then in Paraview it should 
-        # be drawn along the y-asis. No rotation needed, just set origin to 
-        # [500,500,500], height to 10000 and radius to 25.
-        # Add DNA by default.
-        dnaL = 1e-6
-        sigma = 2.5e-8
-        dnaR = sigma
-        # Paraview wants to know the middle of the cylinder.
-        pos = numpy.array( [dnaL/2, dnaL/2, dnaL/2] )
-        # Note: when scaling, setting radius has no effect.
-        # Note: set scalemode to vector components!
-        # Note: set radius to 1 in Paraview, also for particles.
-        scale = numpy.array( [dnaR, dnaR, dnaL])
-        # Orientationlist should contain the number of degrees [0-360] of 
-        # rotation in each direction. Not used. Commented out in 
-        # vtk_xml_serial_unstructured.
-
-        # Not by default at the moment.
-        #self.appendLists( posList, pos, radiusList, 0 ,
-        #        typeList, 0, lengthList, scale, orientationList, [0,0,0] )
-        """
 
         """
         # Get data from scheduler.
@@ -264,13 +276,12 @@ class VTKLogger:
             object = event.getArg()
 
             type = 1 # Color
-
             # Highlight topEvent.
             if event.getTime() == topTime:
                 type = 0
 
             try:
-                length = object.halfLength  # Only cylinders have length.
+                length = object.size  # Only cylinders have length.
                 scale = numpy.array([object.radius_b, object.radius_b, 
                     length])
                 self.appendLists( posList, object.pos, radiusList, 
@@ -282,47 +293,3 @@ class VTKLogger:
                 pass
         """
 
-        """
-        topTime = self.sim.scheduler.getTopTime()
-        for eventIndex in range( self.sim.scheduler.getSize() ):
-            # Get event
-            event = self.sim.scheduler.getEventByIndex( eventIndex )
-            object = event.getArg()
-
-            # Give different color to singles/paires/multis.
-            type = object.multiplicity
-            # Highlight topEvent.
-            if event.getTime() == topTime:
-                pass #type = 0
-
-            try:
-                # Don't show sphere for cylinder.
-                length = object.halfLength  # Only cylinders have length.
-            except:
-                # Fixme. How do I find if this object is a single/pair/multi?
-                # Single or Pair.
-                try:
-                    if len(object.origin) ==3: # Ugliest hack ever. Todo.
-                        self.appendLists( posList, object.origin, radiusList, 
-                                object.radius, typeList, type )
-                except:
-                    # This is one of those 1dim spheres that I have to think
-                    # about still.
-                    pass
-                try:
-                    # Multi.
-                    for single in object.shellList:
-                        self.appendLists( posList, single.origin, radiusList, 
-                                single.size, typeList, type )
-                except:
-                    pass
-        """
-
-        """
-        self.vtk_writer.writePVD(self.dir + self.particlesPrefix + '.pvd', 
-                [self.fileNamesParticles], self.times)
-        self.vtk_writer.writePVD(self.dir + self.spheresPrefix + '.pvd', 
-                [self.fileNamesSpheres], self.times)
-        self.vtk_writer.writePVD(self.dir + self.cylindersPrefix + '.pvd', 
-                [self.fileNamesCylinders], self.times)
-        """

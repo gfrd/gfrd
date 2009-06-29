@@ -540,16 +540,17 @@ class ParticleSimulatorBase( object ):
 
         if not self.checkOverlap( pos, radius ):
             raise NoSpace, 'overlap check failed'
+
+        if surface == None:
+            # Particle in cytoplasm.
+            surface = self.defaultSurface
             
         particle = self.createParticle( species, pos, surface )
         return particle
 
 
-    def createParticle( self, species, pos, surface=None ):
+    def createParticle( self, species, pos, surface ):
         newserial = species.newParticle( pos )
-        if surface == None:
-            # Particle in cytoplasm.
-            surface = self.defaultSurface
         newparticle = Particle( species, serial=newserial, surface=surface )
         self.addToParticleMatrix( newparticle, pos )
         return newparticle
@@ -571,8 +572,8 @@ class ParticleSimulatorBase( object ):
         self.particleMatrix.remove( particle )
 
     def updateOnParticleMatrix( self, particle, pos ):
-        self.particleMatrix.update( particle,
-                                    pos, particle.species.radius )
+        self.particleMatrix.add( particle,
+                                    pos, particle.species.radius, True )
 
 
     ### checkOverlap return true if there are no particles within the

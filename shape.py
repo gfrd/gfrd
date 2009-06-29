@@ -13,9 +13,9 @@ class Shape( object ):
 
     # DEBUG:
     def setPos ( self, pos ):
-        raise RuntimeError, 'Shell doesnt have a pos anymore'
+        raise RuntimeError, 'Shape doesnt have a pos anymore'
     def getPos ( self ):
-        raise RuntimeError, 'Shell doesnt have a pos anymore'
+        raise RuntimeError, 'Shape doesnt have a pos anymore'
     pos = property( getPos, setPos )
 
 
@@ -25,15 +25,14 @@ class Shape( object ):
 
 
 class Sphere( Shape ):
-    def __init__( self, origin, size, distFunc=None ):
+    def __init__( self, origin, radius, distFunc=None ):
         Shape.__init__( self, distFunc ) 
-        # Todo: before we had a pos.copy() here. Think about it.
         self.origin = numpy.array( origin )
-        self.size = size
+        self.radius = radius
 
 
     def signedDistanceTo( self, pos ):
-        return self.distance( pos, self.origin ) - self.size
+        return self.distance( pos, self.origin ) - self.radius
 
 
 
@@ -47,7 +46,14 @@ class Cylinder( Shape ):
         self.orientation = normalize( numpy.array( orientation ) )
         # Size is the half length of the cylinder!
         self.size = size 
+
+    def getSize( self ):
+        return self._size
+    def setSize( self, size ):
+        self._size = size
+        # Note: we can not do this in constructor, because size may change.
         self.orientationVector = size * self.orientation
+    size = property( getSize, setSize )
 
     def signedDistanceTo( self, pos ):
         posVector, rUnitVector, r, z = self.toInternal( pos )
@@ -61,7 +67,7 @@ class Cylinder( Shape ):
                 edgeVector = self.orientationVector + self.radius * rUnitVector
                 distance = length( posVector - edgeVector )
         else:
-            # pos is somewhere 'parellel' to the cylinder.
+            # pos is somewhere 'parallel' to the cylinder.
             distance = r - self.radius
         assert distance > 0
         return distance
