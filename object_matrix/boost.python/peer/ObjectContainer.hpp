@@ -37,6 +37,7 @@
 #include "filters.hpp"
 #include "sphere.hpp"
 #include "cylinder.hpp"
+#include "box.hpp"
 #include "object_container.hpp"
 
 #if OBJECTMATRIX_USE_ITERATOR
@@ -594,7 +595,7 @@ public:
     }
 
 
-    void insert( const key_type& key, const position_type& origin, const double size )
+    void insert( const key_type& key, const position_type& origin, const length_type size )
     {
 	// Called from cObjectMatrix.py.
 	// Calls insert() in object_container.hpp, after first making an  
@@ -605,7 +606,7 @@ public:
     }
 
 
-    void update( const key_type& key, const position_type& origin, const double size )
+    void update( const key_type& key, const position_type& origin, const length_type size )
     {
         impl_.insert(impl_type::value_type(key, mapped_type(origin,size)));
     }
@@ -619,8 +620,8 @@ public:
         class_<SphereContainer, bases<ObjectContainer<mapped_type> > >("SphereContainer")
             .def(init<SphereContainer::length_type, SphereContainer::matrix_size_type>())
             .def("insert", &SphereContainer::insert)
-            .def("update", &SphereContainer::update)
-	    .def("get", &SphereContainer::get);
+	    .def("get", &SphereContainer::get)
+            .def("update", &SphereContainer::update);
     }
 };
 
@@ -634,15 +635,10 @@ public:
     CylinderContainer(length_type world_size, matrix_size_type size)
         : ObjectContainer< mapped_type >(world_size, size) {}
 
-    void insert( const key_type& key, const position_type& origin, const double size, const position_type& orientation, const double halfLength )
+    void insert( const key_type& key, const position_type& origin, const length_type size, const position_type& orientationZ, const length_type halfLength )
     {
 	// mapped type is a cylinder.
-        impl_.insert(impl_type::value_type(key, mapped_type(origin, size, orientation, halfLength)));
-    }
-
-    void update( const key_type& key, const position_type& origin, const double size, const position_type& orientation, const double halfLength )
-    {
-        impl_.insert(impl_type::value_type(key, mapped_type(origin, size, orientation, halfLength)));
+        impl_.insert(impl_type::value_type(key, mapped_type(origin, size, orientationZ, halfLength)));
     }
 
     inline static void __register_class()
@@ -652,11 +648,35 @@ public:
         using namespace boost::python;
         class_<CylinderContainer, bases<ObjectContainer<mapped_type> > >("CylinderContainer")
             .def(init<CylinderContainer::length_type, CylinderContainer::matrix_size_type>())
-            .def("insert", &CylinderContainer::insert)
-            .def("update", &CylinderContainer::update);
+            .def("insert", &CylinderContainer::insert);
     }
 };
 
+/* This class is exported to Python. */
+class BoxContainer: public ObjectContainer< box<double> >
+{
+public:
+    BoxContainer() {}
+
+    BoxContainer(length_type world_size, matrix_size_type size)
+        : ObjectContainer< mapped_type >(world_size, size) {}
+
+    void insert( const key_type& key, const position_type& origin, const position_type& unitX, const position_type& unitY, const position_type& unitZ, const length_type Lx, const length_type Ly, const length_type Lz )
+    {
+	// mapped type is a box.
+        impl_.insert(impl_type::value_type(key, mapped_type(origin, unitX, unitY, unitZ, Lx, Ly, Lz)));
+    }
+
+    inline static void __register_class()
+    {
+        peer::ObjectContainer<mapped_type>::__register_object_container();
+
+        using namespace boost::python;
+        class_<BoxContainer, bases<ObjectContainer<mapped_type> > >("BoxContainer")
+            .def(init<BoxContainer::length_type, BoxContainer::matrix_size_type>())
+            .def("insert", &BoxContainer::insert);
+    }
+};
 
 }// namespace peer
 

@@ -144,7 +144,7 @@ class Pair( object ):
         D1_factor = D1 / self.D_tot
         D2_factor = D2 / self.D_tot
 
-        # Major todo.
+        # Todo.
         shellSize = self.shellSize / SAFETY  # FIXME:
 
         sqrtD_tot = math.sqrt( self.D_tot )
@@ -430,7 +430,7 @@ class CylindricalPair2D( Pair ):
 
     def calculateCoMDisplacement( self, r_R ):
         x, y = randomVector2D( r_R )
-        return x * self.surface.outside.xUnitVector + y * self.surface.outside.yUnitVector
+        return x * self.surface.outside.unitX + y * self.surface.outside.unitY
 
 
     def calculateNewIV( self, (r, theta) ):
@@ -448,10 +448,12 @@ class CylindricalPair2D( Pair ):
     a new inter-particle vector, and an old inter-particle vector.
     '''
     def newPositions( self, newCoM, (r, theta) ):
-        angle = vectorAngle( self.surface.outside.xUnitVector, self.IV )
+        unitX = self.surface.outside.unitX
+        unitY = self.surface.outside.unitY
+        angle = vectorAngle( unitX, self.IV )
         newAngle = angle + theta
         
-        rotated = r * math.cos(newAngle) * self.surface.outside.xUnitVector + r * math.sin(newAngle) * self.surface.outside.yUnitVector
+        rotated = r * math.cos(newAngle) * unitX + r * math.sin(newAngle) * unitY
 
         newpos1 = newCoM - rotated * ( self.D1 / self.D_tot )
         newpos2 = newCoM + rotated * ( self.D2 / self.D_tot )
@@ -468,7 +470,7 @@ class CylindricalPair1D( Pair ):
         # Set shellSize directly, without getMinRadius() step. Don't set 
         # radius again from initialize(). Pairs don't move.
         # Todo: maxRadius.
-        self.shellList = [ Cylinder( self.CoM, single1.particle.radius, self.surface.outside.orientation, shellSize, distFunc ) ]
+        self.shellList = [ Cylinder( self.CoM, single1.particle.radius, self.surface.outside.orientationZ, shellSize, distFunc ) ]
 
         # Todo. Make dimension specific.
         a_R, self.a_r = self.determineRadii()
@@ -492,14 +494,13 @@ class CylindricalPair1D( Pair ):
 
 
     def calculateCoMDisplacement( self, r_R ):
-        assert length(self.surface.outside.orientation) == 1
-        return r_R * self.surface.outside.orientation
+        return r_R * self.surface.outside.orientationZ
 
 
     def calculateNewIV( self, r_r ):
         assert abs(r_r[0]) > self.sigma
         # Todo.
-        return r_r[0] * self.surface.outside.orientation
+        return r_r[0] * self.surface.outside.orientationZ
 
 
     def newPositions( self, newCoM, newIV ):

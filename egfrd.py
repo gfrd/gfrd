@@ -37,6 +37,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         self.sphereMatrix = SphereMatrix()
         self.cylinderMatrix = CylinderMatrix()
+        self.boxMatrix = CylinderMatrix()
+        self.objectMatrices = [ self.sphereMatrix, self.cylinderMatrix, self.boxMatrix ]
         #self.sm2 = pObjectMatrix()
 
         ParticleSimulatorBase.__init__( self )
@@ -59,6 +61,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         ParticleSimulatorBase.setWorldSize( self, size )
         self.sphereMatrix.setWorldSize( size )
         self.cylinderMatrix.setWorldSize( size )
+        self.boxMatrix.setWorldSize( size )
 
 
     def setUserMaxShellSize( self, size ):
@@ -99,6 +102,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.scheduler.clear()
         self.sphereMatrix.clear()
         self.cylinderMatrix.clear()
+        self.boxMatrix.clear()
 
         # Get particle data from particleMatrix, because we need to know the 
         # surface they are on.
@@ -222,10 +226,12 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             self.addSingleEvent( single1 )
             self.addSingleEvent( single2 )
             return [ single1, single2 ]
-        else:  # Multi
+        elif isinstance( obj, Multi ): # Multi
             bursted = self.burstMulti( obj )
             self.removeEvent( obj )
             return bursted
+        else:
+            raise NotImplementedError
 
 
     ##########################################################################
@@ -268,33 +274,47 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         ParticleSimulatorBase.setMatrixSize( self, size )
         self.sphereMatrix.setMatrixSize( size )
         self.cylinderMatrix.setMatrixSize( size )
+        self.boxMatrix.setMatrixSize( size )
 
 
     def getMatrixCellSize( self ):
-        assert self.sphereMatrix.cellSize == self.cylinderMatrix.cellSize
+        assert self.sphereMatrix.cellSize == self.cylinderMatrix.cellSize == self.boxMatrix.cellSize
         return self.sphereMatrix.cellSize
 
 
-    def addToShellMatrix( self, obj, update=False ):
+    def addToShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
             key = (obj, i)
             if isinstance( shell, Sphere ):
-                self.sphereMatrix.add( key, shell.origin, shell.radius, update )
+                self.sphereMatrix.add( key, shell.origin, shell.radius )
             elif isinstance( shell, Cylinder ):
-                self.cylinderMatrix.add( key, shell, update )
+                self.cylinderMatrix.add( key, shell )
+            elif isinstance( shell, Box ):
+                self.boxMatrix.add( key, shell )
+            else: raise KeyError, 'Objecttype does not exit'
+
+
+    def updateShellMatrix( self, obj ):
+        for i, shell in enumerate( obj.shellList ):
+            key = (obj, i)
+            if isinstance( shell, Sphere ):
+                self.sphereMatrix.update( key, shell.origin, shell.radius )
+            elif isinstance( shell, Cylinder ):
+                self.cylinderMatrix.update( key, shell )
+            elif isinstance( shell, Box ):
+                self.boxMatrix.update( key, shell )
             else: raise KeyError, 'Objecttype does not exit'
 
 
     def removeFromShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
             key = (obj, i)
-            '''
-            Check for type of shell -> remove key (is that the way to do it?)
-            '''
             if isinstance( shell, Sphere ):
                 self.sphereMatrix.remove( key )
             elif isinstance( shell, Cylinder ):
                 self.cylinderMatrix.remove( key )
+            elif isinstance( shell, Box ):
+                self.boxMatrix.remove( key )
             else: raise KeyError, 'Objecttype does not exit'
 
     '''
@@ -317,7 +337,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         closestSingle = DummySingle()
         closestDistance = INF
 
-        for objectMatrix in [ self.sphereMatrix, self.cylinderMatrix ]:
+        for objectMatrix in self.objectMatrices:
             keys, distances = objectMatrix.getNeighbors( pos )
             '''
             Don't be clever and think you can do:
@@ -337,15 +357,11 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def getNeighborsWithinRadiusNoSort( self, pos, radius, ignore=[] ):
-        keys, _ =\
-            self.sphereMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
-        keys2, _ =\
-            self.cylinderMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
-
-        neighbors = uniq( [ key[0] for key in keys if key[0] not in ignore ] )
-        neighbors2 = uniq( [ key[0] for key in keys2 if key[0] not in ignore ] )
-
-        neighbors.extend( neighbors2 )
+        neighbors = []
+        for objectMatrix in self.objectMatrices:
+            keys, _ =\
+                objectMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
+            neighbors.extend( uniq( [ key[0] for key in keys if key[0] not in ignore ] ) )
         return neighbors
 
 
@@ -363,7 +379,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         closestSingle = DummySingle()
         closestDistance = INF
 
-        for objectMatrix in [ self.sphereMatrix, self.cylinderMatrix ]:
+        for objectMatrix in self.objectMatrices:
             keys, dists = objectMatrix.getNeighbors( pos )
 
             for i, key in enumerate( keys ):

@@ -122,4 +122,6 @@ BOOST_PYTHON_MODULE(object_matrix)
     peer::ObjectContainer<default_mapped_type>::__register_class();
     peer::SphereContainer::__register_class();
     peer::CylinderContainer::__register_class();
+    peer::BoxContainer::__register_class();
 }
+

@@ -87,18 +87,17 @@ class CuboidalSurface( Surface ):
 
 
 class PlanarSurface( Surface ):
-    def __init__( self, origin, xVector, yVector, Lx, Ly, Lz=None, name="PlanarSurface" ):
+    def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, name="PlanarSurface" ):
         Surface.__init__( self, name )
 
-        assert numpy.dot( xVector, yVector ) == 0 # Todo. To doubles.
-        zVector = numpy.cross( xVector, yVector )
-        self.outside = Box( origin, xVector, yVector, zVector, Lx, Ly, Lz ) 
+        assert numpy.dot( vectorX, vectorY ) == 0 # Todo. To doubles.
+        vectorZ = numpy.cross( vectorX, vectorY )
+        self.outside = Box( origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ) 
         self.defaultSingle = CylindricalSingle2D
-        #self.defaultPair = SphericalPair3D
         self.defaultPair = CylindricalPair2D
 
         # Hessian normal form [ nx, ny, nz, p ].
-        self.normal = self.outside.zUnitVector # Extra.
+        self.normal = self.outside.unitZ # Extra.
         self.hessianNormal = [ self.normal[0], self.normal[1], self.normal[2], length(self.outside.origin) ]
 
 
@@ -108,7 +107,7 @@ class PlanarSurface( Surface ):
 
 
     def randomPosition( self ):
-        return self.outside.origin + random.uniform(-1,1)*self.outside.xVector + random.uniform(-1,1)*self.outside.yVector
+        return self.outside.origin + random.uniform(-1,1)*self.outside.vectorX + random.uniform(-1,1)*self.outside.vectorY
 
 
 class CylindricalSurface( Surface ):
@@ -116,12 +115,11 @@ class CylindricalSurface( Surface ):
         Surface.__init__( self, name )
         self.outside = Cylinder( origin, radius, orientation, size )
         self.defaultSingle = CylindricalSingle1D
-        #self.defaultPair = SphericalPair3D
         self.defaultPair = CylindricalPair1D
 
 
     def randomPosition( self ):
-        return self.outside.origin + random.uniform(-1, 1) * self.outside.orientation * self.outside.size
+        return self.outside.origin + random.uniform(-1, 1) * self.outside.vectorZ
 
 
 class SphericalSurface( Surface ):

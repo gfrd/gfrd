@@ -5,11 +5,8 @@
 #include <ostream>
 #include "position.hpp"
 #include <cmath>
-#include <iostream>
-//using namespace std;
 
 // Todo. Make sure cylinder is never larger than 1 cellsize or something.  
-// Important.
 template<typename T_>
 struct cylinder
 {
@@ -18,54 +15,52 @@ struct cylinder
     typedef T_ length_type;
 
     cylinder()
-        : origin(), radius(0), orientation(), size(0) {}
+        : origin(), radius(0), orientationZ(), size(0) {}
 
-    cylinder(const position_type& _origin, const length_type& _radius, const position_type& _orientation, const length_type& _size )
-        : origin(_origin), radius(_radius), orientation(_orientation), size(_size)
+    cylinder(const position_type& _origin, const length_type& _radius, const position_type& _orientationZ, const length_type& _size )
+        : origin(_origin), radius(_radius), orientationZ(_orientationZ), size(_size)
     { }
 
   private:
     length_type calculateDistanceToSelfWithNewOrigin( position_type pos, position_type newOrigin )
     {
 	/* First compute the (z,r) components of pos in a coordinate system 
-	 * defined by the vectors zVector and rVector, where zVector is the 
-	 * orientation of the cylinder (using newOrigin as it's centre) and 
-	 * rVector is choosen such that zVector and rVector define a plane in 
-	 * which pos lies. */
+	 * defined by the vectors unitR and orientationZ, where unitR is
+	 * choosen such that unitR and orientationZ define a plane in which
+	 * pos lies. */
         position_type posVector = pos - newOrigin;
 
-        length_type z = posVector.dot_product( orientation ); // Can be <0.
-        position_type zUnitVector = orientation; // By definition.
-        position_type zVector = zUnitVector.scale( z );
+        length_type z = posVector.dot_product( orientationZ ); // Can be <0.
+        position_type posVectorZ = orientationZ.scale( z );
 
-        position_type rVector = posVector - zVector;
-        length_type r = rVector.length();
-        position_type rUnitVector = rVector.scale( 1. / r );
+        position_type posVectorR = posVector - posVectorZ;
+        length_type r = posVectorR.length();
 
 
 	/* Then compute distance to cylinder. */
         length_type dz = fabs(z) - size;
+	length_type dr = r - radius;
 	length_type distance;
-	//cout << "dz = " << dz << endl;
         if(dz > 0){
 	    // pos is (either) to the right or to the left of the cylinder.
-            if(r < radius){
-                distance = dz;
+            if(r > radius){
+		// Compute distance to edge.
+		distance = std::sqrt( dz*dz + dr*dr );
 	    }
             else{
-		// Difficult case. Compute distance to edge.
-                position_type edgeVector = zUnitVector.scale(size) + rUnitVector.scale(radius);
-                distance = (posVector - edgeVector).length();
+                distance = dz;
 	    }
 	}
         else{
-	    // pos is somewhere 'parellel' to the cylinder.
-	    //cout << " r = " << r;
-	    //cout << " radius = " << radius;
-            distance = r - radius;
-	    //cout << " distance = " << distance;
+	    if(dr > radius){
+		// pos is somewhere 'parellel' to the cylinder.
+		distance = dr;
+	    }
+	    else{
+		// Inside cylinder. 
+		distance = std::max(dr, dz);
+	    }
 	}
-	//cout << "distance to cylinder = " << distance << endl;
         return distance;
     }
 
@@ -77,7 +72,6 @@ struct cylinder
 
     length_type calculateDistanceToSelfWithOffset( position_type pos, position_type offset )
     {
-	//cout << "offset " << offset;
 	// Because this cylinder is on the other side of one of the periodic 
 	// boundaries compared to pos, add offset (for example (-L, 0, 0) to 
 	// origin before calculating distance between this cylinder and pos.  
@@ -86,7 +80,7 @@ struct cylinder
 
     bool operator==(const cylinder& rhs) const
     {
-        return origin == rhs.origin && radius == rhs.radius && orientation == rhs.orientation && size == rhs.size;
+        return origin == rhs.origin && radius == rhs.radius && orientationZ == rhs.orientationZ && size == rhs.size;
     }
 
     bool operator!=(const cylinder& rhs) const
@@ -97,7 +91,7 @@ struct cylinder
     // Thse need to be public for comparison operator==.
     position_type origin; // centre.
     length_type radius;
-    position_type orientation; // should be normalized.
+    position_type orientationZ; // should be normalized.
     length_type size; // half length.
 };
 
@@ -105,7 +99,7 @@ template<typename Tstrm_, typename T_>
 inline std::basic_ostream<Tstrm_>& operator<<(std::basic_ostream<Tstrm_>& strm,
         const cylinder<T_>& v)
 {
-    strm << "{" << v.origin <<  ", " << v.radius << ", " << v.orientation << ", " << v.size << "}";
+    strm << "{" << v.origin <<  ", " << v.radius << ", " << v.orientationZ << ", " << v.size << "}";
     return strm;
 }
 

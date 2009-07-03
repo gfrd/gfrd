@@ -37,131 +37,96 @@ class Sphere( Shape ):
 
 
 class Cylinder( Shape ):
-    def __init__( self, origin, radius, orientation, size, distFunc=None ):
+    def __init__( self, origin, radius, orientationZ, size, distFunc=None ):
         Shape.__init__( self, distFunc )
         # Origin is the centre of the cylinder! This has the slight advantage 
         # over other options that we can make use of symmetry sometimes.
         self.origin = numpy.array( origin )
         self.radius = radius
-        self.orientation = normalize( numpy.array( orientation ) )
+        self.orientationZ = normalize( numpy.array( orientationZ ) )
         # Size is the half length of the cylinder!
         self.size = size 
+        self.vectorZ = self.orientationZ * size # Extra.
 
     def getSize( self ):
         return self._size
     def setSize( self, size ):
         self._size = size
-        # Note: we can not do this in constructor, because size may change.
-        self.orientationVector = size * self.orientation
     size = property( getSize, setSize )
 
     def signedDistanceTo( self, pos ):
-        posVector, rUnitVector, r, z = self.toInternal( pos )
+        r, z = self.toInternal( pos )
         dz = abs(z) - self.size
+        dr = r - self.radius
         if dz > 0:
             # pos is (either) to the right or to the left of the cylinder.
-            if r < self.radius:
-                distance = dz
+            if dr > 0:
+                # Compute distance to edge.
+                distance = sqrt( dz*dz + dr*dr )
             else:
-                # Difficult case. Compute distance to edge.
-                edgeVector = self.orientationVector + self.radius * rUnitVector
-                distance = length( posVector - edgeVector )
+                distance = dz
         else:
-            # pos is somewhere 'parallel' to the cylinder.
-            distance = r - self.radius
-        assert distance > 0
+            if dr > 0:
+                # pos is somewhere 'parallel' to the cylinder.
+                distance = dr
+            else:
+                # Inside cylinder, dz and dr are negative.
+                distance = max( dz, dr )
         return distance
 
 
     # Return the (z,r) components of pos in a coordinate system defined by the 
-    # vectors zVector and rVector, where zVector is the orientation of the 
-    # cylinder and rVector is choosen such that zVector and rVector define a 
-    # plane in which pos lies.
+    # vectors unitR and orientationZ, where unitR is choosen such that unitR 
+    # and orientatoinZ define a plane in which pos lies.
     def toInternal( self, pos ):
         posVector = pos - self.origin
 
-        z = numpy.dot( posVector, self.orientation ) # Can be <0.
-        zVector = z*self.orientation
+        z = numpy.dot( posVector, self.orientationZ ) # Can be <0.
+        posVectorZ = z*self.orientationZ
 
-        rVector = posVector - zVector
-        r = length( rVector )       # Always >= 0.
-        rUnitVector = rVector / r
+        posVectorR = posVector - posVectorZ
+        r = length( posVectorR )       # Always >= 0.
+        unitR = posVectorR / r
 
-        assert pos == self.origin + zVector + rVector
-        return posVector, rUnitVector, r, z
+        assert pos == self.origin + posVectorZ + posVectorR
+        return r, z
 
 
     def __str__( self ):
         return "Cylinder: " + str( self.origin ) + " " + str( self.radius ) + " " + \
-                              str( self.orientation ) + " " + str( self.size )
+                              str( self.orientationZ ) + " " + str( self.size )
+
 
 class DummyCylinder( Cylinder ):
     def __init__( self ):
         Cylinder.__init__( self, [0,0,0], 0, [1,1,1], 0 ) 
 
+
 class Box( Shape ):
-    def __init__( self, origin, xVector, yVector, zVector, Lx, Ly, Lz, distFunc=None ):
+    def __init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz, distFunc=None ):
         Shape.__init__( self, distFunc )
         self.origin = numpy.array(origin)
 
-        self.xUnitVector = normalize(numpy.array(xVector))
-        self.yUnitVector = normalize(numpy.array(yVector))
-        self.zUnitVector = normalize(numpy.array(zVector))
+        self.unitX = normalize(numpy.array(vectorX))
+        self.unitY = normalize(numpy.array(vectorY))
+        self.unitZ = normalize(numpy.array(vectorZ))
 
+        assert Lx > 0 and Ly > 0 and Lz > 0
         self.Lx = Lx
         self.Ly = Ly
         self.Lz = Lz
 
-        self.xVector = self.xUnitVector * Lx
-        self.yVector = self.yUnitVector * Ly
-        self.zVector = self.zUnitVector * Lz
-
-
-
-    """ Todo.
-    def signedDistanceTo( self, pos ):
-        posVector, zUnitVector, z, rUnitVector, r = self.toInternal( pos )
-        dz = abs(z) - self.size
-        if dz > 0:
-            # pos is (either) to the right or to the left of the cylinder.
-            if r < self.radius:
-                distance = dz
-            else:
-                # Difficult case. Compute distance to edge.
-                edgeVector = self.size * zUnitVector + self.radius * rUnitVector
-                distance = length( posVector - edgeVector )
-        else:
-            # pos is somewhere 'parellel' to the cylinder.
-            distance = r - self.radius
-        assert distance > 0
-        return distance
-    """
-
-    """ Todo.
-    # Return the (z,r) components of pos in a coordinate system defined by the 
-    # vectors zVector and rVector, where zVector is the orientation of the 
-    # cylinder and rVector is choosen such that zVector and rVector define a 
-    # plane in which pos lies.
-    def toInternal( self, pos ):
-        posVector = pos - self.origin
-
-        z = numpy.dot( posVector, self.orientation ) # Can be <0.
-        zUnitVector = self.orientation # By definition.
-        zVector = z*zUnitVector
-
-        rVector = posVector - zVector
-        r = length( rVector )       # Always >= 0.
-        rUnitVector = rVector / r
-
-        assert pos == self.origin + zVector + rVector
-        return posVector, zUnitVector, z, rUnitVector, r
-    """
+        # vectorX, vectorY and vectorZ could have any size before.
+        self.vectorX = self.unitX * Lx
+        self.vectorY = self.unitY * Ly
+        self.vectorZ = self.unitZ * Lz
 
 
     def __str__( self ):
-        return "Box: " + str( self.origin ) + " " + str( self.Lx ) + " " + \
-                              str( self.Ly ) + " " + str( self.Lz )
+        return "Box: " + str( self.origin ) + " " + str( self.vectorX ) + " " + \
+                              str( self.vectorY ) + " " + str( self.vectorZ )
 
 class DummyBox( Box ):
     def __init__( self ):
         Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 0, 0, 0 ) 
+

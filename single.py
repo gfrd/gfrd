@@ -195,7 +195,7 @@ class CylindricalSingle2D( FreeSingle ):
 
     def calculateDisplacement( self, r ):
         x, y = randomVector2D( r )
-        return x * self.particle.surface.outside.xUnitVector + y * self.particle.surface.outside.yUnitVector
+        return x * self.particle.surface.outside.unitX + y * self.particle.surface.outside.unitY
 
 
 class CylindricalSingle1D( FreeSingle ):
@@ -203,15 +203,15 @@ class CylindricalSingle1D( FreeSingle ):
         FreeSingle.__init__( self, particle, reactionTypes )
 
         # Heads up. Cylinder's size is determined by getMinRadius().
-        self.shellList = [ Cylinder( particle.pos, particle.radius, particle.surface.outside.orientation, self.getMinRadius(), distFunc ) ]
+        self.shellList = [ Cylinder( particle.pos, particle.radius, particle.surface.outside.orientationZ, self.getMinRadius(), distFunc ) ]
 
         # Create a cartesian domain of size mobilityRadius=0.
         gf = FirstPassageGreensFunction( particle.species.D )
         self.domains = [ CartesianDomain1D( 0, (0, 0), self.getMobilityRadius(), gf ) ]
 
 
-    def calculateDisplacement( self, r ):
-        return r * self.shellList[0].orientation
+    def calculateDisplacement( self, z ):
+        return z * self.shellList[0].orientationZ
 
 
     '''

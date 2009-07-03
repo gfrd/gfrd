@@ -572,8 +572,8 @@ class ParticleSimulatorBase( object ):
         self.particleMatrix.remove( particle )
 
     def updateOnParticleMatrix( self, particle, pos ):
-        self.particleMatrix.add( particle,
-                                    pos, particle.species.radius, True )
+        self.particleMatrix.update( particle,
+                                    pos, particle.species.radius )
 
 
     ### checkOverlap return true if there are no particles within the

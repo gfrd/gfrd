@@ -122,8 +122,7 @@ def burstPair( self, pair ):
     assert self.t >= pair.lastTime
     assert self.t <= pair.lastTime + pair.dt
 
-    single1 = pair.single1
-    single2 = pair.single2
+    single1, single2 = pair.single1, pair.single2
 
     if self.t - pair.lastTime > 0.0:
         self.propagatePair( pair )
@@ -138,16 +137,21 @@ def burstPair( self, pair ):
 
 
 def propagatePair( self, pair ):
-    newpos1, newpos2 = pair.drawNewPositions( self.t - pair.lastTime )
-    self.applyBoundary(newpos1)
-    self.applyBoundary(newpos2)
-    assert self.checkOverlap( newpos1, pair.single1.getMinRadius(),
-                              ignore = [ pair.single1.particle, pair.single2.particle] )
-    assert self.checkOverlap( newpos2, pair.single2.getMinRadius(),
-                              ignore = [ pair.single1.particle, pair.single2.particle ] )
-    assert pair.checkNewpos( newpos1, newpos2 ) # Check after applyBoundary().
-    self.moveSingle( pair.single1, newpos1, False )
-    self.moveSingle( pair.single2, newpos2, False )
+    single1, single2 = pair.single1, pair.single2
+    single1.pos, single2.pos = pair.drawNewPositions( self.t - pair.lastTime )
+    self.applyBoundary(single1.pos)
+    self.applyBoundary(single2.pos)
+    assert self.checkOverlap( single1.pos, single1.getMinRadius(),
+                              ignore = [ single1.particle, single2.particle] )
+    assert self.checkOverlap( single2.pos, pair.single2.getMinRadius(),
+                              ignore = [ single1.particle, single2.particle ] )
+    assert pair.checkNewpos( single1.pos, single2.pos )
+    self.updateOnParticleMatrix( single1.particle, single1.pos )
+    self.updateOnParticleMatrix( single2.particle, single2.pos )
+    single1.initialize( self.t )
+    single2.initialize( self.t )
+    self.addToShellMatrix( single1 ) # Add not update.
+    self.addToShellMatrix( single2 )
 
 
 # Ok.

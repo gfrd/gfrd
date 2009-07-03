@@ -28,7 +28,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
         
     def updateParticle( self, particle, pos ):
 
-        self.particleMatrix.add( particle, pos, particle.radius, True )
+        self.particleMatrix.update( particle, pos, particle.radius )
         self.main.updateOnParticleMatrix( particle, pos )
 
     def initialize( self ):
@@ -68,7 +68,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
         self.particleMatrix.remove( particle )
 
 
-    def createParticle( self, species, pos, surface=None ):
+    def createParticle( self, species, pos, surface ):
 
         #if not self.withinShell( pos, species.radius ):
         #    self.escaped = True

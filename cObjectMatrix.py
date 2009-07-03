@@ -138,19 +138,24 @@ class SphereMatrix( ObjectMatrix ):
         self.impl = object_matrix.SphereContainer( self.worldSize, self.matrixSize )
 
 
+    def add( self, key, pos, radius ):
+        assert not self.impl.contains( key )
+        self.impl.insert( key, pos, radius )
+
+
+    def update( self, key, pos, radius ):
+        assert self.impl.contains( key )
+        self.impl.update( key, pos, radius )
+
+
     def get( self, key ):
         # There is not an equivalent for cylinders.
         return self.impl.get( key )
 
 
-    # Adds an object with single/pair to matrix.
-    def add( self, key, pos, radius, update=False ):
+    def addOrUpdateValue( self, key, object ):
         assert radius < self.cellSize * .5
-        if update:
-            assert self.impl.contains( key )
-        else:
-            assert not self.impl.contains( key )
-        self.impl.insert( key, pos, radius )
+        self.impl.insert( key, object.pos, object.radius )
 
 
 class CylinderMatrix( ObjectMatrix ):
@@ -162,13 +167,39 @@ class CylinderMatrix( ObjectMatrix ):
         self.impl = object_matrix.CylinderContainer( self.worldSize, self.matrixSize )
 
 
-    def add( self, key, shell, update ):
+    def add( self, key, shell ):
         # Todo. Do something like this.
         #assert radius < self.cellSize * .5
-        if update:
-            assert self.impl.contains( key )
-        else:
-            assert not self.impl.contains( key )
+        assert not self.impl.contains( key )
         self.impl.insert( key, shell.origin, shell.radius, shell.orientation, shell.size )
+
+
+    def update( self, key, shell ):
+        assert self.impl.contains( key )
+        # object_matrix handles updates nicely.
+        self.impl.add( key, shell.origin, shell.radius, shell.orientation, shell.size )
+
+
+class BoxMatrix( ObjectMatrix ):
+    def __init__( self ):
+        ObjectMatrix.__init__( self )
+
+
+    def initialize( self ):
+        self.impl = object_matrix.BoxContainer( self.worldSize, self.matrixSize )
+
+
+    def add( self, key, shell ):
+        # Todo. Do something like this.
+        #assert radius < self.cellSize * .5
+        assert not self.impl.contains( key )
+        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
+
+
+    def update( self, key, shell ):
+        assert self.impl.contains( key )
+        # object_matrix handles updates nicely.
+        self.impl.add( key, shell.origin, shell.unitX, shell.unitY, shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
+
 
 

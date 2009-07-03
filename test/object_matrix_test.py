@@ -16,6 +16,9 @@ class object_matrixTestCase( unittest.TestCase ):
     def tearDown(self):
         pass
 
+    '''
+    SphereContainer
+    '''
     def test1( self ):
 
         c = SphereContainer(1.0, 10)
@@ -51,7 +54,7 @@ class object_matrixTestCase( unittest.TestCase ):
         self.assertAlmostEqual( 50, d[0] )
 
         # Update with same value.
-        c.update( 'A', [500, 500, 500], 50 )
+        c.insert( 'A', [500, 500, 500], 50 )
         _,d = c.neighbors_array( [500, 500, 600], 75 )
         self.assertAlmostEqual( 50, d[0] )
         # cyclic should give same result
@@ -59,11 +62,15 @@ class object_matrixTestCase( unittest.TestCase ):
         self.assertAlmostEqual( 50, d[0] )
 
         # Now a real update.
-        c.update( 'A', [500, 500, 500], 75 )
+        c.insert( 'A', [500, 500, 500], 75 )
         _,d = c.neighbors_array( [500, 500, 600], 100 )
         self.assertAlmostEqual( 25, d[0] )
         _,d = c.neighbors_array_cyclic( [500, 500, 600], 100 )
         self.assertAlmostEqual( 25, d[0] )
+
+    '''
+    CylinderContainer
+    '''
 
     def test3( self ):
         c = CylinderContainer( 1000, 3 )
@@ -83,7 +90,7 @@ class object_matrixTestCase( unittest.TestCase ):
         self.assertAlmostEqual( 50, d[0] )
 
         # Real update.
-        c.update( 'A', [500, 500, 500], 25, [0,0,1], 75 )
+        c.insert( 'A', [500, 500, 500], 25, [0,0,1], 75 )
         _,d = c.neighbors_array( [500, 500, 600], 75 )
         self.assertAlmostEqual( 25, d[0] )
         _,d = c.neighbors_array_cyclic( [500, 500, 600], 75 ) 
@@ -122,6 +129,52 @@ class object_matrixTestCase( unittest.TestCase ):
         self.assertAlmostEqual( 200, d[0] ) # Ok.
         _,d = c.all_neighbors_array_cyclic( [600, 0, 0] )
         self.assertAlmostEqual( 500, d[0] ) # Not Ok!
+
+    '''
+    BoxContainer
+    '''
+    def test8( self ):
+        c = BoxContainer( 1000, 3 )
+        c.insert( 'A', [500, 500, 500], [1,0,0], [0,1,0], [0,0,1], 50, 50, 50 )
+        
+        # Find neighbors of cylinder.
+        _,d = c.neighbors_array( [500, 500, 600], 75 )
+        self.assertAlmostEqual( 50, d[0] )
+        _,d = c.neighbors_array_cyclic( [500, 500, 600], 75 )
+        self.assertAlmostEqual( 50, d[0] )
+
+        # Cylinder update with same value.
+        c.insert( 'A', [500, 500, 500], [1,0,0], [0,1,0], [0,0,1], 50, 50, 50 )
+        _,d = c.neighbors_array( [500, 500, 600], 75 )
+        self.assertAlmostEqual( 50, d[0] )
+        _,d = c.neighbors_array_cyclic( [500, 500, 600], 75 )
+        self.assertAlmostEqual( 50, d[0] )
+
+        # Real update.
+        c.insert( 'A', [500, 500, 500], [1,0,0], [0,1,0], [0,0,1], 50, 50, 75 )
+        _,d = c.neighbors_array( [500, 500, 600], 75 )
+        self.assertAlmostEqual( 25, d[0] )
+        _,d = c.neighbors_array_cyclic( [500, 500, 600], 75 ) 
+        self.assertAlmostEqual( 25, d[0] )
+
+    def test9( self ):
+        # Distance to cylinder in y direction.
+        c = BoxContainer( 1000, 3 )
+        c.insert( 'A', [500, 500, 500], [1,0,0], [0,1,0], [0,0,1], 50, 50, 50 )
+        _,d = c.all_neighbors_array( [500, 600, 527] )
+        self.assertAlmostEqual( 50, d[0] )
+        # Distance to cylinder edge.
+        _,d = c.all_neighbors_array( [500, 553, 554] )
+        self.assertAlmostEqual( 5, d[0] )
+
+    def test10( self ):
+        # Distance to cylinder using periodic boundary conditions.
+        # Distance towards edge x-y.
+        c = BoxContainer( 1000, 3 )
+        c.insert( 'A', [0,0,0], [1,0,0], [0,1,0], [0,0,1], 50, 50, 50 )
+        _,d = c.all_neighbors_array_cyclic( [946, 947, 0] )
+        self.assertAlmostEqual( 5, d[0] )
+
 
 if __name__ == "__main__":
     unittest.main()

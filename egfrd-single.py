@@ -99,18 +99,13 @@ the single, while just calling propagateSingle does not. This works if
 single.dt is returned to the scheduler.
 '''
 def propagateSingle( self, single ):
-    newpos = single.drawNewPosition(self.t - single.lastTime) 
-    self.applyBoundary( newpos )
-    assert self.checkOverlap( newpos, single.getMinRadius(),
+    single.pos = single.drawNewPosition(self.t - single.lastTime) 
+    self.applyBoundary( single.pos )
+    assert self.checkOverlap( single.pos, single.getMinRadius(),
                               ignore = [ single.particle ] )
-    self.moveSingle( single, newpos )
-
-
-def moveSingle( self, single, newpos, update=True ):
-    single.pos = newpos
-    self.updateOnParticleMatrix( single.particle, newpos )
+    self.updateOnParticleMatrix( single.particle, single.pos )
     single.initialize( self.t )
-    self.addToShellMatrix( single, update )
+    self.updateShellMatrix( single )
 
 
 def restoreSingleShells( self, singles ):
@@ -141,7 +136,7 @@ def updateSingle( self, single, closest, distanceToShell ):
     single.dt, single.eventType, single.activeDomain = single.determineNextEvent( )
     single.lastTime = self.t
     # No need for self.updateEvent(), single.dt is returned from fireSingle().
-    self.addToShellMatrix( single, True )
+    self.updateShellMatrix( single )
 
 
 def calculateSingleShellSize( self, single, closest, 

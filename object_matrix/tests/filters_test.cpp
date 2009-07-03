@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(cylinders)
     oc.insert(std::make_pair(2, mapped_type(pos(0.9, 0.1, 0.4), 0.07, pos(0,0,1), 0.07)));
     oc.insert(std::make_pair(3, mapped_type(pos(0.9, 0.95, 0.4), 0.1, pos(0,0,1), 0.1)));
 
-    cout << std::endl << std::endl;
+    std::cout << std::endl << std::endl;
     typedef collector<oc_type> col_type;
     col_type col;
     // Collect all objects from oc that lie within the radius of object 1.
