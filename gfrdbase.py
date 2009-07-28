@@ -388,7 +388,7 @@ class ParticleSimulatorBase( object ):
         self.lastReaction = None
 
         # Needed when creating a shell around a particle whose surface is not 
-        # specified.
+        # specified. Backward compatibility.
         self.defaultSurface = DefaultSurface()
 
     def initialize( self ):

@@ -109,22 +109,6 @@ class VTKLogger:
                 colors=typeList )
 
 
-    def getShellData( self ):
-        posList, radiusList, typeList = [], [], []
-
-        # Get data from object matrix.
-        keys = self.sim.sphereMatrix.getAll( )
-        for key in keys:
-            single = key[0]
-            sphere = single.shellList[0]
-            type = 1
-            self.appendLists( posList, sphere.origin, radiusList, sphere.radius, 
-                    typeList, type )
-
-        return self.vtk_writer.createDoc(posList, radii=radiusList, 
-                colors=typeList )
-
-
     def getShellDataFromScheduler( self ):
         posList, radiusList, typeList = [], [], []
 
@@ -142,23 +126,12 @@ class VTKLogger:
 
             try:
                 # Don't show sphere for cylinder.
-                length = object.size  # Only cylinders have length.
+                length = object.shellList[0].size  # Only cylinders have a 'size'.
             except:
-                # Fixme. How do I find if this object is a single/pair/multi?
-                # Single or Pair.
-                try:
-                    if len(object.origin) ==3: # Ugliest hack ever. Todo.
-                        self.appendLists( posList, object.origin, radiusList, 
-                                object.radius, typeList, type )
-                except:
-                    pass
-                try:
-                    # Multi.
-                    for single in object.shellList:
-                        self.appendLists( posList, single.origin, radiusList, 
-                                single.radius, typeList, type )
-                except:
-                    pass
+                # Single or Pair or Multi.
+                for single in object.shellList:
+                    self.appendLists( posList, single.origin, radiusList, 
+                            single.radius, typeList, type )
 
         return self.vtk_writer.createDoc(posList, radii=radiusList, 
                 colors=typeList )
@@ -187,7 +160,7 @@ class VTKLogger:
 
         type = 1
         for box in boxes:
-            tensor = numpy.concatenate((box.xVector, box.yVector, box.zVector))
+            tensor = numpy.concatenate((box.vectorX, box.vectorY, box.vectorZ))
             self.appendLists(posList, box.origin, typeList, type, tensorList=tensorList, 
                     tensor=tensor) 
 
@@ -205,7 +178,7 @@ class VTKLogger:
         for cylinder in cylinders:
             radius = cylinder.radius
             type = 1
-            orientation = cylinder.orientation
+            orientation = cylinder.orientationZ
             size = cylinder.size
 
             # Construct scale vector for scaling by vector components. Not 
@@ -291,5 +264,22 @@ class VTKLogger:
             except AttributeError:
                 # So this is not a cylinder.
                 pass
+
+    def getShellData( self ):
+        posList, radiusList, typeList = [], [], []
+
+        # Get data from object matrix.
+        keys = self.sim.sphereMatrix.getAll( )
+        for key in keys:
+            single = key[0]
+            sphere = single.shellList[0]
+            type = 1
+            self.appendLists( posList, sphere.origin, radiusList, sphere.radius, 
+                    typeList, type )
+
+        return self.vtk_writer.createDoc(posList, radii=radiusList, 
+                colors=typeList )
+
+
         """
 

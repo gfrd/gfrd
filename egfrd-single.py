@@ -48,6 +48,7 @@ def fireSingle( self, single ):
     '''
     Propagate this particle to the exit point on the shell. This is done by 
     setting the escape flag in the active domain.
+    This is the only time we need this activeDomain stuff.
     '''
     single.activeDomain.drawEventType( single.dt )
     self.propagateSingle( single )
@@ -60,7 +61,7 @@ def fireSingle( self, single ):
     bursted = []
     if closeNeighbors:
         bursted = self.burstNonMultis( closeNeighbors )
-        obj, b = self.formPairOrMulti( single, bursted )
+        obj, b = self.formInteractionOrPairOrMulti( single, bursted )
         bursted.extend( b )
         if obj:
             single.dt = -INF # remove by rescheduling to past.
@@ -69,6 +70,8 @@ def fireSingle( self, single ):
         # if nothing was formed, recheck closest and restore shells.
         closest, closestShellDistance = \
             self.getClosestObj( single.pos, ignore = [ single, ] )
+
+    # All neighbors are more than minShell away.
     self.updateSingle( single, closest, closestShellDistance )
     bursted = uniq( bursted )
     burstedSingles = [ s for s in bursted if isinstance( s, Single ) ]
@@ -96,7 +99,7 @@ place before the actual scheduled event for the single, while propagateSingle
 can be called for an escape event.
 Another subtle difference is that burstSingle always reschedules (updateEvent) 
 the single, while just calling propagateSingle does not. This works if 
-single.dt is returned to the scheduler.
+single.dt is returned to the scheduler after calling propagateSingle.
 '''
 def propagateSingle( self, single ):
     single.pos = single.drawNewPosition(self.t - single.lastTime) 
@@ -121,7 +124,7 @@ def restoreSingleShells( self, singles ):
 
 # Draw new shell + new event time.
 def updateSingle( self, single, closest, distanceToShell ): 
-    if isinstance( closest, Single ):
+    if isinstance( closest, Single ): # and isinstance( closest.shellList[0], Sphere)
         distanceToClosest = self.distance( single.pos, closest.pos )
         shellSize = self.calculateSingleShellSize( single, closest, 
                                                    distanceToClosest,

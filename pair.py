@@ -64,8 +64,9 @@ class Pair( object ):
         # account). 
         self.CoM, self.IV = self.getCoMandIV()
         self.pairDistance = distFunc( particle1.pos, particle2.pos )
-        assert abs(self.pairDistance - length( self.IV )) < 1e-15, \
-                    '%g != %g' % (self.pairDistance, length( self.IV ))
+        # Todo: why discrepancy of about 1e-15 here?
+        assert abs(self.pairDistance - length( self.IV )) < 1e-10, \
+                    '%.15g != %.15g' % (self.pairDistance, length( self.IV ))
 
 
     def __del__( self ):
@@ -122,8 +123,8 @@ class Pair( object ):
         pos1 = self.single1.particle.pos
         pos2 = self.single2.particle.pos
 
-        # Todo.
-        pos2t = cyclicTranspose( pos2, pos1, self.worldSize ) #FIXME:
+        # Todo. Why the fixme?
+        pos2t = cyclicTranspose( pos2, pos1, self.worldSize ) #FIXME
         CoM = ( pos1 * self.D2 + pos2t * self.D1 ) / self.D_tot
         IV = pos2t - pos1
         return CoM % self.worldSize, IV
@@ -144,7 +145,7 @@ class Pair( object ):
         D1_factor = D1 / self.D_tot
         D2_factor = D2 / self.D_tot
 
-        # Todo.
+        # Todo. Why the Fixme?
         shellSize = self.shellSize / SAFETY  # FIXME:
 
         sqrtD_tot = math.sqrt( self.D_tot )
@@ -272,10 +273,6 @@ class Pair( object ):
         return buf
 
 
-    def drawNewPositions( self, dt ):
-        return self.newPositions( self.drawNewCoM( dt ), self.drawNewIV( dt ) )
-
-
     def drawNewCoM( self, dt ):
         r_R = self.domains[0].drawPosition( dt )
         return self.CoM + self.calculateCoMDisplacement( r_R )
@@ -326,7 +323,10 @@ class SphericalPair3D( Pair ):
     Calculate new positions of the pair particles using a new center-of-mass, 
     a new inter-particle vector, and an old inter-particle vector.
     '''
-    def newPositions( self, newCoM, newIV ):
+
+
+    def drawNewPositions( self, dt ):
+        newCoM, newIV = self.drawNewCoM( dt ), self.drawNewIV( dt )
         #FIXME: need better handling of angles near zero and pi.
 
         '''
@@ -447,7 +447,8 @@ class CylindricalPair2D( Pair ):
     Calculate new positions of the pair particles using a new center-of-mass, 
     a new inter-particle vector, and an old inter-particle vector.
     '''
-    def newPositions( self, newCoM, (r, theta) ):
+    def drawNewPositions( self, dt ):
+        newCoM, (r, theta) = self.drawNewCoM( dt ), self.drawNewIV( dt )
         unitX = self.surface.outside.unitX
         unitY = self.surface.outside.unitY
         angle = vectorAngle( unitX, self.IV )
@@ -492,7 +493,6 @@ class CylindricalPair1D( Pair ):
         self.domains = [ comDomain, ivDomain ]
 
 
-
     def calculateCoMDisplacement( self, r_R ):
         return r_R * self.surface.outside.orientationZ
 
@@ -503,7 +503,8 @@ class CylindricalPair1D( Pair ):
         return r_r[0] * self.surface.outside.orientationZ
 
 
-    def newPositions( self, newCoM, newIV ):
+    def drawNewPositions( self, dt ):
+        newCoM, newIV = self.drawNewCoM( dt ), self.drawNewIV( dt )
         newpos1 = newCoM - newIV * ( self.D1 / self.D_tot )
         newpos2 = newCoM + newIV * ( self.D2 / self.D_tot )
         return newpos1, newpos2

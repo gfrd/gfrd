@@ -153,11 +153,6 @@ class SphereMatrix( ObjectMatrix ):
         return self.impl.get( key )
 
 
-    def addOrUpdateValue( self, key, object ):
-        assert radius < self.cellSize * .5
-        self.impl.insert( key, object.pos, object.radius )
-
-
 class CylinderMatrix( ObjectMatrix ):
     def __init__( self ):
         ObjectMatrix.__init__( self )
@@ -171,13 +166,13 @@ class CylinderMatrix( ObjectMatrix ):
         # Todo. Do something like this.
         #assert radius < self.cellSize * .5
         assert not self.impl.contains( key )
-        self.impl.insert( key, shell.origin, shell.radius, shell.orientation, shell.size )
+        self.impl.insert( key, shell.origin, shell.radius, shell.orientationZ, shell.size )
 
 
     def update( self, key, shell ):
         assert self.impl.contains( key )
         # object_matrix handles updates nicely.
-        self.impl.add( key, shell.origin, shell.radius, shell.orientation, shell.size )
+        self.impl.insert( key, shell.origin, shell.radius, shell.orientationZ, shell.size )
 
 
 class BoxMatrix( ObjectMatrix ):
@@ -199,7 +194,7 @@ class BoxMatrix( ObjectMatrix ):
     def update( self, key, shell ):
         assert self.impl.contains( key )
         # object_matrix handles updates nicely.
-        self.impl.add( key, shell.origin, shell.unitX, shell.unitY, shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
+        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
 
 
 

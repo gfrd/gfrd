@@ -37,14 +37,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         self.sphereMatrix = SphereMatrix()
         self.cylinderMatrix = CylinderMatrix()
-        self.boxMatrix = CylinderMatrix()
+        self.boxMatrix = BoxMatrix()
         self.objectMatrices = [ self.sphereMatrix, self.cylinderMatrix, self.boxMatrix ]
         #self.sm2 = pObjectMatrix()
 
         ParticleSimulatorBase.__init__( self )
 
         self.MULTI_SHELL_FACTOR = 0.05
-        self.SINGLE_SHELL_FACTOR = 0.1
+        self.SINGLE_SHELL_FACTOR = 1.0  # 0.1
 
         self.isDirty = True
         self.scheduler = EventScheduler()
@@ -198,7 +198,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     def burstNonMultis( self, neighbors ):
         bursted = []
         for obj in neighbors:
-            if not isinstance( obj, Multi ):
+            if not (isinstance( obj, Multi ) or isinstance( obj, Surface )):
                 b = self.burstObj( obj )
                 bursted.extend( b )
             else:
@@ -334,7 +334,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         since that would unneccesarily iterate one more time over all 
         objects in self.getNeighbors. 
         '''
-        closestSingle = DummySingle()
+        closestObject = DummySingle()
         closestDistance = INF
 
         for objectMatrix in self.objectMatrices:
@@ -347,15 +347,42 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             for i, key in enumerate( keys ):
                 single = key[0]
                 if single not in ignore and distances[i] < closestDistance:
-                    closestSingle, closestDistance = single, distances[i]
+                    closestObject, closestDistance = single, distances[i]
                     '''
                     Found yet a closer single. Break out of inner for loop 
                     and check other objectMatrices.
                     '''
                     break   
-        return closestSingle, closestDistance
+
+        # Surface detection.
+        distanceToSurface, closestSurface = self.getClosestSurface( pos ) 
+        if distanceToSurface < closestDistance:
+            closestDistance = distanceToSurface
+            closestObject = closestSurface
+
+        return closestObject, closestDistance
 
 
+    '''
+    Returns sorted list of pairs:
+    - distance to surface
+    - surface itself
+
+    We can not use objectmatrix, it would miss a surface if the origin of the 
+    surface would not be in the same or neighboring cells as pos.
+    '''
+    def getClosestSurface( self, pos ):
+        surfaces = [ None ]
+        distances = [ INF ]
+        for surface in self.surfaceList:
+            posTransposed = cyclicTranspose( pos, surface.outside.origin, self.worldSize )
+            distances.append( surface.signedDistanceTo( posTransposed ) )
+        return min( zip( distances, surfaces ))
+
+
+    '''
+    Todo: no surface detection needed?
+    '''
     def getNeighborsWithinRadiusNoSort( self, pos, radius, ignore=[] ):
         neighbors = []
         for objectMatrix in self.objectMatrices:
@@ -367,8 +394,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
     '''
     Returns all singles and the distances towards their *shell* if that shell is 
-    within a distance radius of pos, plus the closest single and the distance 
-    towards it shell that is just outside of radius.
+    within 'radius' of 'pos', plus the closest single and the distance towards it 
+    shell that is just outside of radius.
     '''
     def getNeighbors( self, pos, radius=INF, ignore=[] ):
         # Diccionaries are more efficient for lookups.
@@ -389,7 +416,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                     Since a single can in theory have more than 1 shell, and 
                     for each shell there is an entry in the objectMatrix, we 
                     signal here that we have already seen this single.
-                    This is a bug: seen[ key ] = None
+                    This used to be a bug: seen[ key ] = None
                     '''
                     seen[ single ] = None
                     if dists[i] > radius:
@@ -409,6 +436,16 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                     else:
                         neighbors.append( single )
                         distances.append( dists[i] )
+
+        # Surface detection.
+        distanceToSurface, closestSurface = self.getClosestSurface( pos ) 
+        if distanceToSurface < radius:
+            neighbors.append( closestSurface )
+            distances.append( distanceToSurface )
+        elif distanceToSurface < closestDistance:
+            closestDistance = distanceToSurface
+            closestSingle = closestSurface
+
         return neighbors, distances, closestSingle, closestDistance
 
 

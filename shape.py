@@ -7,7 +7,7 @@ class Shape( object ):
     def __init__( self, distFunc ):
         # Note: we can use the distance function to compute the distance 
         # between 2 points, taken into account the periodic boundary 
-        # conditions. Very cool. 
+        # conditions.
         self.distance = distFunc
 
 
@@ -43,9 +43,9 @@ class Cylinder( Shape ):
         # over other options that we can make use of symmetry sometimes.
         self.origin = numpy.array( origin )
         self.radius = radius
-        self.orientationZ = normalize( numpy.array( orientationZ ) )
+        self.orientationZ = normalize( numpy.array( orientationZ ) ) # Formerly known as unitZ.
         # Size is the half length of the cylinder!
-        self.size = size 
+        self.size = size                                             # Formerly known as Lz.
         self.vectorZ = self.orientationZ * size # Extra.
 
     def getSize( self ):
@@ -55,7 +55,7 @@ class Cylinder( Shape ):
     size = property( getSize, setSize )
 
     def signedDistanceTo( self, pos ):
-        r, z = self.toInternal( pos )
+        r, z, _, _ = self.toInternal( pos )
         dz = abs(z) - self.size
         dr = r - self.radius
         if dz > 0:
@@ -86,10 +86,13 @@ class Cylinder( Shape ):
 
         posVectorR = posVector - posVectorZ
         r = length( posVectorR )       # Always >= 0.
-        unitR = posVectorR / r
+          
+        return r, z, posVectorR, posVectorZ
 
-        assert pos == self.origin + posVectorZ + posVectorR
-        return r, z
+
+    def calculateProjectionVectors( self, pos ):
+        r, z, posVectorR, posVectorZ = self.toInternal( pos )
+        return self.origin + posVectorZ, posVectorR, r
 
 
     def __str__( self ):
@@ -116,10 +119,59 @@ class Box( Shape ):
         self.Ly = Ly
         self.Lz = Lz
 
-        # vectorX, vectorY and vectorZ could have any size before.
+        # vectorX, vectorY and vectorZ didn't have to be normalized before.
         self.vectorX = self.unitX * Lx
         self.vectorY = self.unitY * Ly
         self.vectorZ = self.unitZ * Lz
+
+
+    def signedDistanceTo( self, pos ):
+        x, y, z = self.toInternal( pos )
+        dx = abs(x) - self.Lx
+        dy = abs(y) - self.Ly
+        dz = abs(z) - self.Lz
+
+        if dx > 0:
+            if dy > 0:
+		if dz > 0:
+		    distance = sqrt( dx*dx + dy*dy + dz*dz )
+		else:
+		    distance = sqrt( dx*dx + dy*dy )
+	    else:
+		if dz > 0:
+		    distance = sqrt( dx*dx + dz*dz )
+		else:
+		    distance = dx
+	else:
+            if dy > 0:
+		if dz > 0:
+		    distance = sqrt( dy*dy + dz*dz )
+		else:
+		    distance = dy
+	    else:
+		if dz > 0:
+		    distance = dz
+		else:
+                    # Inside box. Pick negative distance closest to 0.
+		    distance = max( max(dx,dy), dz )
+
+        return distance
+
+
+    def toInternal( self, pos ):
+        # First compute the (x,y,z) components of pos in a coordinate system 
+        # defined by the vectors unitX, unitY, unitZ of the box.
+        posVector = pos - self.origin
+        x = numpy.dot( posVector, self.unitX )
+        y = numpy.dot( posVector, self.unitY )
+        z = numpy.dot( posVector, self.unitZ )
+
+        return x, y, z
+
+
+    def calculateProjectionVectors( self, pos ):
+        x, y, z = self.toInternal( pos )
+        return self.origin + x * self.unitX + y * self.unitY, z * self.unitZ, z
 
 
     def __str__( self ):

@@ -1,16 +1,3 @@
-    # Returns sorted list with elements:
-    # - distance to surface
-    # - surface itself
-    # - interactionType (only 1) this subSpace can have with that surface.
-    def getClosestSurface( self, pos ):
-        surfaces = ( s for s in self.surfaceList )
-        #interactions = ( s[1] for s in self.surfaceList )
-        try:
-            # Todo: is this distance boundaries-safe?
-            distances = ( (s.distance( pos ) ) for s in self.surfaceList )
-            return min( izip( distances, surfaces ))
-        except ValueError:
-            return INF, None
 
 
 
@@ -30,7 +17,6 @@
     # fireSingle is more or less surface proof.
     ### A single particle either reacts or leaves it's shell. Here these
     ### events are executed.
-    """
     def fireSingle( self, single ):
         log.debug( '    %s.fireSingle: %s' % ('egfrd2', single) )
 
@@ -189,7 +175,6 @@
         # single.
         return single.dt
 
-    """
 
     def createCylinder( self, single, pos, orientation, radius_a, r0, radius_b, halfLength, interactionType ):
         log.debug( '    %s.createCylinder: %s ' % ('egfrd2', single) )

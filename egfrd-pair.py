@@ -154,23 +154,25 @@ def propagatePair( self, pair ):
     self.addToShellMatrix( single2 )
 
 
-# Ok.
-def formPairOrMulti( self, single, neighbors ):
+def formInteractionOrPairOrMulti( self, single, neighbors ):
     assert neighbors
     bursted = []
 
+    # Try interaction
+    if isinstance( neighbors[0], Surface ):
+        obj = self.formInteraction( single, neighbors[0], neighbors[1:] )
+        if obj:
+            return obj, neighbors[1:]
+
+
     # Try forming a Pair.
-    if isinstance( neighbors[0], Single ):
+    if isinstance( neighbors[0], Single ): # and isinstance( neighbors[0].shellList[0], Sphere)
         obj = self.formPair( single, neighbors[0], neighbors[1:] )
         if obj:
             return obj, neighbors[1:]
 
     # Then, a Multi.
     minShell = single.getMinRadius() * ( 1.0 + self.MULTI_SHELL_FACTOR )
-    '''
-    Good example why side-effect free programming is a good idea.  Then 
-    I would know for sure that formPair didn't do anything to neighbors. 
-    '''
     neighborDists = self.objDistanceArray( single.pos, neighbors )
     neighbors = [ neighbors[i] for i in 
                   ( neighborDists <= minShell ).nonzero()[0] ]
@@ -214,7 +216,107 @@ def formPairOrMulti( self, single, neighbors ):
     assert False, 'do not reach here'
 
 
-# Ok.
+# Todo.
+# Find largest possible cylinder around particle, such that it is not
+# interfering with other particles. Miedema's algorithm.
+#def formCylinder( self, single, surface, interactionType ):
+def formInteraction( self, single, surface, bursted ):
+    # Todo.
+    assert bursted == []
+    log.debug( 'formInteraction: %s' % (single) )
+
+    orientation = surface.orientationZ
+    origin, posVector, r0 = surface.calculateProjectionVectors( single.pos )
+
+    # Todo. Applyboundary.
+    assert numpy.linalg.norm(single.pos - origin) >= surface.radius
+
+    dr = self.getMaxShellSize() #INF #CYLINDRICAL_SHELL_MAX_WIDTH - r0
+    dz = self.getMaxShellSize() #INF #CYLINDRICAL_SHELL_MAX_HALF_LENGTH
+
+    #cylinder = surface.interactionSingle( origin, 
+
+    allNeighbors = getNeighborsWithinRadiusNoSort( origin, INF, ignore=[single,] )
+
+    for object in allNeighbors:
+        rhoi = object.shellList[0].radius
+
+        objectVector = object.shellList[0].origin - origin
+
+        # Calculate dz for this object.
+        zi = numpy.dot( objectVector, orientation )
+        dzi = abs(zi) - rhoi
+        temp = zi*numpy.array(orientation)
+        temp2 = numpy.array(objectVector) - numpy.array(temp)
+
+        # Calculate dr for this object.
+        ri = numpy.linalg.norm( temp2 )
+        dri = ri - r0 - rhoi
+
+        if dzi < dz and dri < dr:
+            if dzi > dri:
+                dz = dzi
+            else:
+                dr = dri
+
+    assert dr > 0
+    bursted = uniq( bursted )
+    burstedSingles = [ s for s in bursted if isinstance( s, Single ) ]
+    # Probably everything would work just fine still if we didn't restore
+    # here, since those burstedSingles are already in the scheduler with a
+    # dt=0 because they have been given a shell with size minSize.
+    self.restoreSingleShells( burstedSingles )
+
+    radius_a = surface.radius
+    radius_b = r0 + dr
+    halfLength = abs(dz)
+    # Make cylinder with radius b and half-length dz. 
+    cylinder = self.createCylinder( single, origin, orientation, radius_a, r0, radius_b, halfLength, interactionType )
+
+    self.removeFromShellMatrix( single )
+
+    self.shellMatrix.addCylinder( (cylinder, 0), cylinder.shellList[0] )
+    cylinder.determineNextEvent( self.t )
+    self.addCylinderEvent( cylinder )
+    log.info( 'cylinder shell pos %s radius %g halfLength %g dt %g' % (cylinder.origin, cylinder.radius, cylinder.halfLength, cylinder.dt) )
+    #Todo:
+    #assert self.checkObj( cylinder )
+    return cylinder
+
+
+# Todo.
+def formInteraction( self, single, surface, bursted ):
+    # Todo.
+    assert bursted == []
+
+
+    
+
+    '''
+    Here, we have to take into account of the bursted Singles in
+    this step.  The simple check for closest below could miss
+    some of them, because sizes of these Singles for this
+    distance check has to include SINGLE_SHELL_FACTOR, while
+    these bursted objects have zero mobility radii.  This is not
+    beautiful, a cleaner framework may be possible.
+    '''
+    # TODO 
+    closest, closestShellDistance = DummySingle(), INF
+    for b in bursted:
+        if isinstance( b, Single ):
+            d = self.distance( com, b.pos ) \
+                - b.getMinRadius() * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+            if d < closestShellDistance:
+                closest, closestShellDistance = b, d
+
+    if closestShellDistance <= minShellSizeWithMargin:
+        log.debug( '%s not formed: squeezed by bursted neighbor %s' %
+                   ( 'Pair( %s, %s )' % ( single1.particle, 
+                                          single2.particle ), closest ) )
+        return None
+
+
+# Decide if pair makes sense.
 def formPair( self, single1, single2, bursted ):
     #log.debug( 'trying to form %s' %
     #           'Pair( %s, %s )' % ( single1.particle, 
@@ -346,17 +448,16 @@ def formPair( self, single1, single2, bursted ):
     self.addToShellMatrix( pair )
 
 
-    # The function formerly known as the impure function 
-    # Pair.determineNextEvent.
+    # Formerly known as the impure function Pair.determineNextEvent().
     dtSingleReaction, reactingSingle = pair.drawSingleReactionTime( )
     dtEscape, activeDomain = pair.drawEscapeOrReactionTime( )
 
     if dtSingleReaction < dtEscape:
-        pair.EventType = EventType.REACTION
+        pair.eventType = EventType.REACTION # This is single (!) reaction.
         pair.reactingSingle = reactingSingle
         pair.dt = dtSingleReaction
     else:
-        pair.EventType = EventType.ESCAPE
+        pair.eventType = EventType.ESCAPE
         pair.activeDomain = activeDomain
         pair.dt = dtEscape
 

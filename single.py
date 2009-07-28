@@ -182,6 +182,9 @@ class SphericalSingle3D( FreeSingle ):
         return randomVector(r)
 
 
+'''
+Hockey pucks.
+'''
 class CylindricalSingle2D( FreeSingle ):
     def __init__( self, particle, reactionTypes, distFunc ):
         FreeSingle.__init__( self, particle, reactionTypes )
@@ -251,4 +254,53 @@ class DummySingle( object ):
 
     def __str__( self ):
         return 'DummySingle()'
+
+
+class InteractionSingle( Single ):
+    def __init__( self, particle, reactionTypes ):
+        Single.__init__( self, particle, reactionTypes )
+
+# Todo.
+class InteractionSingle1D( InteractionSingle ):
+    def __init__( self, particle, reactionTypes ):
+        pass
+
+
+# Todo.
+class InteractionSingle2D( InteractionSingle ):
+    def __init__( self, particle, reactionTypes ):
+        InteractionSingle.__init__( self, particle, reactionTypes )
+
+        self.shellList = [ Cylinder( particle.pos, particle.radius, particle.surface.outside.orientationZ, self.getMinRadius(), distFunc ) ]
+
+        # Create a cartesian domain of size mobilityRadius=0.
+        gf = FirstPassageGreensFunction( particle.species.D )
+        self.domains = [ CartesianDomain1D( 0, (0, 0), self.getMobilityRadius(), gf ) ]
+
+    def __init__( self, pos, orientation, radius, halfLength ):
+        self.pos = pos
+        self.orientation = orientation
+        self.radius = radius
+        self.halfLength = halfLength
+
+
+# Origin of box is where particles starts. Setting it at the corners is 1. not 
+# easier, 2. mobilityRadius makes domain extent from (0+mobilityRadius to 
+# L-mobilityRadius)
+class CuboidalSingle( InteractionSingle ):
+    def __init__( self, particle, reactionTypes, origin, baseVectors, widths, interactionRates ):
+        self.origin = origin
+        self.baseVectors = baseVectors
+        self.widths = widths
+        pos = toInternal( particle.pos )
+        gf = OneDimGreensFunction( particle.species.D ) 
+        Single.__init__( particle, reactionTypes, [ SimpleDomain(x, w, ks, gf) for (x, w, ks) in zip(pos, widths, interactionRates)] )
+
+    def toInternal( self, pos ):
+        # Todo.
+        pass
+
+    def toExternal( self, pos ):
+        # Todo.
+        pass
 

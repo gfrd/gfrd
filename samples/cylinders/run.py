@@ -29,12 +29,14 @@ def run( ):
     box1 = CuboidalSurface( [0,0,0], [L,L,L], 'world' )
     dna = CylindricalSurface( [L/2,L/2,L/2], 2*sigma, [0,1,0], L/2, 'dna')
     s.addSurface( dna )
-    membrane = PlanarSurface( [L/2,L/2,0], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
+    membrane = PlanarSurface( [L/2,L/2,2*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
     s.addSurface( membrane )
+    membrane2 = PlanarSurface( [L/2,L/2,8*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
+    s.addSurface( membrane2 )
 
     # Test periodic boundary condition with pair.
-    s.placeParticle( A, [500,500,975], membrane )
-    s.placeParticle( B, [500,500,25.1], membrane )
+    #s.placeParticle( A, [500,500,975], membrane )
+    #s.placeParticle( B, [500,500,25.1], membrane )
 
 
 
@@ -45,24 +47,21 @@ def run( ):
     #s.throwInParticles( B, 2, dna )
 
     #s.throwInParticles( C, 2, dna )
-    #s.throwInParticles( A, 2, membrane )
-    #s.throwInParticles( B, 2, membrane )
+    s.throwInParticles( A, 1, membrane )
+    s.throwInParticles( B, 1, membrane )
+    s.throwInParticles( A, 1, membrane2 )
+    s.throwInParticles( B, 1, membrane2 )
 
     #s.throwInParticles( C, 2, membrane )
     #s.placeParticle( O, [L/2,L/2,L/2], dna )
 
-
-
-
-
-    s.placeParticle( C, [709,748,3], membrane )
 
     # Initialize before s.cylinderMatrix.add.
     s.initialize()
 
     #s.cylinderMatrix.add( (dna, 0), dna.outside )
 
-    for i in range(20):
+    for i in range(100):
         s.step()
 
     s.stop( s.t )
