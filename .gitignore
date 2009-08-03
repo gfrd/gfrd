@@ -16,7 +16,6 @@ config.h.in~
 config.status
 libtool
 Makefile
-m4
 stamp-h1
 
 ltmain.sh

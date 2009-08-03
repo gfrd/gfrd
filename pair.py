@@ -1,5 +1,4 @@
 from utils import *
-from shell import *
 from _gfrd import *
 from shape import Sphere, Cylinder
 from domain import RadialDomain1D, RadialDomain2D, CartesianDomain1D
