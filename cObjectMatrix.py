@@ -166,13 +166,13 @@ class CylinderMatrix( ObjectMatrix ):
         # Todo. Do something like this.
         #assert radius < self.cellSize * .5
         assert not self.impl.contains( key )
-        self.impl.insert( key, shell.origin, shell.radius, shell.orientationZ, shell.size )
+        self.impl.insert( key, shell.origin, shell.radius, shell.unitZ, shell.size )
 
 
     def update( self, key, shell ):
         assert self.impl.contains( key )
         # object_matrix handles updates nicely.
-        self.impl.insert( key, shell.origin, shell.radius, shell.orientationZ, shell.size )
+        self.impl.insert( key, shell.origin, shell.radius, shell.unitZ, shell.size )
 
 
 class BoxMatrix( ObjectMatrix ):

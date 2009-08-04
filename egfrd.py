@@ -90,6 +90,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.zeroSteps = 0
         self.rejectedMoves = 0
         self.reactionEvents = 0
+	self.interactionEvents = 0
         self.lastEvent = None
         self.lastReaction = None
         self.isDirty = True
@@ -122,6 +123,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             self.initialize(1)
         if self.vtklogger:
             self.vtklogger.log()
+
         self.lastReaction = None
             
         #if self.stepCounter % 100 == 0:
@@ -131,9 +133,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         event = self.scheduler.getTopEvent()
         self.t, self.lastEvent = event.getTime(), event.getArg()
 
-        log.info( '\n%d: t=%g dt=%g\nevent=%s reactions=%d rejectedmoves=%d' 
+        log.info( '\n%d: t=%g dt=%g\nevent=%s reactions=%d interactions=%d rejectedmoves=%d' 
                       % ( self.stepCounter, self.t, self.dt, self.lastEvent, 
-                          self.reactionEvents, self.rejectedMoves ) )
+                          self.reactionEvents, self.interactionEvents, self.rejectedMoves ) )
         
         self.scheduler.step()
 
@@ -375,7 +377,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         surfaces = [ None ]
         distances = [ INF ]
         for surface in self.surfaceList:
-            posTransposed = cyclicTranspose( pos, surface.outside.origin, self.worldSize )
+            posTransposed = cyclicTranspose( pos, surface.origin, self.worldSize )
             distances.append( surface.signedDistanceTo( posTransposed ) )
         return min( zip( distances, surfaces ))
 
@@ -601,10 +603,31 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	return single
 
 
+    def createInteraction( self, single, surface, origin, radius, size, particleDistance, particleVector, bindingSite ):
+        log.debug( '    %createCylinder: %s ' % (single) )
+
+        assert single.dt == 0.0
+        assert single.getMobilitySize() == 0.0
+
+        particle = single.particle
+        reactionTypes = self.getReactionType1( particle.species )
+
+	interactionType = self.getInteractionType( particle.species, surface )
+
+        cylinder = surface.InteractionSingle( particle, surface, reactionTypes, interactionType, origin, radius, size, particleDistance, particleVector, bindingSite )
+        cylinder.initialize( self.t )
+
+	self.addToShellMatrix( cylinder )
+	cylinder.determineNextEvent( self.t )
+	self.addSingleEvent( cylinder )
+
+        return cylinder
+
+
     def fireSingle( self, single ):
 	assert abs( single.dt + single.lastTime - self.t ) <= 1e-18 * self.t
 
-	# Reaction.
+        # 0. Reaction.
 	if single.eventType == EventType.REACTION:
 	    log.info( 'single reaction %s' % str( single ) )
 
@@ -622,10 +645,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    single.dt = -INF  # remove this Single from the Scheduler
 	    return single.dt
 
-	'''
-	Propagate, if not reaction.
-	Handle immobile case first.
-	'''
+        # 1. Propagate.
+        # Handle immobile case first.
 	if single.getD() == 0:
 	    # no propagation, just calculate next reaction time.
 	    # (!) Not a pure function.
@@ -638,8 +659,26 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	setting the escape flag in the active domain.
 	This is the only time we need this activeDomain stuff.
 	'''
-	single.activeDomain.drawEventType( single.dt )
-	self.propagateSingle( single )
+	eventType = single.activeDomain.drawEventType( single.dt )
+	if eventType == EventType.REACTION:
+	    # Interaction.
+	    particle = single.particle
+
+	    # Todo: need to checkOverlap here?
+	    self.updateOnParticleMatrix( particle, single.bindingSite )
+	    particle.surface = single.interactionSurface
+
+	    newsingle = self.createSingle( particle )
+
+	    self.interactionEvents += 1
+
+	    self.removeFromShellMatrix( single )
+	    single.dt = -INF
+	    return single.dt
+
+	elif eventType == EventType.ESCAPE:
+	    self.propagateSingle( single )
+
 
 	# (2) Clear volume.
 	minShell = single.getMinRadius() * ( 1.0 + self.SINGLE_SHELL_FACTOR )
@@ -749,21 +788,19 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	return shellSize
 
 
-    def fireSingleReaction( self, single, interactionType = None ):
+    def fireSingleReaction( self, single ):
 	reactantSpecies = single.particle.species
+	oldSurface = single.particle.surface
 	oldpos = single.particle.pos.copy()
 	
 	rt = single.drawReactionType()
 	
-	if isinstance( rt, SurfaceUnbindingReactionType ):
-	    raise NotImplementedError, 'SurfaceUnbindingReactionType!'
-	if interactionType:
-	    pass
-	    #'nu in fireSingleReaction voor cylinder'
 	if len( rt.products ) == 0:
 	    self.removeParticle( single.particle )
 	    self.lastReaction = Reaction( rt, [single.particle], [] )
+
 	elif len( rt.products ) == 1:
+
 	    productSpecies = rt.products[0]
 	    if reactantSpecies.radius < productSpecies.radius:
 		self.clearVolume( oldpos, productSpecies.radius )
@@ -773,13 +810,21 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		log.info( 'no space for product particle.' )
 		raise NoSpace()
 
-	    currentSurface = single.particle.surface
+	    if isinstance( rt, SurfaceUnbindingReactionType ):
+		newpos = oldSurface.randomUnbindingSite( oldpos, productSpecies.radius )
+		newSurface = DefaultSurface( )
+	    else: 
+		# No change.
+		newpos = olpos
+		newSurface = oldSurface
+
 	    self.removeParticle( single.particle )
-	    newparticle = self.createParticle( productSpecies, oldpos, currentSurface )
+	    newparticle = self.createParticle( productSpecies, newpos, newSurface )
 	    newsingle = self.createSingle( newparticle )
 
 	    self.lastReaction = Reaction( rt, [single.particle], [newparticle] )
 	    log.info( 'product; %s' % str( newsingle ) )
+
 	elif len( rt.products ) == 2:
 	    productSpecies1 = rt.products[0]
 	    productSpecies2 = rt.products[1]
@@ -827,10 +872,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		log.info( 'no space for product particles.' )
 		raise NoSpace()
 
-	    currentSurface = single.particle.surface
 	    self.removeParticle( single.particle )
-	    particle1 = self.createParticle( productSpecies1, newpos1, currentSurface )
-	    particle2 = self.createParticle( productSpecies2, newpos2, currentSurface )
+	    particle1 = self.createParticle( productSpecies1, newpos1, oldSurface )
+	    particle2 = self.createParticle( productSpecies2, newpos2, oldSurface )
 	    newsingle1 = self.createSingle( particle1 )
 	    newsingle2 = self.createSingle( particle2 )
 
@@ -923,13 +967,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		assert self.distance( pair.CoM, newCoM ) + species3.radius <\
 		    pair.shellSize
 
-		currentSurface = particle1.surface
+		oldSurface = particle1.surface
 		self.applyBoundary( newCoM )
 
 		self.removeParticle( particle1 )
 		self.removeParticle( particle2 )
 
-		particle = self.createParticle( species3, newCoM, currentSurface  )
+		particle = self.createParticle( species3, newCoM, oldSurface  )
 		newsingle = self.createSingle( particle )
 
 		self.reactionEvents += 1
@@ -1067,81 +1111,81 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	assert False, 'do not reach here'
 
 
-    # Todo.
-    # Find largest possible cylinder around particle, such that it is not
-    # interfering with other particles. Miedema's algorithm.
-    #def formCylinder( self, single, surface, interactionType ):
+    '''
+    Find largest possible cylinder around particle and surface, such that it 
+    is not interfering with other particles. Miedema's algorithm.
+    '''
     def formInteraction( self, single, surface, bursted ):
-	# Todo.
-	assert bursted == []
-	log.debug( 'formInteraction: %s' % (single) )
+	assert bursted == [] # Todo.
+	log.debug( 'formInteraction: %s + %s' % (single, surface) )
 
-	orientation = surface.orientationZ
-	origin, posVector, r0 = surface.calculateProjectionVectors( single.pos )
+	orientation = surface.unitZ
+	origin, particleVector, particleDistance = surface.calculateProjectionVectors( single.pos )
 
 	# Todo. Applyboundary.
 	assert numpy.linalg.norm(single.pos - origin) >= surface.radius
 
-	dr = self.getMaxShellSize() #INF #CYLINDRICAL_SHELL_MAX_WIDTH - r0
+	dr = self.getMaxShellSize() #INF #CYLINDRICAL_SHELL_MAX_WIDTH - particleDistance
 	dz = self.getMaxShellSize() #INF #CYLINDRICAL_SHELL_MAX_HALF_LENGTH
-
-	#cylinder = surface.interactionSingle( origin, 
 
 	allNeighbors = getNeighborsWithinRadiusNoSort( origin, INF, ignore=[single,] )
 
 	for object in allNeighbors:
-	    rhoi = object.shellList[0].radius
-
-	    objectVector = object.shellList[0].origin - origin
+	    sphere = object.shellList[0]
+	    assert( isinstance( object, Sphere ) )
+	    # Todo. What if object is not a sphere.
+	    objectRadius = sphere.radius
+	    objectVector = sphere.origin - origin
 
 	    # Calculate dz for this object.
+	    # Todo. Use toInternal from Shape class.
 	    zi = numpy.dot( objectVector, orientation )
-	    dzi = abs(zi) - rhoi
-	    temp = zi*numpy.array(orientation)
-	    temp2 = numpy.array(objectVector) - numpy.array(temp)
+	    dzi = abs(zi) - objectRadius
+	    vectorZ = zi*numpy.array(orientation)
+	    vectorR = numpy.array(objectVector) - numpy.array(vectorZ)
 
 	    # Calculate dr for this object.
-	    ri = numpy.linalg.norm( temp2 )
-	    dri = ri - r0 - rhoi
+	    ri = numpy.linalg.norm( vectorR )
+	    dri = ri - objectRadius
 
+	    if isinstance( surface, Box ):
+		dzi -= particleDistance
+	    elif isinstance( surface, Cylinder ):
+		dri -= particleDistance
+
+	    # Miedema's algorithm.
 	    if dzi < dz and dri < dr:
 		if dzi > dri:
 		    dz = dzi
 		else:
 		    dr = dri
 
-	assert dr > 0
-	bursted = uniq( bursted )
-	burstedSingles = [ s for s in bursted if isinstance( s, Single ) ]
-	# Probably everything would work just fine still if we didn't restore
-	# here, since those burstedSingles are already in the scheduler with a
-	# dt=0 because they have been given a shell with size minSize.
-	self.restoreSingleShells( burstedSingles )
+	if isinstance( surface, Box ):
+	    assert dz > 0
+	    radius = dr
+	    size = ( particleDistance + dz - surface.Lz ) / 2
+	    shiftZ = (surface.Lz + size) * surface.unitZ
+	    cylinderOrigin = origin + shiftZ
+	    particleDistance -= shiftZ # particleDistance in z-direction relative to origin of new cylinder.
+	elif isinstance( surface, Cylinder ):
+	    assert dr > 0
+	    radius = particleDistance + dr
+	    cylinderOrigin = origin
+	    size = abs(dz)
 
-	radius_a = surface.radius
-	radius_b = r0 + dr
-	halfLength = abs(dz)
-	# Make cylinder with radius b and half-length dz. 
-	cylinder = self.createCylinder( single, origin, orientation, radius_a, r0, radius_b, halfLength, interactionType )
+	# Todo. This does not obey detailed balance.
+	bindingSite = origin
 
+	cylinder = self.createInteraction( single, surface, cylinderOrigin, radius, size, particleDistance, particleVector, bindingSite )
 	self.removeFromShellMatrix( single )
 
-	self.shellMatrix.addCylinder( (cylinder, 0), cylinder.shellList[0] )
-	cylinder.determineNextEvent( self.t )
-	self.addCylinderEvent( cylinder )
-	log.info( 'cylinder shell pos %s radius %g halfLength %g dt %g' % (cylinder.origin, cylinder.radius, cylinder.halfLength, cylinder.dt) )
+	log.info( 'cylinder shell pos %s radius %g size %g dt %g' % (cylinder.origin, cylinder.radius, cylinder.size, cylinder.dt) )
+
 	#Todo:
 	#assert self.checkObj( cylinder )
+
 	return cylinder
 
-
-    # Todo.
-    def formInteraction( self, single, surface, bursted ):
-	# Todo.
-	assert bursted == []
-
-
-	
 
 	'''
 	Here, we have to take into account of the bursted Singles in

@@ -74,10 +74,11 @@ class CartesianDomain1D( Domain ):
 	except Exception, e:
             raise Exception, 'gf.drawEventType() failed; %s; r0=%g, %s' %\
                 ( str( e ), self.r0, self.pgf.dump() )
-        if eventType == 0:
-            # Todo. Or other way around. And take interactions into account.
+        if eventType == EventType.REACTION:
+            # Interaction.
             self.newPos = - self.a
-        if eventType == 1:
+        elif eventType == EventType.ESCAPE:
+            # Escape.
             self.newPos = self.a
         return eventType
 

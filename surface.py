@@ -6,12 +6,11 @@ import random
 from shape import Cylinder, Box
 from single import SphericalSingle3D, CylindricalSingle1D, CylindricalSingle2D, InteractionSingle1D, InteractionSingle2D
 from pair import SphericalPair3D, CylindricalPair1D, CylindricalPair2D
-from utils import length, normalize
+from utils import length, normalize, SAFETY
 
 
 class Surface( object ):
-    def __init__( self, origin, name ):
-        self.origin = origin
+    def __init__( self, name ):
         self.name = name
 
 
@@ -29,8 +28,10 @@ class Surface( object ):
     When this surface defines a closed region in space,
     negative value means that the position is inside.
     '''
+    """
     def signedDistanceTo( self, pos ):
-        return self.outside.signedDistanceTo( pos )
+        return self.signedDistanceTo( pos )
+    """
 
 
     def __str__( self ):
@@ -40,7 +41,7 @@ class Surface( object ):
 class DefaultSurface( Surface ):
     # If no surface is specified, particles are tagged with this one.
     def __init__( self ):
-        Surface.__init__( self, None, 'DefaultSurface' )
+        Surface.__init__( self, 'DefaultSurface' )
         self.defaultSingle = SphericalSingle3D
         self.defaultPair = SphericalPair3D
 
@@ -52,7 +53,7 @@ class CuboidalSurface( Surface ):
     point.
     '''
     def __init__( self, origin, size, name='CuboidalSurface' ):
-        Surface.__init__( self, origin, name )
+        Surface.__init__( self, name )
         self.setParams( origin, size )
         self.defaultSingle = SphericalSingle3D
         self.defaultPair = SphericalPair3D
@@ -69,7 +70,7 @@ class CuboidalSurface( Surface ):
     '''
     Returns a random position equidistributed within
     the region in space defined by negative signed distance.
-    See also signedDistance().
+    See also signedDistanceTo().
     '''
     def randomPosition( self ):
         return numpy.array( [ random.uniform( self.origin[0], self.size[0] ),
@@ -87,21 +88,21 @@ class CuboidalSurface( Surface ):
         return self.params
 
 
-class PlanarSurface( Surface ):
+class PlanarSurface( Surface, Box ):
     def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, name="PlanarSurface" ):
-        Surface.__init__( self, origin, name )
+        Surface.__init__( self, name )
 
         assert numpy.dot( vectorX, vectorY ) == 0 # Todo. To doubles.
         vectorZ = numpy.cross( vectorX, vectorY )
-        self.outside = Box( origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ) 
+        Box.__init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ) 
         self.defaultSingle = CylindricalSingle2D
         self.defaultPair = CylindricalPair2D
         self.defaultInteractionSingle = InteractionSingle2D
 
-        self.normal = self.outside.unitZ # Extra.
+        self.normal = self.unitZ # Extra.
         # Todo: p is not correct here.
         # Hessian normal form [ nx, ny, nz, p ].
-        #self.hessianNormal = [ self.normal[0], self.normal[1], self.normal[2], length(self.outside.origin) ]
+        #self.hessianNormal = [ self.normal[0], self.normal[1], self.normal[2], length(self.origin) ]
 
 
     '''
@@ -110,7 +111,7 @@ class PlanarSurface( Surface ):
     """
     def signedDistanceTo( self, pos ):
         return numpy.dot( self.hessianNormal,\
-                  numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) ) - self.outside.Lz
+                  numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) ) - self.Lz
     """
 
 
@@ -118,22 +119,31 @@ class PlanarSurface( Surface ):
     Only uniform if vectorX and vectorY have same length.
     '''
     def randomPosition( self ):
-        return self.outside.origin + random.uniform(-1,1)*self.outside.vectorX + random.uniform(-1,1)*self.outside.vectorY
+        return self.origin + random.uniform(-1,1)*self.vectorX + random.uniform(-1,1)*self.vectorY
 
 
-class CylindricalSurface( Surface ):
+    def randomUnbindingSite( self, pos, radius ):
+        return pos + random.sample([-1,1],1)[0] * (self.Lz + 1.5 * radius ) * SAFETY * self.unitZ
+
+
+class CylindricalSurface( Surface, Cylinder ):
     def __init__( self, origin, radius, orientation, size, name="CylindricalSurface" ):
-        Surface.__init__( self, origin, name )
-        self.outside = Cylinder( origin, radius, orientation, size )
+        Surface.__init__( self, name )
+        Cylinder.__init__( self, origin, radius, orientation, size )
         self.defaultSingle = CylindricalSingle1D
         self.defaultPair = CylindricalPair1D
         self.defaultInteractionSingle = InteractionSingle1D
 
 
     def randomPosition( self ):
-        return self.outside.origin + random.uniform(-1, 1) * self.outside.vectorZ
+        return self.origin + random.uniform(-1, 1) * self.vectorZ
 
 
+    def randomUnbindingSite( self, pos, radius ):
+        return pos
+
+"""
+Todo.
 class SphericalSurface( Surface ):
     '''
     origin -- = [ x0, y0, z0 ] is the origin and
@@ -162,4 +172,4 @@ class SphericalSurface( Surface ):
 
     def getParams( self ):
         return self.params
-
+"""

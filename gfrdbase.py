@@ -157,6 +157,7 @@ class BindingReactionType( ReactionType ):
 
     def __init__( self, s1, s2, p1, k ):
         ReactionType.__init__( self, [ s1, s2 ], [ p1, ], k )
+        # ??
         D = s1.D + s2.D
         sigma = s1.radius + s2.radius
 
@@ -166,6 +167,7 @@ class RepulsionReactionType( ReactionType ):
     def __init__( self, s1, s2 ):
         ReactionType.__init__( self, [ s1, s2 ], [], 0.0 )
 
+        # ??
         D = s1.D + s2.D
         sigma = s1.radius + s2.radius
 
@@ -176,17 +178,24 @@ class UnbindingReactionType( ReactionType ):
         ReactionType.__init__( self, [ s1, ], [ p1, p2 ], k )
 
 
-### Todo #################
-# Todo: setAllRepulsive equivalent.
-class SurfaceBindingReactionType( ReactionType ):
-    def __init__( self, s1, surface, k ):
-        ReactionType.__init__( self, [ s1, surface ], [ s1, ], k )
+class SurfaceBindingInteractionType( ReactionType ):
+    def __init__( self, reactantSpecies, surface, productSpecies,  k ):
+        ReactionType.__init__( self, [ reactantSpecies, surface ], [ productSpecies, ], k )
+
+
+class SurfaceRepulsionInteractionType( ReactionType ):
+    def __init__( self, species, surface ):
+        ReactionType.__init__( self, [ species, surface ], [], 0.0 )
 
 
 # Unbinding is a Poisson process.
+# A species can only exist on 1 surface ever.
 class SurfaceUnbindingReactionType( ReactionType ):
-    def __init__( self, s1, surface, k ):
-        ReactionType.__init__( self, [ s1, ], [ s1, ], k )
+    def __init__( self, reactantSpecies, surface, productSpecies, k ):
+        # After unbinding from a surface the particle always ends up on the 
+        # defaultSurface (world) for now.
+        self.surface = surface
+        ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies, ], k )
 
 
 class Reaction:
@@ -366,6 +375,7 @@ class ParticleSimulatorBase( object ):
         ### Per species key a list of reactiontypes.
         self.reactionTypeMap1 = {}
         self.reactionTypeMap2 = {}
+        self.interactionTypeMap = {}
 
         self.surfaceList = []
 
@@ -448,6 +458,9 @@ class ParticleSimulatorBase( object ):
     def getReactionType2( self, species1, species2 ):
         return self.reactionTypeMap2.get( ( species1, species2 ), None )
 
+    def getInteractionType( self, species ):
+        return self.interActionType.get( species )
+    
     def getSpeciesByIndex( self, i ):
         return self.speciesList.values()[i]
 
@@ -508,6 +521,12 @@ class ParticleSimulatorBase( object ):
             raise RuntimeError, 'Invalid ReactionType.'
 
 
+    def addInteractionType( self, it ):
+        species = it.reactants[0]
+        surface = it.reactants[1]
+        self.interactionTypeMap[ (species, surface) ] = it
+
+
     def setAllRepulsive( self ):
         for species1 in self.speciesList.values():
             for species2 in self.speciesList.values():
@@ -517,6 +536,13 @@ class ParticleSimulatorBase( object ):
                     self.reactionTypeMap2[ ( species1, species2 ) ] =\
                                             RepulsionReactionType( species1,\
                                                                    species2 )
+        for species in self.speciesList.values():
+            for surface in self.surfaceList:
+                try:
+                    _ = self.interactionTypeMap[ ( species, surface ) ]
+                except:
+                    self.interactionTypeMap[ ( species, surface ) ] =\
+                            SurfaceRepulsionInteractionType( species,surface )
         
 
     def throwInParticles( self, species, n, surface ):

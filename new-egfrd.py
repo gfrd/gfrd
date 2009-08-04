@@ -176,21 +176,7 @@
         return single.dt
 
 
-    def createCylinder( self, single, pos, orientation, radius_a, r0, radius_b, halfLength, interactionType ):
-        log.debug( '    %s.createCylinder: %s ' % ('egfrd2', single) )
-
-        assert single.dt == 0.0
-        assert single.getMobilitySize() == 0.0
-
-        particle = single.particle
-        rt = self.getReactionType1( particle.species )
-
-        cylinder = Cylinder2( particle, rt, interactionType, pos, orientation, radius_a, r0, radius_b, halfLength )
-        cylinder.initialize( self.t )
-
-        return cylinder
-
-
+    """
     # Find largest possible cylinder around particle, such that it is not
     # interfering with other particles. Miedema's algorithm.
     def formCylinder( self, single, cylindricalSurface, interactionType ):
@@ -255,8 +241,10 @@
         #Todo:
         #assert self.checkObj( cylinder )
         return cylinder
+    """
    
 
+    """
     def addCylinderEvent( self, cylinder ):
         print 'Cylinder!'
         log.debug( '    %s.addCylinderEvent: %s %g' % ('egfrd2', cylinder, cylinder.dt) )
@@ -264,7 +252,7 @@
                                  Delegate( self, EGFRDSimulator.fireCylinder ), 
                                  cylinder )
         cylinder.eventID = eventID
-
+    """
 
     def fireCylinder( self, cylinder ):
         log.debug( '    %s.fireCylinder: %s' % ('egfrd2', cylinder) )

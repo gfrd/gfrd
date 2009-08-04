@@ -43,10 +43,10 @@ class Cylinder( Shape ):
         # over other options that we can make use of symmetry sometimes.
         self.origin = numpy.array( origin )
         self.radius = radius
-        self.orientationZ = normalize( numpy.array( orientationZ ) ) # Formerly known as unitZ.
+        self.unitZ = normalize( numpy.array( orientationZ ) ) # Formerly known as orientationZ.
         # Size is the half length of the cylinder!
         self.size = size                                             # Formerly known as Lz.
-        self.vectorZ = self.orientationZ * size # Extra.
+        self.vectorZ = self.unitZ * size # Extra.
 
     def getSize( self ):
         return self._size
@@ -76,13 +76,13 @@ class Cylinder( Shape ):
 
 
     # Return the (z,r) components of pos in a coordinate system defined by the 
-    # vectors unitR and orientationZ, where unitR is choosen such that unitR 
-    # and orientatoinZ define a plane in which pos lies.
+    # vectors unitR and unitZ, where unitR is choosen such that unitR and 
+    # unitZ define a plane in which pos lies.
     def toInternal( self, pos ):
         posVector = pos - self.origin
 
-        z = numpy.dot( posVector, self.orientationZ ) # Can be <0.
-        posVectorZ = z*self.orientationZ
+        z = numpy.dot( posVector, self.unitZ ) # Can be <0.
+        posVectorZ = z*self.unitZ
 
         posVectorR = posVector - posVectorZ
         r = length( posVectorR )       # Always >= 0.
@@ -90,6 +90,13 @@ class Cylinder( Shape ):
         return r, z, posVectorR, posVectorZ
 
 
+    '''
+    Returns:
+    1. a vector pointing from the global origin to the projected point of 
+       'pos' onto the main axis of the cylinder.
+    2. a vector pointing from that point to 'pos'.
+    3. the length of that 2nd vector.
+    '''
     def calculateProjectionVectors( self, pos ):
         r, z, posVectorR, posVectorZ = self.toInternal( pos )
         return self.origin + posVectorZ, posVectorR, r
@@ -97,7 +104,7 @@ class Cylinder( Shape ):
 
     def __str__( self ):
         return "Cylinder: " + str( self.origin ) + " " + str( self.radius ) + " " + \
-                              str( self.orientationZ ) + " " + str( self.size )
+                              str( self.unitZ ) + " " + str( self.size )
 
 
 class DummyCylinder( Cylinder ):
@@ -169,6 +176,13 @@ class Box( Shape ):
         return x, y, z
 
 
+    '''
+    Returns:
+    1. a vector pointing from the global origin to the projected point of 
+       'pos' onto the xy-plane of the box (or surface).
+    2. a vector pointing from that point to 'pos'.
+    3. the length of that 2nd vector.
+    '''
     def calculateProjectionVectors( self, pos ):
         x, y, z = self.toInternal( pos )
         return self.origin + x * self.unitX + y * self.unitY, z * self.unitZ, z
@@ -180,5 +194,5 @@ class Box( Shape ):
 
 class DummyBox( Box ):
     def __init__( self ):
-        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 0, 0, 0 ) 
+        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 1, 1, 1 ) 
 

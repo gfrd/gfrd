@@ -145,7 +145,7 @@ class VTKLogger:
 
 
     def getCylindricalSurfaceData( self ):
-        cylinders = [ surface.outside for surface in self.sim.surfaceList if isinstance(surface.outside, Cylinder) ]
+        cylinders = [ surface for surface in self.sim.surfaceList if isinstance(surface, Cylinder) ]
         return self.processCylinders( cylinders )
 
 
@@ -153,7 +153,7 @@ class VTKLogger:
         posList, radiusList, typeList, scaleList, orientationList, tensorList = \
                 [], [], [], [], [], []
 
-        boxes = [ surface.outside for surface in self.sim.surfaceList if isinstance(surface.outside, Box) ]
+        boxes = [ surface for surface in self.sim.surfaceList if isinstance(surface, Box) ]
         if len(boxes) == 0:
             # Add dummy box to stop tensorGlyph from complaining.
             boxes = [ DummyBox() ] 
@@ -178,7 +178,7 @@ class VTKLogger:
         for cylinder in cylinders:
             radius = cylinder.radius
             type = 1
-            orientation = cylinder.orientationZ
+            orientation = cylinder.unitZ
             size = cylinder.size
 
             # Construct scale vector for scaling by vector components. Not 

@@ -131,6 +131,10 @@ class Pair( object ):
 
     '''
     Determine a_r and a_R.
+
+    Todo. Check all this and make sure the radius of the largest particle is 
+    subtracted from a_r and a_R to get values of the same type as 
+    getMobilityRadius() for singles. 
     '''
     def determineRadii( self ):
         single1 = self.single1
@@ -429,7 +433,7 @@ class CylindricalPair2D( Pair ):
 
     def calculateCoMDisplacement( self, r_R ):
         x, y = randomVector2D( r_R )
-        return x * self.surface.outside.unitX + y * self.surface.outside.unitY
+        return x * self.surface.unitX + y * self.surface.unitY
 
 
     def calculateNewIV( self, (r, theta) ):
@@ -448,8 +452,8 @@ class CylindricalPair2D( Pair ):
     '''
     def drawNewPositions( self, dt ):
         newCoM, (r, theta) = self.drawNewCoM( dt ), self.drawNewIV( dt )
-        unitX = self.surface.outside.unitX
-        unitY = self.surface.outside.unitY
+        unitX = self.surface.unitX
+        unitY = self.surface.unitY
         angle = vectorAngle( unitX, self.IV )
         newAngle = angle + theta
         
@@ -470,7 +474,7 @@ class CylindricalPair1D( Pair ):
         # Set shellSize directly, without getMinRadius() step. Don't set 
         # radius again from initialize(). Pairs don't move.
         # Todo: maxRadius.
-        self.shellList = [ Cylinder( self.CoM, single1.particle.radius, self.surface.outside.orientationZ, shellSize, distFunc ) ]
+        self.shellList = [ Cylinder( self.CoM, single1.particle.radius, self.surface.unitZ, shellSize, distFunc ) ]
 
         # Todo. Make dimension specific.
         a_R, self.a_r = self.determineRadii()
@@ -493,13 +497,13 @@ class CylindricalPair1D( Pair ):
 
 
     def calculateCoMDisplacement( self, r_R ):
-        return r_R * self.surface.outside.orientationZ
+        return r_R * self.surface.unitZ
 
 
     def calculateNewIV( self, r_r ):
         assert abs(r_r[0]) > self.sigma
         # Todo.
-        return r_r[0] * self.surface.outside.orientationZ
+        return r_r[0] * self.surface.unitZ
 
 
     def drawNewPositions( self, dt ):
