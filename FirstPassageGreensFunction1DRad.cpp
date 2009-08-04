@@ -92,7 +92,7 @@ const Real FirstPassageGreensFunction1DRad::Cn (const Real a_n, const Real t) co
 
 // Berekent de kans dat het deeltje zich nog in het domein bevindt op tijdstip t, de survival probability
 // Het domein is van -r to r (r0 zit hier dus tussen!!)
-const Real FirstPassageGreensFunction1DRad::p_survival (const Real r0, const Real t) const
+const Real FirstPassageGreensFunction1DRad::p_survival (const Real t, const Real r0) const
 {
 	const Real D(this->getD());
 	const Real a(this->geta());
@@ -162,7 +162,7 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r0, const Real r,
 // Berekent de kans om het deeltje op plaats z te vinden op tijdstip t, gegeven dat het deeltje
 // zich nog in het domein bevindt.
 const Real FirstPassageGreensFunction1DRad::calcpcum (const Real r0, const Real r, const Real t) const
-{	return prob_r (r0, r, t)/p_survival (r0, t);
+{	return prob_r (r0, r, t)/p_survival (t, r0);
 }
 
 // Berekent de totale kansflux die het systeem verlaat op tijdstip t
@@ -240,7 +240,7 @@ double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
 }
 
 // Trekt een tijd uit de propensity function, een first passage time.
-const Real FirstPassageGreensFunction1DRad::drawTime (const Real r0, const Real rnd) const
+const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd, const Real r0) const
 {
 	const Real a(this->geta());
 
@@ -307,7 +307,7 @@ double FirstPassageGreensFunction1DRad::drawR_f (double z, void *p)
 	return sum - params->rnd;		// het snijpunt vinden met het random getal
 }
 
-const Real FirstPassageGreensFunction1DRad::drawR (const Real r0, const Real t, const Real rnd) const
+const Real FirstPassageGreensFunction1DRad::drawR (const Real rnd, const Real r0, const Real t) const
 {
 	const Real a(this->geta());
 	const Real D(this->getD());
@@ -326,7 +326,7 @@ const Real FirstPassageGreensFunction1DRad::drawR (const Real r0, const Real t, 
 	double tmp0, tmp1;
 	const Real L(a*2.0);
 	const Real h(this->getk()/D);
-	const Real S = 2.0/p_survival(r0, t);
+	const Real S = 2.0/p_survival(t, r0);
 	const Real r0_2(r0 + a);
 
 

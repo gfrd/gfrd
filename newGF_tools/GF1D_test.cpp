@@ -30,7 +30,7 @@ int main (void)
 	gf.seta (a);
 
 
-/*
+
 	// Producing data by drawing from the distributions
 	for (int i=0; i<1000; i++)
 	{
@@ -45,7 +45,7 @@ int main (void)
 
 		cout << endl;
 	}
-*/
+
 /*
 	// Producing time dependent data
 	for (t=0; t < 0.3; t+= 0.001)
@@ -58,7 +58,7 @@ int main (void)
 		cout << endl;
 	}
 */
-
+/*
 	// producing the place dependent data
 	for (Real x=-a; x<a; x+=1e-8)
 	{
@@ -69,5 +69,5 @@ int main (void)
 
 		cout << endl;
 	}
-
+*/
 }

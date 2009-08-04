@@ -37,12 +37,12 @@ int main (void)
 	{
 		rnd = Real(rand())/RAND_MAX;			// drawing the firstpassage times
 		cout << rnd << " ";
-		Real time2D = gf.drawTime (r0, rnd);
+		Real time2D = gf.drawTime (rnd, r0);
 		cout << time2D << " ";
 
 		rnd = Real(rand())/RAND_MAX;			// drawing the radius for GIVEN TIME
 		cout << rnd << " ";
-		Real place2D = gf.drawR (r0, t, rnd);
+		Real place2D = gf.drawR (rnd, r0, t);
 		cout << place2D << " ";
 
 		rnd = Real(rand())/RAND_MAX;
@@ -58,7 +58,7 @@ int main (void)
 	{
 		cout << t << " ";				// Put down the time
 
-		Real S_t = gf.p_survival(r0, t);		// The survival probability
+		Real S_t = gf.p_survival(t, r0);		// The survival probability
 		cout << S_t << " ";
 
 		Real Js_t = gf.flux_rad(r0, t);			// The flux through the radiating boundary

@@ -100,6 +100,14 @@ const Real FirstPassageGreensFunction1D::drawTime (const Real rnd) const
 	const Real a(this->geta());
 	const Real D(this->getD());
 
+	if (D == 0.0 || a == INFINITY)
+	{	return INFINITY;
+	}
+
+	if (a == 0.0)
+	{	return 0.0;
+	}
+
 	const Real expo(-D/(4.0*a*a));
 
 	struct drawT_params parameters;	// the structure to store the numbers to calculate the numbers for 1-S
@@ -129,16 +137,59 @@ for (double t=0; t<0.1; t += 0.0001)
 	std::cout << t << " " << drawT_f (t, &parameters) << std::endl;
 }
 */
-
-	// find the intersection on the y-axis between the random number and the function
 	gsl_function F;
 	F.function = &drawT_f;
 	F.params = &parameters;
 
+
+	// Find a good interval to determine the first passage time in
+	const Real t_guess( a * a / ( 4. * D ) );   // construct a guess: msd = sqrt (2*d*D*t)
+	const Real value( GSL_FN_EVAL( &F, t_guess ) );
+	Real low( t_guess );
+	Real high( t_guess );
+
+	// scale the interval around the guess such that the function straddles
+	if( value < 0.0 )		// if the guess was too low
+	{
+		Real high_value;
+		do
+		{	high *= 10;	// keep increasing the upper boundary until the function straddles
+			high_value = GSL_FN_EVAL( &F, high );
+
+			if( fabs( high ) >= t_guess * 1e6 )
+			{
+				std::cerr << "Couldn't adjust high. F(" << high <<
+				    ") = " << GSL_FN_EVAL( &F, high ) << std::endl;
+				throw std::exception();
+			}
+		}
+		while (high_value <= 0.0);
+	}
+	else				// if the guess was too high
+	{
+		Real low_value_prev( value );
+		Real low_value;
+		do			
+		{
+			low *= .1;	// keep decreasing the lower boundary until the function straddles
+			low_value = GSL_FN_EVAL( &F, low );	// get the accompanying value
+
+			if( fabs( low ) <= t_guess * 1e-6 || fabs( low_value - low_value_prev ) < CUTOFF )
+			{
+				std::cerr << "Couldn't adjust low. F(" << low <<
+					") = " << GSL_FN_EVAL( &F, low ) << std::endl;
+				return low;
+			}
+			low_value_prev = value;	
+		}
+		while (low_value >= 0.0 );
+	}
+
+	// find the intersection on the y-axis between the random number and the function
 	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
 	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
 									   // incl typecast?
-	const Real t( findRoot( F, solver, 1e-5, 1.0, 1e-18, 1e-12,
+	const Real t( findRoot( F, solver, low, high, 1e-18, 1e-12,
 		"FirstPassageGreensFunction1D::drawTime" ) );
 
 	return t;				// return the drawn time
@@ -167,6 +218,10 @@ const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) co
 
 	const Real a(this->geta());
 	const Real D(this->getD());
+
+	if (D == 0.0 || a == 0.0 || t == 0.0)
+	{	return 0.0;
+	}
 
 	struct drawR_params parameters;	// structure to store the numbers to calculate numbers for 1-S
 	Real S_Cn_An;

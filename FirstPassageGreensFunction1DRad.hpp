@@ -58,7 +58,7 @@ public:
 
 	// Berekent de kans dat het deeltje zich nog in het domein bevindt op tijdstip t,
 	// de survival probability
-	const Real p_survival (const Real r0, const Real t) const;
+	const Real p_survival (const Real t, const Real r0) const;
 
 	// Berekent de kans om het deeltje op plaats z te vinden op tijdstip t
 	const Real prob_r (const Real r0, const Real r, const Real t) const;
@@ -82,9 +82,9 @@ public:
 	const EventType drawEventType( const Real rnd, const Real r0, const Real t ) const;
 
 	// Trekt een tijd uit de propensity function, een first passage time.
-	const Real drawTime (const Real r0, const Real rnd) const;
+	const Real drawTime (const Real rnd, const Real r0) const;
 
-	const Real drawR (const Real r0, const Real t, const Real rnd) const;
+	const Real drawR (const Real rnd, const Real r0, const Real t) const;
 
 private:
 	// Berekent de wortels van tan(aL)=-ak/h

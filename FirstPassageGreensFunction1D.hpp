@@ -83,6 +83,8 @@ private:
 
 	static double drawR_f (double z, void *p);
 
+	static const Real CUTOFF = 1e-10;
+
         const Real D;   // The diffusion constant
         Real a;         // The distance from the internal origin to one of the boundaries
                         // The total domain is 2*a long
