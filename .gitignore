@@ -38,4 +38,4 @@ tags
 tags.python
 lib
 *_test
-
+*.*data

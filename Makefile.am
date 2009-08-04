@@ -57,9 +57,13 @@ GreensFunction.hpp\
 PairGreensFunction.hpp\
 FreeGreensFunction.hpp\
 FirstPassageGreensFunction.hpp\
+FirstPassageGreensFunction1D.hpp\
+FirstPassageGreensFunction1DRad.hpp\
+FirstPassageGreensFunction2D.hpp\
 BasicPairGreensFunction.hpp\
 FreePairGreensFunction.hpp\
 FirstPassagePairGreensFunction.hpp\
+FirstPassagePairGreensFunction2D.hpp\
 FirstPassageNoCollisionPairGreensFunction.hpp
 
 
@@ -71,9 +75,13 @@ freeFunctions.cpp\
 SphericalBesselGenerator.cpp\
 FreeGreensFunction.cpp\
 FirstPassageGreensFunction.cpp\
+FirstPassageGreensFunction1D.cpp\
+FirstPassageGreensFunction1DRad.cpp\
+FirstPassageGreensFunction2D.cpp\
 BasicPairGreensFunction.cpp\
 FreePairGreensFunction.cpp\
 FirstPassagePairGreensFunction.cpp\
+FirstPassagePairGreensFunction2D.cpp\
 FirstPassageNoCollisionPairGreensFunction.cpp\
 pyGFRD.cpp
 

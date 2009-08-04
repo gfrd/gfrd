@@ -6,13 +6,13 @@
 
 #include "Defs.hpp"
 
-
+/*
 enum EventType
 {
     REACTION = 0,
     ESCAPE = 1
 };
-
+*/
 
 
 class PairGreensFunction
