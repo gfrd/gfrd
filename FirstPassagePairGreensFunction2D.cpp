@@ -21,7 +21,7 @@
 #include "findRoot.hpp"
 #include "freeFunctions.hpp"
 
-#include "FirstPassagePairGreensFunction2D3.hpp"
+#include "FirstPassagePairGreensFunction2D.hpp"
 
 const Real FirstPassagePairGreensFunction2D::TOLERANCE;
 const Real FirstPassagePairGreensFunction2D::MIN_T_FACTOR;

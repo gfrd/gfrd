@@ -12,7 +12,7 @@
 #include <gsl/gsl_sf_bessel.h>
 
 
-#include "FirstPassageGreensFunction1D.hpp"
+#include "../FirstPassageGreensFunction1D.hpp"
 
 using namespace std;
 
@@ -40,7 +40,7 @@ int main (void)
 		cout << time2D << " ";
 
 		rnd = Real(rand())/RAND_MAX;			// drawing the radius for GIVEN TIME
-		Real place2D = gf.drawR (t, rnd);
+		Real place2D = gf.drawR (rnd, t);
 		cout << rnd << " " << place2D << " ";
 
 		cout << endl;

@@ -49,7 +49,7 @@ public:
 
 	// Berekent een positie gegeven dat het deeltje zich nog in het domein bevindt en er twee absorbing
 	// boundary conditions gelden
-	const Real drawR (const Real t, const Real rnd) const;
+	const Real drawR (const Real rnd, const Real t) const;
 
 
 

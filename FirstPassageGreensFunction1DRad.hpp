@@ -19,13 +19,13 @@
 #include "Defs.hpp"
 
 #define TERMEN 500
-
+/*
 enum EventType
 {
     REACTION = 0,
     ESCAPE = 1
 };
-
+*/
 class FirstPassageGreensFunction1DRad
 {
 

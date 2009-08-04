@@ -22,9 +22,13 @@
 #include "freeFunctions.hpp"
 #include "FreeGreensFunction.hpp"
 #include "FirstPassageGreensFunction.hpp"
+#include "FirstPassageGreensFunction1D.hpp"
+#include "FirstPassageGreensFunction1DRad.hpp"
+#include "FirstPassageGreensFunction2D.hpp"
 #include "BasicPairGreensFunction.hpp"
 #include "FreePairGreensFunction.hpp"
 #include "FirstPassagePairGreensFunction.hpp"
+#include "FirstPassagePairGreensFunction2D.hpp"
 #include "FirstPassageNoCollisionPairGreensFunction.hpp"
 
 
@@ -273,6 +277,48 @@ BOOST_PYTHON_MODULE( _gfrd )
 	;
 
 
+    class_<FirstPassageGreensFunction1D>( "FirstPassageGreensFunction1D",
+					init<const Real>() )
+	.def( "getD", &FirstPassageGreensFunction1D::getD )
+	.def( "seta", &FirstPassageGreensFunction1D::seta )
+	.def( "geta", &FirstPassageGreensFunction1D::geta )
+	.def( "drawTime", &FirstPassageGreensFunction1D::drawTime )
+	.def( "drawR", &FirstPassageGreensFunction1D::drawR )
+	.def( "p_survival", &FirstPassageGreensFunction1D::p_survival )
+	.def( "prob_r", &FirstPassageGreensFunction1D::prob_r )
+	.def( "calcpcum", &FirstPassageGreensFunction1D::calcpcum )
+	;
+
+
+    class_<FirstPassageGreensFunction1DRad>( "FirstPassageGreensFunction1DRad",
+					init<const Real, const Real>() )
+	.def( "getD", &FirstPassageGreensFunction1DRad::getD )
+	.def( "seta", &FirstPassageGreensFunction1DRad::seta )
+	.def( "geta", &FirstPassageGreensFunction1DRad::geta )
+	.def( "getk", &FirstPassageGreensFunction1DRad::getk )
+	.def( "drawTime", &FirstPassageGreensFunction1DRad::drawTime )
+	.def( "drawR", &FirstPassageGreensFunction1DRad::drawR )
+	.def( "drawEventType", &FirstPassageGreensFunction1DRad::drawEventType )
+	.def( "p_survival", &FirstPassageGreensFunction1DRad::p_survival )
+	.def( "prob_r", &FirstPassageGreensFunction1DRad::prob_r )
+	.def( "calcpcum", &FirstPassageGreensFunction1DRad::calcpcum )
+	.def( "flux_tot", &FirstPassageGreensFunction1DRad::flux_tot )
+	.def( "flux_rad", &FirstPassageGreensFunction1DRad::flux_rad )
+	.def( "fluxRatioRadTot", &FirstPassageGreensFunction1DRad::fluxRatioRadTot )
+	;
+
+    class_<FirstPassageGreensFunction2D>( "FirstPassageGreensFunction2D",
+					init<const Real>() )
+	.def( "getD", &FirstPassageGreensFunction2D::getD )
+	.def( "seta", &FirstPassageGreensFunction2D::seta )
+	.def( "geta", &FirstPassageGreensFunction2D::geta )
+	.def( "drawTime", &FirstPassageGreensFunction2D::drawTime )
+	.def( "drawR", &FirstPassageGreensFunction2D::drawR )
+	.def( "p_survival", &FirstPassageGreensFunction2D::p_survival )
+	//.def( "p_int_r", &FirstPassageGreensFunction2D::p_int_r )
+	//.def( "p_int_r_free", &FirstPassageGreensFunction2D::p_int_r_free )
+	//.def( "p_r_fourier", &FirstPassageGreensFunction2D::p_r_fourier )
+	;
 
     class_<BasicPairGreensFunction>( "BasicPairGreensFunction",
 				     init<const Real, 
@@ -362,6 +408,23 @@ BOOST_PYTHON_MODULE( _gfrd )
 	.def( "dump", &FirstPassagePairGreensFunction::dump )
 
 //	.def( "alpha_i", &FirstPassagePairGreensFunction::alpha_i )
+	;
+
+
+    class_<FirstPassagePairGreensFunction2D>( "FirstPassagePairGreensFunction2D",
+					    init<const Real, 
+					    const Real,
+					    const Real>() )
+	.def( "seta", &FirstPassagePairGreensFunction2D::seta )
+	.def( "geta", &FirstPassagePairGreensFunction2D::geta )
+	.def( "getD", &FirstPassagePairGreensFunction2D::getD )
+	.def( "getkf", &FirstPassagePairGreensFunction2D::getkf )
+	.def( "geth", &FirstPassagePairGreensFunction2D::geth )
+	.def( "getSigma", &FirstPassagePairGreensFunction2D::getSigma )
+	.def( "drawTime", &FirstPassagePairGreensFunction2D::drawTime )
+	.def( "drawEventType", &FirstPassagePairGreensFunction2D::drawEventType )
+	.def( "drawR", &FirstPassagePairGreensFunction2D::drawR )
+	.def( "drawTheta", &FirstPassagePairGreensFunction2D::drawTheta )
 	;
 
 

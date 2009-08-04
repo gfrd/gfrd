@@ -160,7 +160,7 @@ double FirstPassageGreensFunction1D::drawR_f (double z, void *p)
 
 // Berekent een positie gegeven dat het deeltje zich nog in het domein bevindt en er twee absorbing
 // boundary conditions gelden
-const Real FirstPassageGreensFunction1D::drawR (const Real t, const Real rnd) const
+const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) const
 {
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 	THROW_UNLESS( std::invalid_argument, t >= 0.0 );

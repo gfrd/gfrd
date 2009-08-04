@@ -12,7 +12,7 @@
 #include <gsl/gsl_sf_bessel.h>
 
 
-#include "FirstPassagePairGreensFunction2D3.hpp"
+#include "../FirstPassagePairGreensFunction2D.hpp"
 
 using namespace std;
 

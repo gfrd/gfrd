@@ -22,6 +22,13 @@ Real3DArray;
 typedef boost::multi_array<Real, 4>
 Real4DArray;
 
+enum EventType
+{
+    REACTION = 0,
+    ESCAPE = 1
+};
+
+
 #if !HAVE_SINCOS
 inline void sincos( double x, double* s, double* c )
 {
