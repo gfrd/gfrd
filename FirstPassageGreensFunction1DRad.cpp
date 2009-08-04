@@ -278,15 +278,58 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd, const Real
 	parameters.terms = TERMEN;		// store the number of terms used
 //std::cout << "terms made\n"; 
 
-	// find the intersection on the y-axis between the random number and the function
+	// Define the function for the rootfinder
 	gsl_function F;
 	F.function = &FirstPassageGreensFunction1DRad::drawT_f;
 	F.params = &parameters;
 
+
+        // Find a good interval to determine the first passage time in
+        const Real t_guess( a * a / ( 2. * D ) );   // construct a guess: msd = sqrt (2*d*D*t)
+        Real value( GSL_FN_EVAL( &F, t_guess ) );
+        Real low( t_guess );
+        Real high( t_guess );
+
+        // scale the interval around the guess such that the function straddles
+        if( value < 0.0 )               // if the guess was too low
+        {
+                do
+                {       high *= 10;     // keep increasing the upper boundary until the function straddles
+                        value = GSL_FN_EVAL( &F, high );
+
+                        if( fabs( high ) >= t_guess * 1e6 )
+                        {
+                                std::cerr << "Couldn't adjust high. F(" << high <<
+                                    ") = " << value << std::endl;
+                                throw std::exception();
+                        }
+                }
+                while ( value <= 0.0 );
+        }
+        else                            // if the guess was too high
+        {
+                Real value_prev( value );
+                do
+                {       low *= .1;      // keep decreasing the lower boundary until the function straddles
+                        value = GSL_FN_EVAL( &F, low );     // get the accompanying value
+
+                        if( fabs( low ) <= t_guess * 1e-6 || fabs( value - value_prev ) < CUTOFF )
+                        {
+                                std::cerr << "Couldn't adjust low. F(" << low <<
+                                        ") = " << value << std::endl;
+                                return low;
+                        }
+                        value_prev = value;
+                }
+                while ( value >= 0.0 );
+        }
+
+
+	// find the intersection on the y-axis between the random number and the function
 	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
 	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
 									   // incl typecast?
-	const Real t( findRoot( F, solver, 1e-5, 100.0, 1e-18, 1e-12,
+	const Real t( findRoot( F, solver, low, high, 1e-18, 1e-12,
 		"FirstPassageGreensFunction1DRad::drawTime" ) );
 
 	return t;				// return the drawn time

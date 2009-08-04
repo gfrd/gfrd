@@ -123,103 +123,78 @@ FirstPassageGreensFunction2D::p_survival_F( const Real t,
 const Real 
 FirstPassageGreensFunction2D::drawTime( const Real rnd ) const
 {
-    THROW_UNLESS( std::invalid_argument, rnd < 1.0 && rnd >= 0.0 );
+	THROW_UNLESS( std::invalid_argument, rnd < 1.0 && rnd >= 0.0 );
 
-    const Real a( geta() );
+	const Real a( geta() );
 
-    if( getD() == 0.0 || a == INFINITY )
-    {
-        return INFINITY;
-    }
-
-    if( a == 0.0 )
-    {
-	return 0.0;
-    }
-
-    p_survival_params params = { this, rnd };
-
-    gsl_function F = 
+	if( getD() == 0.0 || a == INFINITY )
 	{
-	    reinterpret_cast<typeof(F.function)>( &p_survival_F ),
-	    &params 
+		return INFINITY;
+	}
+	if( a == 0.0 )
+	{
+		return 0.0;
+	}
+
+	p_survival_params params = { this, rnd };
+
+	gsl_function F = 
+	{
+		reinterpret_cast<typeof(F.function)>( &p_survival_F ), &params 
 	};
 
 //for (Real t=0.0001; t<=1; t+=0.0001)
 //{	std::cout << t << " " << GSL_FN_EVAL( &F, t) << std::endl;
 //}
 
+	// Find a good interval to determine the first passage time in
+        const Real t_guess( a * a / ( 4. * D ) );   // construct a guess: msd = sqrt (2*d*D*t)
+        Real value( GSL_FN_EVAL( &F, t_guess ) );
+        Real low( t_guess );
+        Real high( t_guess );
 
-    const Real t_guess( a * a / ( 4. * D ) );	// construct a guess for the first passage time
-//std::cout << t_guess << std::endl;
-
-    Real low( t_guess );
-    Real high( t_guess );
-
-    const Real value( GSL_FN_EVAL( &F, t_guess ) );
-
-    if( value < 0.0 )	// scale the interval around the guess such that the function straddles
-    {
-        high *= 10;
-
-        while( 1 )
+        // scale the interval around the guess such that the function straddles
+        if( value < 0.0 )               // if the guess was too low
         {
-            const Real high_value( GSL_FN_EVAL( &F, high ) );
-            
-            if( high_value >= 0.0 )
-            {
-                break;
-            }
+                do
+                {       high *= 10;     // keep increasing the upper boundary until the function straddles
+                        value = GSL_FN_EVAL( &F, high );
 
-            if( fabs( high ) >= t_guess * 1e6 )
-            {
-                std::cerr << "Couldn't adjust high. F(" << high <<
-                    ") = " << GSL_FN_EVAL( &F, high ) << "; " <<
-                    ", " << dump() << std::endl;
-                throw std::exception();
-            }
-            high *= 10;
+                        if( fabs( high ) >= t_guess * 1e6 )
+                        {
+                                std::cerr << "Couldn't adjust high. F(" << high <<
+                                    ") = " << value << std::endl;
+                                throw std::exception();
+                        }
+                }
+                while ( value <= 0.0 );
         }
-    }
-    else
-    {
-        Real low_value_prev( value );
-        low *= .1;
-
-        while( 1 )
+        else                            // if the guess was too high
         {
-            const Real low_value( GSL_FN_EVAL( &F, low ) );
-            
-            if( low_value <= 0.0 )
-            {
-                break;
-            }
-            
-            if( fabs( low ) <= t_guess * 1e-6 ||
-                fabs( low_value - low_value_prev ) < CUTOFF )
-            {
-                std::cerr << "Couldn't adjust low.  Returning low (= "
-                          << low << "); F(" << low <<
-                    ") = " << GSL_FN_EVAL( &F, low )
-                          << dump() << std::endl;
-                return low;
-            }
-            low_value_prev = low_value;
-            low *= .1;
+                Real value_prev( value );
+                do
+                {       low *= .1;      // keep decreasing the lower boundary until the function straddles
+                        value = GSL_FN_EVAL( &F, low );     // get the accompanying value
+
+                        if( fabs( low ) <= t_guess * 1e-6 || fabs( value - value_prev ) < CUTOFF )
+                        {
+                                std::cerr << "Couldn't adjust low. F(" << low <<
+                                        ") = " << value << std::endl;
+                                return low;
+                        }
+                        value_prev = value;
+                }
+                while ( value >= 0.0 );
         }
-    }
 
 	// find the root
-    const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );	// a new solver type brent
-    gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );	// make a new solver instance
-									// incl typecast?
-
-    const Real t( findRoot( F, solver, low, high, 1e-18, 1e-12,
+	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );	// a new solver type brent
+	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );	// make a new solver instance
+	const Real t( findRoot( F, solver, low, high, 1e-18, 1e-12,
                             "FirstPassageGreensFunction2D::drawTime" ) );
+	gsl_root_fsolver_free( solver );
 
-    gsl_root_fsolver_free( solver );
-
-    return t;
+	return t;
 }
 
 const Real

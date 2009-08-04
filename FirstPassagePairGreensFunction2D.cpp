@@ -826,6 +826,7 @@ const Real FirstPassagePairGreensFunction2D::drawTime( const Real rnd,
     Real high( t_guess );
 
     // adjust high and low to make sure that f( low ) and f( high ) straddle.
+    // Warning: rediculously ugly code below!!!!
     const Real value( GSL_FN_EVAL( &F, t_guess ) );
     if( value < 0.0 )			// if the function is below zero at the guess the upper
     {					// boundary should be moved (passed the zero point)
@@ -846,9 +847,6 @@ const Real FirstPassagePairGreensFunction2D::drawTime( const Real rnd,
                     ", " << dump() << std::endl;
                 throw std::exception();
             }
-
-//            printf( "drawTime: adjusting high: %g F = %g\n", 
-//                    high, high_value );
             high *= 10;			// otherwise keep extending the interval
         }
     }
@@ -878,12 +876,10 @@ const Real FirstPassagePairGreensFunction2D::drawTime( const Real rnd,
                 return low;
             }
             low_value_prev = low_value;
-
-            //printf( "drawTime: adjusting low: %g, F = %g\n",
-            //        low, low_value );
             low *= .1;
         }
     }
+    // END OF SUPERUGLY CODE
 
     // find the intersection of the cummulative survival probability and the randomly generated number
     const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );	// initialize the solver

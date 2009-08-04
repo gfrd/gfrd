@@ -1,3 +1,7 @@
+# You can only run this Makefile when the rest of the system (ie the GreensFunctions) are already made
+# These 'tools' depend on them
+# So run 'make' in the parent directory first
+#
 all: GF2D_test GF2DRad_test GF1D_test GF1DRad_test
 	make -f Makefile GF2D_test GF2DRad_test GF1D_test GF1DRad_test
 
