@@ -65,8 +65,12 @@ class CartesianDomain1D( Domain ):
     def drawEventType( self, dt ):
         self.escape = True
         # Todo after here. Flux stuff.
-        self.newPos = self.a * random.choice( [-1,1] )
-	return EventType.ESCAPE
+        choice = random.choice( [-1,1] )
+        self.newPos = self.a * choice
+        if choice == -1:
+            return EventType.REACTION
+        else:
+            return EventType.ESCAPE
 
         try:
             eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, 
@@ -127,6 +131,7 @@ class RadialDomain2D( Domain ):
         assert self.escape == False
         # Todo. This only works this simple if all parameters have been set in 
         # greens function, like gf.seta(), but also gf.ka() and gf.kb().
+        print 'r0 = ', self.r0
 	try:
             rnd = numpy.random.uniform()
 	    dt = self.gf.drawTime( rnd, self.r0 )
@@ -191,6 +196,11 @@ class RadialDomain2D( Domain ):
             raise Exception,\
                 'gf.drawTheta() failed; %s; rnd= %g, r= %g, r0= %g, dt=%g, %s' %\
                 ( str( e ), rnd, r, self.r0, dt, gf.dump() )
-        return theta
+
+        '''
+        Heads up. For cylinders theta should be between [-pi,pi]. For spheres 
+        it doesn't matter.
+        '''
+        return random.choice( [-1,1] ) * theta
 
 

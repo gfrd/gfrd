@@ -141,6 +141,18 @@ def randomVector( r ):
     return v * ( r / _gfrd.distance( ZEROPOS, v ) )
 
 
+"""
+# Return a vector perpendicular to 'vector' of length 'r'.
+def randomPerpendicularVector( vector, r ):
+    # Select index of element with least magnitude.
+    index = 
+
+    v = crossproduct( vector,  
+    norm = numpy.linalg.norm(v)
+    return v * ( r / norm )
+"""
+
+
 # Return a random 2D cartesian vector of length r.
 def randomVector2D( r ):
     v = numpy.random.uniform( -1, 1, 2 )

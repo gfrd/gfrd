@@ -458,8 +458,8 @@ class ParticleSimulatorBase( object ):
     def getReactionType2( self, species1, species2 ):
         return self.reactionTypeMap2.get( ( species1, species2 ), None )
 
-    def getInteractionType( self, species ):
-        return self.interActionType.get( species )
+    def getInteractionType( self, species, surface ):
+        return self.interactionTypeMap.get( (species, surface) )
     
     def getSpeciesByIndex( self, i ):
         return self.speciesList.values()[i]

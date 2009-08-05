@@ -55,7 +55,7 @@ class Cylinder( Shape ):
     size = property( getSize, setSize )
 
     def signedDistanceTo( self, pos ):
-        r, z, _, _ = self.toInternal( pos )
+        r, z, = self.toInternal( pos )
         dz = abs(z) - self.size
         dr = r - self.radius
         if dz > 0:
@@ -87,19 +87,18 @@ class Cylinder( Shape ):
         posVectorR = posVector - posVectorZ
         r = length( posVectorR )       # Always >= 0.
           
-        return r, z, posVectorR, posVectorZ
+        return r, z
 
 
     '''
     Returns:
-    1. a vector pointing from the global origin to the projected point of 
-       'pos' onto the main axis of the cylinder.
-    2. a vector pointing from that point to 'pos'.
-    3. the length of that 2nd vector.
+    1. the position of the projected point of 'pos' onto the main axis of the 
+       cylinder.
+    2. the distance (always +) between that point and 'pos'.
     '''
-    def calculateProjectionVectors( self, pos ):
-        r, z, posVectorR, posVectorZ = self.toInternal( pos )
-        return self.origin + posVectorZ, posVectorR, r
+    def calculateProjection( self, pos ):
+        r, z = self.toInternal( pos )
+        return self.origin + z*self.unitZ, r
 
 
     def __str__( self ):
@@ -178,14 +177,13 @@ class Box( Shape ):
 
     '''
     Returns:
-    1. a vector pointing from the global origin to the projected point of 
-       'pos' onto the xy-plane of the box (or surface).
-    2. a vector pointing from that point to 'pos'.
-    3. the length of that 2nd vector.
+    1. the position of the projected point of 'pos' onto the xy-plane of the 
+       box.
+    2. the distance (+ or -) between that point and 'pos'.
     '''
-    def calculateProjectionVectors( self, pos ):
+    def calculateProjection( self, pos ):
         x, y, z = self.toInternal( pos )
-        return self.origin + x * self.unitX + y * self.unitY, z * self.unitZ, z
+        return self.origin + x * self.unitX + y * self.unitY, z
 
 
     def __str__( self ):

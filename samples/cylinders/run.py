@@ -61,7 +61,7 @@ def run( ):
     box1 = CuboidalSurface( [0,0,0], [L,L,L], 'world' )
 
     dna = CylindricalSurface( [L/2,L/2,L/2], 2*sigma, [0,1,0], L/2, 'dna')
-    s.addSurface( dna )
+    #s.addSurface( dna )
 
     membrane = PlanarSurface( [L/2,L/2,2*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
     s.addSurface( membrane )
@@ -99,17 +99,19 @@ def run( ):
     '''
     Particles.
     '''
-    #s.throwInParticles( A, 2, box1 )
+    #s.throwInParticles( worldA, 2, box1 )
+    #s.throwInParticles( worldB, 1, box1 )
+    #s.throwInParticles( worldC, 1, box1 )
 
-    #s.throwInParticles( dnaA, 1, dna )
+    #s.throwInParticles( dnaA, 5, dna )
     #s.throwInParticles( dnaB, 1, dna )
     #s.throwInParticles( dnaC, 1, dna )
 
-    s.throwInParticles( membraneA, 1, membrane )
+    s.throwInParticles( membraneA, 2, membrane )
     #s.throwInParticles( membraneB, 1, membrane )
     #s.throwInParticles( membraneC, 1, membrane )
 
-    s.throwInParticles( membrane2A, 1, membrane2 )
+    s.throwInParticles( membrane2A, 2, membrane2 )
     #s.throwInParticles( membrane2B, 1, membrane2 )
     #s.throwInParticles( membrane2C, 1, membrane2 )
 
@@ -120,7 +122,7 @@ def run( ):
     Simulation.
     '''
     s.initialize()
-    for i in range(10):
+    for i in range(200):
         s.step()
     s.stop( s.t )
     

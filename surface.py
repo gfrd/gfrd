@@ -93,7 +93,7 @@ class PlanarSurface( Surface, Box ):
         Surface.__init__( self, name )
 
         assert numpy.dot( vectorX, vectorY ) == 0 # Todo. To doubles.
-        vectorZ = numpy.cross( vectorX, vectorY )
+        vectorZ = numpy.cross( vectorX, vectorY ) # Todo. - or + ?
         Box.__init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ) 
         self.defaultSingle = CylindricalSingle2D
         self.defaultPair = CylindricalPair2D
@@ -123,7 +123,8 @@ class PlanarSurface( Surface, Box ):
 
 
     def randomUnbindingSite( self, pos, radius ):
-        return pos + random.sample([-1,1],1)[0] * (self.Lz + 1.5 * radius ) * SAFETY * self.unitZ
+        # Todo.
+        return pos + random.choice( [-1,1] ) * (self.Lz + 1.5 * radius ) * SAFETY * self.unitZ
 
 
 class CylindricalSurface( Surface, Cylinder ):
@@ -140,6 +141,7 @@ class CylindricalSurface( Surface, Cylinder ):
 
 
     def randomUnbindingSite( self, pos, radius ):
+        # Todo.
         return pos
 
 """

@@ -403,8 +403,8 @@ class SphericalPair3D( Pair ):
 
 class CylindricalPair2D( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
-        assert single1.particle.surface == single2.particle.surface
-        self.surface = single1.particle.surface
+        assert single1.surface == single2.surface
+        self.surface = single1.surface
 
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
@@ -466,8 +466,8 @@ class CylindricalPair2D( Pair ):
 
 class CylindricalPair1D( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
-        assert single1.particle.surface == single2.particle.surface
-        self.surface = single1.particle.surface
+        assert single1.surface == single2.surface
+        self.surface = single1.surface
 
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
