@@ -230,7 +230,7 @@ class Particle( object ):
 
     def __str__( self ):
 
-        return "( '" + self.species.id + "', " + str( self.serial ) + ", " + str( self.surface ) + ' )'
+        return "( '" + self.species.id + "', " + str( self.serial ) + ' )'
 
     def __repr__( self ):
 
@@ -654,8 +654,8 @@ class ParticleSimulatorBase( object ):
     is a list of Particle objects.
     '''
 
-    # Thomas: there is a problem with these 5 methods: Particles can not be 
-    # indexed. And they are not used anyway. Maybe before with gfrd?
+    # There is a problem with these 4 methods: Particles can not be indexed.  
+    # And they are not used anyway. Maybe before with gfrd?
     # In all these methods we try to get a reference to to the original 
     # particle, since we don't just want the values that the particleMatrix 
     # returns?
@@ -711,6 +711,7 @@ class ParticleSimulatorBase( object ):
         
         return dt, idx
         
+    """
 
     def checkParticleMatrix( self ):
 
@@ -747,7 +748,6 @@ class ParticleSimulatorBase( object ):
 
         self.checkParticleMatrix()
 
-    """
 
     def dumpPopulation( self ):
         buf = ''

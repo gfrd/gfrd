@@ -6,7 +6,7 @@ import random
 from shape import Cylinder, Box
 from single import SphericalSingle3D, CylindricalSingle1D, CylindricalSingle2D, InteractionSingle1D, InteractionSingle2D
 from pair import SphericalPair3D, CylindricalPair1D, CylindricalPair2D
-from utils import length, normalize, SAFETY
+from utils import length, normalize, SAFETY, randomVector2D
 
 
 class Surface( object ):
@@ -17,22 +17,15 @@ class Surface( object ):
     '''
     This method computes the absolute distance between pos and
     a closest point on the surface.
+
+    signedDistanceTo on the other hand returns a positive
+    or negative value depending on in which side the position is.
+    When this surface defines a closed region in space,
+    negative value means that the position is inside.
     '''
     def distanceTo( self, pos ):
         return abs( self.signedDistanceTo( pos ) )
    
-
-    '''
-    Same as distanceTo(), but the return value is positive
-    or negative depending on in which side the position is.
-    When this surface defines a closed region in space,
-    negative value means that the position is inside.
-    '''
-    """
-    def signedDistanceTo( self, pos ):
-        return self.signedDistanceTo( pos )
-    """
-
 
     def __str__( self ):
         return self.name
@@ -46,7 +39,7 @@ class DefaultSurface( Surface ):
         self.defaultPair = SphericalPair3D
 
 
-class CuboidalSurface( Surface ):
+class CuboidalSurface( Surface, Box ):
     '''
     origin -- = [ x0, y0, z0 ] is the origin.
     size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
@@ -54,14 +47,23 @@ class CuboidalSurface( Surface ):
     '''
     def __init__( self, origin, size, name='CuboidalSurface' ):
         Surface.__init__( self, name )
-        self.setParams( origin, size )
+        self.size = numpy.array(size)
+        Lx = size[0]
+        Ly = size[1]
+        Lz = size[2]
+        Box.__init__( self, origin + self.size/2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx/2, Ly/2, Lz/2 ) 
         self.defaultSingle = SphericalSingle3D
         self.defaultPair = SphericalPair3D
  
 
+    '''
+    Overrule signedDistanceTo from Box.
+    '''
     def signedDistanceTo( self, pos ):
-        dists = numpy.concatenate( ( self.origin - pos,
-                                     self.origin+self.size-pos ) )
+        print 'CuboidalSurface.signedDistanceTo(). Is this ever used?'
+        edge = self.origin - size/2
+        dists = numpy.concatenate( ( edge - pos,
+                                     edge+self.size-pos ) )
         absdists = numpy.abs( dists )
         i = numpy.argmin( absdists )
         return dists[i]
@@ -73,47 +75,23 @@ class CuboidalSurface( Surface ):
     See also signedDistanceTo().
     '''
     def randomPosition( self ):
-        return numpy.array( [ random.uniform( self.origin[0], self.size[0] ),
-                              random.uniform( self.origin[1], self.size[1] ),
-                              random.uniform( self.origin[2], self.size[2] )])
-
-
-    def setParams( self, origin, size ):
-        self.origin = numpy.array( origin )
-        self.size = size
-        self.midpoint = ( self.size - self.origin ) * 0.5
-
-
-    def getParams( self ):
-        return self.params
+        edge = self.origin - self.size/2
+        return numpy.array( [ random.uniform( edge[0], self.size[0] ),
+                              random.uniform( edge[1], self.size[1] ),
+                              random.uniform( edge[2], self.size[2] )])
 
 
 class PlanarSurface( Surface, Box ):
     def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, name="PlanarSurface" ):
         Surface.__init__( self, name )
 
-        assert numpy.dot( vectorX, vectorY ) == 0 # Todo. To doubles.
-        vectorZ = numpy.cross( vectorX, vectorY ) # Todo. - or + ?
+        assert numpy.dot( vectorX, vectorY ) == 0.0
+        # Orientation of surface is decided here.
+        vectorZ = numpy.cross( vectorX, vectorY )
         Box.__init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ) 
         self.defaultSingle = CylindricalSingle2D
         self.defaultPair = CylindricalPair2D
         self.defaultInteractionSingle = InteractionSingle2D
-
-        self.normal = self.unitZ # Extra.
-        # Todo: p is not correct here.
-        # Hessian normal form [ nx, ny, nz, p ].
-        #self.hessianNormal = [ self.normal[0], self.normal[1], self.normal[2], length(self.origin) ]
-
-
-    '''
-    Assumes plane spans whole world.
-    '''
-    """
-    def signedDistanceTo( self, pos ):
-        return numpy.dot( self.hessianNormal,\
-                  numpy.array( [ pos[0], pos[1], pos[2], 1.0 ] ) ) - self.Lz
-    """
-
 
     '''
     Only uniform if vectorX and vectorY have same length.
@@ -123,8 +101,7 @@ class PlanarSurface( Surface, Box ):
 
 
     def randomUnbindingSite( self, pos, radius ):
-        # Todo.
-        return pos + random.choice( [-1,1] ) * (self.Lz + 1.5 * radius ) * SAFETY * self.unitZ
+        return pos + random.choice( [-1,1] ) * (self.Lz * SAFETY + radius ) * self.unitZ
 
 
 class CylindricalSurface( Surface, Cylinder ):
@@ -141,37 +118,6 @@ class CylindricalSurface( Surface, Cylinder ):
 
 
     def randomUnbindingSite( self, pos, radius ):
-        # Todo.
-        return pos
+        x, y = randomVector2D( self.radius * SAFETY + radius )
+        return pos + x * self.unitX + y * self.unitY
 
-"""
-Todo.
-class SphericalSurface( Surface ):
-    '''
-    origin -- = [ x0, y0, z0 ] is the origin and
-    radius -- the radius of the sphere.
-
-    ( x - x0 )^2 + ( y - y0 )^2 + ( z - z0 )^2 = r^2
-    '''
-    def __init__( self, origin, radius ):
-        self.setParams( origin, radius )
-
-
-    def signedDistanceTo( self, pos ):
-        return math.sqrt( ( ( pos - self.origin ) ** 2 ).sum() ) - self.radius
-
-
-    def randomPosition( self ):
-        pos = randomUnitVectorS()
-        pos[0] *= self.radius
-        return sphericalToCartesian( pos )
-
-
-    def setParams( self, origin, radius ):
-        self.origin = numpy.array( origin )
-        self.radius = radius
-
-
-    def getParams( self ):
-        return self.params
-"""

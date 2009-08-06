@@ -9,7 +9,9 @@ class Domain( object ):
         self.a = a           # Out er radius.
         self.escape = False  # Flag for if there is an escape in this domain 
                              # later. So we don't have to draw a position for 
-                             # this domain in case of a propagate. 
+                             # this domain in case of a propagate. By default 
+                             # all escape flags have to be set to False, so 
+                             # drawPosition works properly.
     
 
     def drawTime( self ):
@@ -51,15 +53,16 @@ class CartesianDomain1D( Domain ):
         self.r0 = r0         # Initial position
         self.kInner = kInner # Inner interaction rate.
         self.kOuter = kOuter # Outer interaction rate.
+        """
         self.newPos = a      # Position in this domain where particle will end 
                              # up after an escape.
+        """
         Domain.__init__( self, a, gf )
 
 
     '''
     Returns the type of event in this domain (which side) the particle will 
     leave.
-    TODO
     (!) Not a pure function.
     '''
     def drawEventType( self, dt ):
@@ -131,7 +134,6 @@ class RadialDomain2D( Domain ):
         assert self.escape == False
         # Todo. This only works this simple if all parameters have been set in 
         # greens function, like gf.seta(), but also gf.ka() and gf.kb().
-        print 'r0 = ', self.r0
 	try:
             rnd = numpy.random.uniform()
 	    dt = self.gf.drawTime( rnd, self.r0 )

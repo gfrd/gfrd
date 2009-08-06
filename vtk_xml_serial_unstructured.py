@@ -7,8 +7,7 @@ class VTK_XML_Serial_Unstructured:
         pass
 
 
-    def createDoc(self, posList, radii=[], colors=[], orientations=[], 
-            scales=[], tensors=[]):
+    def createDoc(self, posList, radii=[], colors=[], tensors=[]):
         # Document and root element
         doc = xml.dom.minidom.Document()
         root_element = doc.createElementNS("VTK", "VTKFile")
@@ -117,38 +116,6 @@ class VTK_XML_Serial_Unstructured:
             color_Data = doc.createTextNode(string)
             colorNode.appendChild(color_Data)
 
-        # Cylinder orientation
-        if len(orientations) > 0:
-            jumps = doc.createElementNS("VTK", "DataArray")
-            jumps.setAttribute("Name", "orientation")
-            jumps.setAttribute("NumberOfComponents", "3")
-            jumps.setAttribute("type", "Float32")
-            jumps.setAttribute("format", "ascii")
-            point_data.appendChild(jumps)
-
-            string = str()
-            for orientation in orientations:
-                string = string + repr(orientation[0]) + ' ' + \
-                repr(orientation[1]) + ' ' + repr(orientation[2]) + ' '
-            jumpData = doc.createTextNode(string)
-            jumps.appendChild(jumpData)
-
-        # Cylinder scale
-        if len(scales) > 0:
-            jumps = doc.createElementNS("VTK", "DataArray")
-            jumps.setAttribute("Name", "scale")
-            jumps.setAttribute("NumberOfComponents", "3")
-            jumps.setAttribute("type", "Float32")
-            jumps.setAttribute("format", "ascii")
-            point_data.appendChild(jumps)
-
-            string = str()
-            for scale in scales:
-                string = string + repr(scale[0]) + ' ' + repr(scale[1]) \
-                        + ' ' + repr(scale[2]) + ' '
-            jumpData = doc.createTextNode(string)
-            jumps.appendChild(jumpData)
-
         if len(tensors) > 0:
             jumps = doc.createElementNS("VTK", "DataArray")
             jumps.setAttribute("Name", "tensors")
@@ -195,7 +162,7 @@ class VTK_XML_Serial_Unstructured:
         pvd_root.appendChild(collection)
 
         # Fix order. Use ordered dict in future.
-        for type in ['particles', 'spheres', 'cylinders', 'cylindricalSurfaces', 'planarSurfaces']:
+        for type in ['particles', 'spheres', 'cylinders', 'cuboidalSurfaces', 'cylindricalSurfaces', 'planarSurfaces']:
             for index, (fileName, time) in enumerate(fileList[type]):
                 dataSet = pvd.createElementNS("VTK", "DataSet")
                 #if times[i] == None:
@@ -248,6 +215,40 @@ class VTK_XML_Serial_Unstructured:
         colors          optional array of scalars to use to set particle colors 
                         The exact colors will depend on the color map you set up in Paraview.
     """
+
+
     """
+    # Cylinder orientation
+    if len(orientations) > 0:
+        jumps = doc.createElementNS("VTK", "DataArray")
+        jumps.setAttribute("Name", "orientation")
+        jumps.setAttribute("NumberOfComponents", "3")
+        jumps.setAttribute("type", "Float32")
+        jumps.setAttribute("format", "ascii")
+        point_data.appendChild(jumps)
+
+        string = str()
+        for orientation in orientations:
+            string = string + repr(orientation[0]) + ' ' + \
+            repr(orientation[1]) + ' ' + repr(orientation[2]) + ' '
+        jumpData = doc.createTextNode(string)
+        jumps.appendChild(jumpData)
     """
 
+    """
+    # Cylinder scale
+    if len(scales) > 0:
+        jumps = doc.createElementNS("VTK", "DataArray")
+        jumps.setAttribute("Name", "scale")
+        jumps.setAttribute("NumberOfComponents", "3")
+        jumps.setAttribute("type", "Float32")
+        jumps.setAttribute("format", "ascii")
+        point_data.appendChild(jumps)
+
+        string = str()
+        for scale in scales:
+            string = string + repr(scale[0]) + ' ' + repr(scale[1]) \
+                    + ' ' + repr(scale[2]) + ' '
+        jumpData = doc.createTextNode(string)
+        jumps.appendChild(jumpData)
+    """

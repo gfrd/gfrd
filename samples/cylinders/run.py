@@ -59,6 +59,7 @@ def run( ):
     Surfaces.
     '''
     box1 = CuboidalSurface( [0,0,0], [L,L,L], 'world' )
+    s.cuboidalSurfaces = [ box1 ]
 
     dna = CylindricalSurface( [L/2,L/2,L/2], 2*sigma, [0,1,0], L/2, 'dna')
     #s.addSurface( dna )
@@ -66,7 +67,7 @@ def run( ):
     membrane = PlanarSurface( [L/2,L/2,2*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
     s.addSurface( membrane )
 
-    membrane2 = PlanarSurface( [L/2,L/2,8*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
+    membrane2 = PlanarSurface( [L/2,L/2,8*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane2', )
     s.addSurface( membrane2 )
 
 
@@ -99,7 +100,7 @@ def run( ):
     '''
     Particles.
     '''
-    #s.throwInParticles( worldA, 2, box1 )
+    #s.throwInParticles( worldA, 5, box1 )
     #s.throwInParticles( worldB, 1, box1 )
     #s.throwInParticles( worldC, 1, box1 )
 
@@ -107,11 +108,11 @@ def run( ):
     #s.throwInParticles( dnaB, 1, dna )
     #s.throwInParticles( dnaC, 1, dna )
 
-    s.throwInParticles( membraneA, 2, membrane )
+    s.throwInParticles( membraneA, 5, membrane )
     #s.throwInParticles( membraneB, 1, membrane )
     #s.throwInParticles( membraneC, 1, membrane )
 
-    s.throwInParticles( membrane2A, 2, membrane2 )
+    s.throwInParticles( membrane2A, 5, membrane2 )
     #s.throwInParticles( membrane2B, 1, membrane2 )
     #s.throwInParticles( membrane2C, 1, membrane2 )
 
@@ -122,8 +123,10 @@ def run( ):
     Simulation.
     '''
     s.initialize()
-    for i in range(200):
+    for i in range(100):
+        #s.dumpScheduler()
         s.step()
+        s.check()
     s.stop( s.t )
     
 if __name__ == '__main__':

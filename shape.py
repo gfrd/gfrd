@@ -1,52 +1,48 @@
 import numpy
 from utils import length, normalize
-
-debug = 1
+import math
 
 class Shape( object ):
-    def __init__( self, distFunc ):
-        # Note: we can use the distance function to compute the distance 
-        # between 2 points, taken into account the periodic boundary 
-        # conditions.
-        self.distance = distFunc
+    def __init__( self ):
+        pass
 
 
-    # DEBUG:
-    def setPos ( self, pos ):
-        raise RuntimeError, 'Shape doesnt have a pos anymore'
-    def getPos ( self ):
-        raise RuntimeError, 'Shape doesnt have a pos anymore'
-    pos = property( getPos, setPos )
-
-
+    # Note: cyclicTranspose 'pos' before you use this.
     def distanceTo( self, pos ):
         return abs( self.signedDistanceTo( pos ) )
 
 
 
 class Sphere( Shape ):
-    def __init__( self, origin, radius, distFunc=None ):
-        Shape.__init__( self, distFunc ) 
+    def __init__( self, origin, radius ):
+        Shape.__init__( self ) 
         self.origin = numpy.array( origin )
         self.radius = radius
 
 
+    # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
-        return self.distance( pos, self.origin ) - self.radius
+        return length( pos - self.origin ) - self.radius
 
 
 
 class Cylinder( Shape ):
-    def __init__( self, origin, radius, orientationZ, size, distFunc=None ):
-        Shape.__init__( self, distFunc )
+    def __init__( self, origin, radius, orientationZ, size ):
+        Shape.__init__( self )
         # Origin is the centre of the cylinder! This has the slight advantage 
         # over other options that we can make use of symmetry sometimes.
         self.origin = numpy.array( origin )
         self.radius = radius
-        self.unitZ = normalize( numpy.array( orientationZ ) ) # Formerly known as orientationZ.
+        self.unitZ = normalize( numpy.array( orientationZ ) )
         # Size is the half length of the cylinder!
         self.size = size                                             # Formerly known as Lz.
         self.vectorZ = self.unitZ * size # Extra.
+
+        # Select basis vector in which self.unitZ is smallest.
+        _, basisVector = min( zip(abs(self.unitZ), [[1,0,0], [0,1,0], [0,0,1]]) )
+        # Find (any) 2 vectors perpendicular to self.unitZ.
+        self.unitX = normalize( numpy.cross( self.unitZ, basisVector ) )
+        self.unitY = normalize( numpy.cross( self.unitZ, self.unitX ) )
 
     def getSize( self ):
         return self._size
@@ -54,6 +50,7 @@ class Cylinder( Shape ):
         self._size = size
     size = property( getSize, setSize )
 
+    # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
         r, z, = self.toInternal( pos )
         dz = abs(z) - self.size
@@ -62,7 +59,7 @@ class Cylinder( Shape ):
             # pos is (either) to the right or to the left of the cylinder.
             if dr > 0:
                 # Compute distance to edge.
-                distance = sqrt( dz*dz + dr*dr )
+                distance = math.sqrt( dz*dz + dr*dr )
             else:
                 distance = dz
         else:
@@ -108,19 +105,18 @@ class Cylinder( Shape ):
 
 class DummyCylinder( Cylinder ):
     def __init__( self ):
-        Cylinder.__init__( self, [0,0,0], 0, [1,1,1], 0 ) 
+        Cylinder.__init__( self, [0,0,0], 0, [0,0,1], 0 ) 
 
 
 class Box( Shape ):
-    def __init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz, distFunc=None ):
-        Shape.__init__( self, distFunc )
+    def __init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ):
+        Shape.__init__( self )
         self.origin = numpy.array(origin)
 
         self.unitX = normalize(numpy.array(vectorX))
         self.unitY = normalize(numpy.array(vectorY))
         self.unitZ = normalize(numpy.array(vectorZ))
 
-        assert Lx > 0 and Ly > 0 and Lz > 0
         self.Lx = Lx
         self.Ly = Ly
         self.Lz = Lz
@@ -131,6 +127,7 @@ class Box( Shape ):
         self.vectorZ = self.unitZ * Lz
 
 
+    # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
         x, y, z = self.toInternal( pos )
         dx = abs(x) - self.Lx
@@ -192,5 +189,5 @@ class Box( Shape ):
 
 class DummyBox( Box ):
     def __init__( self ):
-        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 1, 1, 1 ) 
+        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 0, 0, 0 ) 
 

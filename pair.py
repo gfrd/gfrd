@@ -24,10 +24,11 @@ class Pair( object ):
 
     '''
     The distance function is passed to be able to take the boundary 
-    conditions into account. Todo: remove.
+    conditions into account.
     '''
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         self.multiplicity = 2
+
         '''
         Individual singles are preserved, but removed from shellMatrix and 
         eventScheduler.
@@ -39,6 +40,9 @@ class Pair( object ):
             self.single1, self.single2 = single2, single1 
         self.singles = [ self.single1, self.single2 ]
 
+        assert single1.surface == single2.surface
+        self.surface = single1.surface
+
         self.rt = rt
 
         self.distance = distFunc
@@ -46,6 +50,8 @@ class Pair( object ):
         
         particle1 = self.single1.particle
         particle2 = self.single2.particle
+
+        self.biggestParticleRadius = max( particle1.species.radius, particle2.species.radius )
 
         self.D1, self.D2 = particle1.species.D, particle2.species.D
         self.D_tot = self.D1 + self.D2
@@ -93,16 +99,6 @@ class Pair( object ):
         return self.D_tot #FIXME: is this correct?
 
 
-    def setRadius( self, radius ):
-        raise Exception
-        assert radius - self.getMinRadius() >= 0.0
-        self.shellList[0].radius = radius
-    def getRadius( self ):
-        raise Exception
-        return self.shellList[0].radius
-    radius = property( getRadius, setRadius )
-
-
     '''
     This method returns the radius from its CoM that this Pair must reserve
     to remain mobile.
@@ -135,6 +131,8 @@ class Pair( object ):
     Todo. Check all this and make sure the radius of the largest particle is 
     subtracted from a_r and a_R to get values of the same type as 
     getMobilityRadius() for singles. 
+    
+    Todo. Make dimension specific.
     '''
     def determineRadii( self ):
         single1 = self.single1
@@ -262,7 +260,7 @@ class Pair( object ):
         if d1 > self.shellSize or d2 > self.shellSize:
             raise RuntimeError, \
                 'New particle(s) out of protective sphere. %s' % \
-                'radius = %g, d1 = %g, d2 = %g ' % ( self.radius, d1, d2 )
+                'radius = %g, d1 = %g, d2 = %g ' % ( self.shellSize, d1, d2 )
         return True
 
 
@@ -271,7 +269,7 @@ class Pair( object ):
 
 
     def __str__( self ):
-        buf = 'Pair( ' + str(self.single1.particle) +\
+        buf = '( ' + str(self.single1.particle) +\
               ', ' + str(self.single2.particle) + ' )'
         return buf
 
@@ -294,7 +292,6 @@ class SphericalPair3D( Pair ):
         # radius again from initialize(). Pairs don't move.
         self.shellList = [ Sphere( self.CoM, shellSize ) ]
 
-        # Todo. Make dimension specific.
         a_R, self.a_r = self.determineRadii()
 
         # Green's function for centre of mass inside absorbing sphere.
@@ -401,19 +398,21 @@ class SphericalPair3D( Pair ):
         return pgf
 
 
+    def __str__( self ):
+        return 'SphericalPair3D' + Pair.__str__( self )
+
+
+'''
+Hockey pucks.
+'''
 class CylindricalPair2D( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
-        assert single1.surface == single2.surface
-        self.surface = single1.surface
-
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
         # Set shellSize directly, without getMinRadius() step. Don't set 
         # radius again from initialize(). Pairs don't move.
-        # Todo. maxradius or so.
-        self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.normal, single1.particle.radius, distFunc ) ]
+        self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, self.surface.Lz * SAFETY + 2*self.biggestParticleRadius ) ]
 
-        # Todo. Make dimension specific.
         a_R, self.a_r = self.determineRadii()
 
         # Green's function for centre of mass inside absorbing sphere.
@@ -464,19 +463,21 @@ class CylindricalPair2D( Pair ):
         return newpos1, newpos2
 
 
+    def __str__( self ):
+        return 'CylindricalPair2D' + Pair.__str__( self )
+
+
+'''
+Rods.
+'''
 class CylindricalPair1D( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
-        assert single1.surface == single2.surface
-        self.surface = single1.surface
-
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
         # Set shellSize directly, without getMinRadius() step. Don't set 
         # radius again from initialize(). Pairs don't move.
-        # Todo: maxRadius.
-        self.shellList = [ Cylinder( self.CoM, single1.particle.radius, self.surface.unitZ, shellSize, distFunc ) ]
+        self.shellList = [ Cylinder( self.CoM, self.surface.radius * SAFETY + 2*self.biggestParticleRadius, self.surface.unitZ, shellSize ) ]
 
-        # Todo. Make dimension specific.
         a_R, self.a_r = self.determineRadii()
 
         # Green's function for centre of mass inside absorbing sphere.
@@ -517,16 +518,6 @@ class CylindricalPair1D( Pair ):
         # Todo.
         return self.pgf
 
-    # Overloaded methods getRadius and setRadius.
-    """
-    def getRadius( self ):
-        # Heads up. Return cylinder's size.
-        return self.shellList[0].size
-    def setRadius( self, size ):
-        assert size - self.getMinRadius() >= 0.0 # Still fine.
-        # Heads up. A larger shell means a larger CylindricalSingle2D's size.
-        self.shellList[0].size = size
-        # Todo.
-        self.domains[0].size = self.getMobilityRadius()
-    size = property( getRadius, setRadius )
-    """
+
+    def __str__( self ):
+        return 'CylindricalPair1D' + Pair.__str__( self )

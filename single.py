@@ -1,7 +1,7 @@
 import math
 import numpy
 from _gfrd import EventType, FirstPassageGreensFunction, FirstPassagePairGreensFunction
-from utils import INF, NOWHERE, randomVector, randomVector2D, length
+from utils import INF, NOWHERE, SAFETY, randomVector, randomVector2D, length, normalize, rotateVector
 from shape import Sphere, Cylinder
 from domain import RadialDomain1D, CartesianDomain1D, RadialDomain2D
 
@@ -40,6 +40,10 @@ class Single( object ):
         self.shellList[0].origin = pos
         self.particle.pos = pos
     pos = property( getPos, setPos )
+
+
+    def posString( self ):
+        return '(%3.1f %3.1f %3.1f)' % ( self.pos[0], self.pos[1], self.pos[2] ) 
 
 
     def getRadius( self ):
@@ -96,10 +100,6 @@ class Single( object ):
             determineNextEvent), self.activeDomain won't be used at all, as 
             long as you make sure reaction events are taken care of before 
             escape events in fireSingle.
-
-            By not letting the domains notice that one of them has been 
-            made active, we also don't have to reset a flag or something when
-            there is a burst (again, just ignore the activeDomain flag).
             '''
             return min( (d.drawTime(), EventType.ESCAPE, d) for d in self.domains )
 
@@ -117,9 +117,6 @@ class Single( object ):
         return dt, EventType.REACTION, None
 
 
-    '''
-    Copy pasted.
-    '''
     def drawReactionType( self ):
         k_array = [ rt.k for rt in self.reactionTypes ]
         k_array = numpy.add.accumulate( k_array )
@@ -135,7 +132,7 @@ class Single( object ):
 
 
     def __str__( self ):
-        return 'Shell' + str( self.particle ) + (" (%3.1f %3.1f %3.1f)" % (self.pos[0], self.pos[1], self.pos[2]) )
+        return 'Single' + str( self.particle ) + '. pos=' + self.posString()
 
 
 '''
@@ -158,11 +155,6 @@ class FreeSingle( Single ):
         self.radius = self.getMinRadius()
         self.dt = 0.0
         self.eventType = EventType.ESCAPE
-      
-        # Todo. Cant't we set proper size and event immediately? (like with 
-        # pairs).
-        # Just set some activeDomain, doesn't matter which.
-        self.activeDomain = self.domains[0] # FIXME
 
 
     def isReset( self ):
@@ -170,11 +162,15 @@ class FreeSingle( Single ):
                and self.eventType == EventType.ESCAPE
 
 
+    def __str__( self ):
+        return 'Free' + Single.__str__( self )
+
+
 class SphericalSingle3D( FreeSingle ):
-    def __init__( self, particle, reactionTypes, distFunc ):
+    def __init__( self, particle, reactionTypes ):
         FreeSingle.__init__( self, particle, reactionTypes )
 
-        self.shellList = [ Sphere( particle.pos, self.getMinRadius(), distFunc ) ]
+        self.shellList = [ Sphere( particle.pos, self.getMinRadius() ) ]
 
         # Create a radial domain of size mobilityRadius=0.
         gf = FirstPassageGreensFunction( particle.species.D )
@@ -188,10 +184,10 @@ class SphericalSingle3D( FreeSingle ):
 Hockey pucks.
 '''
 class CylindricalSingle2D( FreeSingle ):
-    def __init__( self, particle, reactionTypes, distFunc ):
+    def __init__( self, particle, reactionTypes ):
         FreeSingle.__init__( self, particle, reactionTypes )
 
-        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.normal, particle.radius, distFunc ) ]
+        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.surface.Lz * SAFETY + 2 * particle.radius ) ]
 
         # Create a radial domain of size mobilityRadius=0.
         gf = FirstPassageGreensFunction( particle.species.D )
@@ -207,11 +203,11 @@ class CylindricalSingle2D( FreeSingle ):
 Rods.
 '''
 class CylindricalSingle1D( FreeSingle ):
-    def __init__( self, particle, reactionTypes, distFunc ):
+    def __init__( self, particle, reactionTypes ):
         FreeSingle.__init__( self, particle, reactionTypes )
 
         # Heads up. Cylinder's size is determined by getMinRadius().
-        self.shellList = [ Cylinder( particle.pos, particle.radius, self.surface.unitZ, self.getMinRadius(), distFunc ) ]
+        self.shellList = [ Cylinder( particle.pos, self.surface.radius * SAFETY + 2 * particle.radius, self.surface.unitZ, self.getMinRadius() ) ]
 
         # Create a cartesian domain of size mobilityRadius=0.
         gf = FirstPassageGreensFunction( particle.species.D )
@@ -248,15 +244,11 @@ class InteractionSingle( Single ):
 
 
     def reset( self ):
-        #self.radius = self.getMinRadius()
-        #self.dt = 0.0
-        #self.eventType = EventType.ESCAPE
-      
-        # Todo. Cant't we set proper size and event immediately? (like with 
-        # pairs).
-        # Just set some activeDomain, doesn't matter which.
-        #self.activeDomain = self.domains[0] # FIXME
         pass
+
+
+    def __str__( self ):
+        return 'Interaction' + Single.__str__( self )
 
 
 
@@ -264,10 +256,10 @@ class InteractionSingle( Single ):
 Interaction with plane.
 '''
 class InteractionSingle2D( InteractionSingle ):
-    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, size, particleOffset ):
+    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint = None ):
         InteractionSingle.__init__( self, particle, surface, reactionTypes, interactionType )
 
-        self.shellList = [ Cylinder( origin, radius, surface.unitZ, size ) ]
+        self.shellList = [ Cylinder( origin, radius, orientationVector, size ) ]
 
         # Free diffusion in r direction.
         gfr = FirstPassageGreensFunction( particle.species.D )
@@ -285,23 +277,24 @@ class InteractionSingle2D( InteractionSingle ):
         r = self.domains[0].drawPosition( dt )
         z = self.domains[1].drawPosition( dt )
         x, y = randomVector2D( r )
-        return self.getPos() + x * self.interactionSurface.unitX + y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
+        return self.pos + x * self.interactionSurface.unitX + y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
 
 
 '''
 Interaction with cylinder.
 '''
 class InteractionSingle1D( InteractionSingle ):
-    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, size, particleOffset ):
+    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint ):
+        self.unitR = normalize( particle.pos - projectedPoint ) # Not needed for InteractionSingle2D
         InteractionSingle.__init__( self, particle, surface, reactionTypes, interactionType )
 
-        self.shellList = [ Cylinder( origin, radius, surface.unitZ, size ) ]
+        self.shellList = [ Cylinder( origin, radius, orientationVector, size ) ]
 
         # Interaction possible in r direction.
         # Todo. Correct gf.
         gfr = FirstPassagePairGreensFunction( particle.species.D, interactionType.k, surface.radius )
+        self.pgf = gfr
         gfr.seta( radius )
-        print 'particleOffset ', particleOffset
         rDomain = RadialDomain2D( surface.radius + particle.species.radius, particleOffset[0], radius - particle.species.radius, gfr )
 
         # Free diffusion in z direction.
@@ -312,11 +305,18 @@ class InteractionSingle1D( InteractionSingle ):
 
 
     def drawNewPosition( self, dt ):
-        r, theta = self.domains[0].drawPosition( dt )
+        # Todo, gf.
+        gf = self.choosePairGreensFunction( dt )
+        r, theta = self.domains[0].drawPosition( gf, dt )
         z = self.domains[1].drawPosition( dt )
-        newVectorR = rotateVector( self.particleVector, self.shellList[0].unitZ, theta )
-        return self.getPos() + newVectorR + z * self.shellList[0].unitZ
+        # Calculate new position starting from origin.
+        newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, theta )
+        return self.pos + newVectorR + z * self.shellList[0].unitZ
 
+
+    def choosePairGreensFunction( self, dt ):
+        # Todo.
+        return self.pgf
 
 class DummySingle( object ):
     def __init__( self ):

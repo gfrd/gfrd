@@ -29,7 +29,8 @@ class MultiBDCore( BDSimulatorCoreBase ):
     def updateParticle( self, particle, pos ):
 
         self.particleMatrix.update( particle, pos, particle.radius )
-        self.main.updateOnParticleMatrix( particle, pos )
+        # Todo. Is it ok to use moveParticle here?
+        self.main.moveParticle( particle, pos )
 
     def initialize( self ):
 

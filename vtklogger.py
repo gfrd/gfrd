@@ -27,7 +27,8 @@ class VTKLogger:
             os.makedirs('data/' + self.name + '/files')
 
         self.fileList = {'particles':[], 'spheres':[], 'cylinders':[], 
-                'cylindricalSurfaces':[], 'planarSurfaces':[]}  # For .pvd file.
+                'cuboidalSurfaces':[], 'cylindricalSurfaces':[], 
+                'planarSurfaces':[]}  # For .pvd file.
 
         self.i = 0          # Counter.
         self.deltaT = 1e-11 # Needed for hack. Note: don't make too small, 
@@ -51,11 +52,12 @@ class VTKLogger:
 
         # Get and process data.
         particlesDoc = self.getParticleData()
+        cuboidalSurfacesDoc = self.getCuboidalSurfaceData()
         cylindricalSurfacesDoc = self.getCylindricalSurfaceData()
         planarSurfacesDoc = self.getPlanarSurfaceData()
         if BROWNIAN != True:
-            spheresDoc   = self.getShellDataFromScheduler( )
-            cylindersDoc = self.getCylinderData( )
+            spheresDoc   = self.getSphericalShellDataFromScheduler( )
+            cylindersDoc = self.getCylindricalShellData( )
 
             if self.i == 0:
                 self.previousShellsDoc = spheresDoc
@@ -66,6 +68,7 @@ class VTKLogger:
             self.makeSnapshot( 'particles', self.i, time, particlesDoc )
             self.makeSnapshot( 'spheres', self.i, time, self.previousShellsDoc )
             self.makeSnapshot( 'cylinders', self.i, time, self.previousCylindersDoc )
+            self.makeSnapshot( 'cuboidalSurfaces', self.i, time, cuboidalSurfacesDoc )
             self.makeSnapshot( 'cylindricalSurfaces', self.i, time, cylindricalSurfacesDoc )
             self.makeSnapshot( 'planarSurfaces', self.i, time, planarSurfacesDoc )
             self.i += 1
@@ -76,6 +79,7 @@ class VTKLogger:
 
         # Then a normal snapshot.
         self.makeSnapshot( 'particles', self.i, time, particlesDoc )
+        self.makeSnapshot( 'cuboidalSurfaces', self.i, time, cuboidalSurfacesDoc )
         self.makeSnapshot( 'cylindricalSurfaces', self.i, time, cylindricalSurfacesDoc )
         self.makeSnapshot( 'planarSurfaces', self.i, time, planarSurfacesDoc )
         if BROWNIAN != True:
@@ -102,14 +106,13 @@ class VTKLogger:
 
         for speciesIndex,species in enumerate(self.sim.speciesList.values()):
             for particlePos in species.pool.positions:
-                self.appendLists( posList, particlePos, radiusList,
-                        species.radius, typeList, 2 + speciesIndex)
+                self.appendLists( posList, particlePos, typeList, 2 + speciesIndex, radiusList, species.radius)
 
         return self.vtk_writer.createDoc(posList, radii=radiusList, 
                 colors=typeList )
 
 
-    def getShellDataFromScheduler( self ):
+    def getSphericalShellDataFromScheduler( self ):
         posList, radiusList, typeList = [], [], []
 
         topTime = self.sim.scheduler.getTopTime()
@@ -126,22 +129,39 @@ class VTKLogger:
 
             try:
                 # Don't show sphere for cylinder.
-                length = object.shellList[0].size  # Only cylinders have a 'size'.
+                object.shellList[0].size  # Only cylinders have a 'size'.
             except:
                 # Single or Pair or Multi.
                 for single in object.shellList:
-                    self.appendLists( posList, single.origin, radiusList, 
-                            single.radius, typeList, type )
+                    self.appendLists( posList, single.origin, typeList, type, radiusList, single.radius )
 
         return self.vtk_writer.createDoc(posList, radii=radiusList, 
                 colors=typeList )
 
 
-    def getCylinderData( self ):
+    def getCylindricalShellData( self ):
         # Get data from object matrix.
         keys = self.sim.cylinderMatrix.getAll( )
         cylinders = [ key[0].shellList[0] for key in keys ]
         return self.processCylinders( cylinders )
+
+
+    def getCuboidalSurfaceData( self ):
+        posList, typeList, tensorList = [], [], []
+
+        try:
+            boxes = self.sim.cuboidalSurfaces
+        except:
+            # Add dummy box to stop tensorGlyph from complaining.
+            boxes = [ DummyBox() ] 
+
+        type = 1
+        for box in boxes:
+            tensor = numpy.concatenate((box.vectorX, box.vectorY, box.vectorZ))
+            self.appendLists(posList, box.origin, typeList, type, 
+                    tensorList=tensorList, tensor=tensor) 
+
+        return self.vtk_writer.createDoc(posList, colors=typeList, tensors=tensorList )
 
 
     def getCylindricalSurfaceData( self ):
@@ -150,8 +170,7 @@ class VTKLogger:
 
 
     def getPlanarSurfaceData( self ):
-        posList, radiusList, typeList, scaleList, orientationList, tensorList = \
-                [], [], [], [], [], []
+        posList, typeList, tensorList = [], [], []
 
         boxes = [ surface for surface in self.sim.surfaceList if isinstance(surface, Box) ]
         if len(boxes) == 0:
@@ -168,8 +187,7 @@ class VTKLogger:
 
 
     def processCylinders( self, cylinders=[] ):
-        posList, radiusList, typeList, scaleList, orientationList, tensorList = \
-                [], [], [], [], [], []
+        posList, typeList, tensorList = [], [], []
 
         if len(cylinders) == 0:
             # Add dummy cylinder to stop tensorGlyph from complaining.
@@ -181,17 +199,12 @@ class VTKLogger:
             orientation = cylinder.unitZ
             size = cylinder.size
 
-            # Construct scale vector for scaling by vector components. Not 
-            # used anymore.
-            scale = numpy.array([radius, radius, size])
-
             # Construct tensor. Use tensor glyph plugin from:
             # http://www.paraview.org/pipermail/paraview/2009-March/011256.html
             # Unset Extract eigenvalues.
 
             # Select basis vector in which orientation is smallest.
-            _, basisVector = min( zip(orientation, [[1,0,0], [0,1,0], 
-            [0,0,1]]) )
+            _, basisVector = min( zip(abs(orientation), [[1,0,0], [0,1,0], [0,0,1]]) )
             # Find 2 vectors perpendicular to orientation.
             perpendicular1 = numpy.cross( orientation, basisVector )
             perpendicular2 = numpy.cross( orientation, perpendicular1 )
@@ -201,85 +214,27 @@ class VTKLogger:
             tensor = numpy.concatenate((perpendicular1*radius, 
                 orientation*size, perpendicular2*radius))
 
-            self.appendLists( posList, cylinder.origin, radiusList,
-                    size, typeList, type, scaleList, scale, 
-                    orientationList, orientation, tensorList, tensor ) 
+            self.appendLists( posList, cylinder.origin, typeList, type, tensorList=tensorList, tensor=tensor ) 
 
-        return self.vtk_writer.createDoc(posList, radii=radiusList, 
-                colors=typeList, orientations=orientationList, 
-                scales=scaleList, tensors=tensorList )
+        return self.vtk_writer.createDoc(posList, colors=typeList, tensors=tensorList )
 
 
     # Helper.
-    def appendLists(self, posList, pos, radiusList=[], radius=None, 
-            typeList=[], type=None, scaleList=[], scale=None, 
-            orientationList=[], orientation=None, tensorList=[], tensor=None):
-        # Convert all lengths to nanometers.
+    def appendLists(self, posList, pos, typeList, type, radiusList=[], radius=None, 
+            tensorList=[], tensor=None):
         factor = 1
+        # Convert all lengths to nanometers.
         #factor = 1e8
-
-        # Multiply radii and lenghts by by 2 because Paraview sets radius to 
-        # 0.5 by default, and it wants full lengths for cylinders and we are 
-        # storing half lengths.
         posList.append( pos * factor )
-        radiusList.append( radius * 2 * factor )
         typeList.append( type )
 
-        if orientation != None:
-            orientationList.append( orientation )
-
-        if scale != None:
-            scaleList.append( scale * 2 * factor )
+        # Multiply radii and tensors by 2 because Paraview sets radius to 0.5 
+        # by default, and it wants full lengths for cylinders and we are 
+        # storing half lengths.
+        if radius != None:
+            radiusList.append( radius * 2 * factor )
 
         if tensor != None:
             tensor = tensor * 2 * factor
-            
             tensorList.append( tensor )
-
-
-
-
-
-        """
-        # Get data from scheduler.
-        topTime = self.sim.scheduler.getTopTime()
-        for eventIndex in range( self.sim.scheduler.getSize() ):
-            # Get event
-            event = self.sim.scheduler.getEventByIndex( eventIndex )
-            object = event.getArg()
-
-            type = 1 # Color
-            # Highlight topEvent.
-            if event.getTime() == topTime:
-                type = 0
-
-            try:
-                length = object.size  # Only cylinders have length.
-                scale = numpy.array([object.radius_b, object.radius_b, 
-                    length])
-                self.appendLists( posList, object.pos, radiusList, 
-                        object.radius_b ,
-                        typeList, type, lengthList, scale, orientationList, 
-                        object.orientation )
-            except AttributeError:
-                # So this is not a cylinder.
-                pass
-
-    def getShellData( self ):
-        posList, radiusList, typeList = [], [], []
-
-        # Get data from object matrix.
-        keys = self.sim.sphereMatrix.getAll( )
-        for key in keys:
-            single = key[0]
-            sphere = single.shellList[0]
-            type = 1
-            self.appendLists( posList, sphere.origin, radiusList, sphere.radius, 
-                    typeList, type )
-
-        return self.vtk_writer.createDoc(posList, radii=radiusList, 
-                colors=typeList )
-
-
-        """
 
