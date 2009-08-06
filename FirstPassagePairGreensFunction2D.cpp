@@ -79,7 +79,6 @@ void FirstPassagePairGreensFunction2D::clearAlphaTable() const
 
 // The method evaluates the equation for finding the alphas for given alpha. This
 // is needed to find the alpha's at which the expression is zero -> alpha is the root.
-// This one is NOT USED
 const Real 
 FirstPassagePairGreensFunction2D::f_alpha0( const Real alpha ) const
 {
@@ -109,7 +108,7 @@ FirstPassagePairGreensFunction2D::f_alpha0_aux_F( const Real alpha,
 						const f_alpha0_aux_params* const params )
 {
     const FirstPassagePairGreensFunction2D* const gf( params->gf ); 	// get the gf from the params?
-    const Real value( params->value );					// get value from the parameters
+//    const Real value( params->value );				// get value from the parameters
 
     return gf->f_alpha0( alpha );
 }
@@ -196,7 +195,7 @@ const Real FirstPassagePairGreensFunction2D::f_alpha( const Real alpha,
 	const Real s_An( sigma * alpha );
 	const Real a_An( a * alpha );
 	const Real realn( static_cast<Real>( n ) );
-	const Real hs_n( h*sigma - realn );
+//	const Real hs_n( h*sigma - realn );
 
 	const double Jn_s_An  (gsl_sf_bessel_Jn(n, s_An));
 	const double Jn1_s_An (gsl_sf_bessel_Jn(n+1, s_An));
@@ -206,9 +205,10 @@ const Real FirstPassagePairGreensFunction2D::f_alpha( const Real alpha,
 	const double Yn1_s_An (gsl_sf_bessel_Yn(n+1, s_An));
 	const double Yn_a_An  (gsl_sf_bessel_Yn(n, a_An));
 
-	const double rho1 ( ( (hs_n * Jn_s_An) + (s_An * Jn1_s_An) ) * Yn_a_An );
-	const double rho2 ( ( (hs_n * Yn_s_An) + (s_An * Yn1_s_An) ) * Jn_a_An );
-//	cout << "hallo\n";
+//	const double rho1 ( ( (hs_n * Jn_s_An) + (s_An * Jn1_s_An) ) * Yn_a_An );
+//	const double rho2 ( ( (hs_n * Yn_s_An) + (s_An * Yn1_s_An) ) * Jn_a_An );
+	const double rho1 ( ( (h*sigma * Jn_s_An) + (s_An * Jn1_s_An) - realn*Jn_s_An ) * Yn_a_An );
+	const double rho2 ( ( (h*sigma * Yn_s_An) + (s_An * Yn1_s_An) - realn*Yn_s_An ) * Jn_a_An );
 	return (rho1 - rho2); // /(Yn_a_An*Jn_a_An);
 }
 
@@ -220,10 +220,7 @@ FirstPassagePairGreensFunction2D::f_alpha_aux_F( const Real alpha,
 {
     const FirstPassagePairGreensFunction2D* const gf( params->gf ); 
     const Integer n( params->n );
-    const Real value( params->value );
 
-
-//    return gf->f_alpha_aux( alpha, n ) - value;
     return gf->f_alpha( alpha, n );	// f_alpha is the function of which we have to find the roots
 }
 
@@ -268,7 +265,7 @@ FirstPassagePairGreensFunction2D::alpha_i( const Real offset, const Integer n,
 	
 	low = gsl_root_fsolver_x_lower( solver );
 	high = gsl_root_fsolver_x_upper( solver );
-	status = gsl_root_test_interval( low, high, 1e-6, 1e-15 );
+	status = gsl_root_test_interval( low, high, 1e-12, 1e-15 );
 	
 	if( status == GSL_CONTINUE && k >= maxIter )	// iteration should continue but there are too many
 	{						// steps
@@ -444,13 +441,11 @@ FirstPassagePairGreensFunction2D::leaves_i( const Real alpha,
         const Real J0_aAn  (gsl_sf_bessel_J0(s_An));    // calculate all the required Bessel functions
         const Real J1_aAn  (gsl_sf_bessel_J1(s_An));
         const Real J0_bAn  (gsl_sf_bessel_J0(a_An));
-        const Real J1_bAn  (gsl_sf_bessel_J1(a_An));
 
         const Real J0_r0An (gsl_sf_bessel_J0(r0An));
         const Real Y0_bAn  (gsl_sf_bessel_Y0(a_An));
         const Real Y0_r0An (gsl_sf_bessel_Y0(r0An));
 
-        const Real Y1_bAn  (gsl_sf_bessel_Y1(a_An));
         const Real Y1_aAn  (gsl_sf_bessel_Y1(s_An));
 
         // calculate An,0
@@ -461,13 +456,13 @@ FirstPassagePairGreensFunction2D::leaves_i( const Real alpha,
 
         const Real B_n_0 (J0_r0An*Y0_bAn - Y0_r0An*J0_bAn);
 
-        const Real A_i_0 ((alpha_sq * rho_sq * B_n_0)/( rho_sq - J0_bAn*J0_bAn*(h*h + alpha_sq)));
+        const Real A_i_0 ((alpha_sq * rho_sq * B_n_0));// /( rho_sq - J0_bAn*J0_bAn*(h*h + alpha_sq)));
 
 	// calculate Bn,0(sigma, alpha)
 	const Real B_n_0_sigma (Y0_bAn * J1_aAn - J0_bAn * Y1_aAn);
 
 	// calculate the total result
-	const Real result (alpha * A_i_0 * B_n_0_sigma);
+	const Real result ((alpha * A_i_0 * B_n_0_sigma)/( rho_sq - J0_bAn*J0_bAn*(h*h + alpha_sq)));
         return result;
 }
 
@@ -510,7 +505,7 @@ FirstPassagePairGreensFunction2D::createY0J0Tables( RealVector& Y0_Table,
 
 	boost::tuple<Real,Real,Real> result;
 	
-	for (int count = 0; count < alphaTable_0.size(); count++)
+	for (unsigned int count = 0; count < alphaTable_0.size(); count++)
 	{	result = Y0J0J1_constants(alphaTable_0[count], t, r0);
 		Y0_Table.push_back (result.get<0>());
 		J0_Table.push_back (result.get<1>());
@@ -699,11 +694,13 @@ FirstPassagePairGreensFunction2D::p_survival_table( const Real t,
 }
 
 // calculates the flux leaving through the inner interface at a given moment
+// FIXME: This is inaccurate for small t's!!
 const Real 
 FirstPassagePairGreensFunction2D::leaves( const Real t,
 					const Real r0 ) const
 {
     const Real sigma(this->getSigma());
+    const Real D(this->getD() );
 
     const Real p( funcSum( boost::bind( &FirstPassagePairGreensFunction2D::
                                         leaves_i_exp,
@@ -711,7 +708,8 @@ FirstPassagePairGreensFunction2D::leaves( const Real t,
                                         _1, t, r0 ),
                            this->MAX_ALPHA_SEQ ) );
 
-    return M_PI_2*sigma*p;
+    return -M_PI_2*M_PI*D*sigma*p;	// The minus is there because the flux is in the negative r
+					// direction. The minus makes the flux always positive
 }
 
 // calculates the flux leaving through the outer interface at a given moment
@@ -719,12 +717,14 @@ const Real
 FirstPassagePairGreensFunction2D::leavea( const Real t,
 					const Real r0 ) const
 {
+    const Real D(this->getD() );
+
     const Real p( funcSum( boost::bind( &FirstPassagePairGreensFunction2D::
                                         leavea_i_exp,
                                         this,
                                         _1, t, r0 ),
                            this->MAX_ALPHA_SEQ ) );
-    return p;
+    return M_PI*D*p;
 }
 
 
@@ -781,105 +781,85 @@ const Real FirstPassagePairGreensFunction2D::drawTime( const Real rnd,
 {
     const Real D( this->getD() );
     const Real sigma( this->getSigma() );
-    const Real kf( this->getkf() );
     const Real a( this->geta() );
+    const Real kf( this->getkf() );
 
     THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
     THROW_UNLESS( std::invalid_argument, sigma <= r0 && r0 <= a );
+
+    Real dist;
+
 
     if( r0 == a || a == sigma )		// when the particle is at the border or if the PD has no real size
     {
 	return 0.0;
     }
 
-    Real t_guess;			// where does this guess come from?
-    Real dist;
-
-/*    if( kf != 0 )			// not sure what this means
-    {	*/
-        dist = std::min( a - r0, r0 - sigma );	// take the shortest distance to a boundary
-/*    }
-    else
+    if ( kf == 0.0 )			// if there was only one absorbing boundary
     {	
         dist = a - r0;
     }
-*/
-    t_guess = dist * dist / ( 4.0 * D );	// get some initial guess for the time, dr=sqrt(2dDt) with d
+    else
+    {	
+        dist = std::min( a - r0, r0 - sigma );	// take the shortest distance to a boundary
+    }
+    Real t_guess = dist * dist / ( 4.0 * D );	// get some initial guess for the time, dr=sqrt(2dDt) with d
 						// the dimensionality (2 in this case)
-    t_guess *= .1;				// needed for the determination of the search range for the
-						// zero for drawing the escape time
 
-    const Real minT( std::min( sigma * sigma / D * this->MIN_T_FACTOR,
-                               t_guess * 1e-6 ) );	// not sure yet how this works
 
-    RealVector psurvTable;		// this is still empty as of now->not used
+	const Real minT( std::min( sigma * sigma / D * this->MIN_T_FACTOR,
+                               t_guess * 1e-7 ) );	// something with determining the lowest possible t
 
-    p_survival_table_params params = { this, r0, psurvTable, rnd };
 
-    gsl_function F = 
+	RealVector psurvTable;		// this is still empty as of now->not used
+	p_survival_table_params params = { this, r0, psurvTable, rnd };
+	gsl_function F = 
 	{
 	    reinterpret_cast<typeof(F.function)>( &p_survival_table_F ),
 	    &params 
 	};
 
-    Real low( t_guess );	// put in a upper and lower limit (the picked time cannot be infinite!)
-    Real high( t_guess );
+	// put in a upper and lower limit (the picked time cannot be infinite!)
+	Real low( t_guess );	
+	Real high( t_guess );
 
-    // adjust high and low to make sure that f( low ) and f( high ) straddle.
-    // Warning: rediculously ugly code below!!!!
-    const Real value( GSL_FN_EVAL( &F, t_guess ) );
-    if( value < 0.0 )			// if the function is below zero at the guess the upper
-    {					// boundary should be moved (passed the zero point)
-        high *= 10;
-        while( 1 )
-        {
-            const Real high_value( GSL_FN_EVAL( &F, high ) );
+	// adjust high and low to make sure that f( low ) and f( high ) straddle.
+	Real value( GSL_FN_EVAL( &F, t_guess ) );
+
+	if( value < 0.0 )			// if the function is below zero at the guess the upper
+	{					// boundary should be moved (passed the zero point)
+		do
+		{
+			high *= 10;
+			value = GSL_FN_EVAL( &F, high );
             
-            if( high_value >= 0.0 )	// if the f(high) is positive they straddle
-            {
-                break;
-            }
+			if( fabs( high ) >= 1e10 )	// if high time is way too high forget about it
+			{
+				std::cerr << "Couldn't adjust high. F(" << high <<
+					") = " << GSL_FN_EVAL( &F, high ) << "; r0 = " << r0 << 
+					", " << dump() << std::endl;
+				throw std::exception();
+			}
+		}
+		while ( value < 0.0 );
+	}
+	else				// if the function is over zero (or at zero!) then the lower
+	{					// boundary should be moved
+                Real value_prev( value );
+                do
+                {       low *= .1;      // keep decreasing the lower boundary until the function straddles
+                        value = GSL_FN_EVAL( &F, low );     // get the accompanying value
 
-            if( fabs( high ) >= 1e10 )	// if high time is way too high forget about it
-            {
-                std::cerr << "Couldn't adjust high. F(" << high <<
-                    ") = " << GSL_FN_EVAL( &F, high ) << "; r0 = " << r0 << 
-                    ", " << dump() << std::endl;
-                throw std::exception();
-            }
-            high *= 10;			// otherwise keep extending the interval
-        }
+                        if( fabs( low ) <= minT || fabs( value - value_prev ) < TOLERANCE )
+                        {
+                                std::cerr << "Couldn't adjust low. F(" << low <<
+                                        ") = " << value << std::endl;
+                                return low;
+                        }
+                        value_prev = value;
+                }
+                while ( value >= 0.0 );
     }
-    else				// if the function is over zero (or at zero!) then the lower
-    {					// boundary should be moved
-        Real low_value_prev( value );
-        low *= .1;
-
-        while( 1 )
-        {
-            
-            const Real low_value( GSL_FN_EVAL( &F, low ) );
-            
-            if( low_value <= 0.0 )
-            {
-                break;
-            }
-            
-            // FIXME: (why? It isn't so bad)
-            if( low <= minT ||
-                ( low_value_prev - low_value ) < TOLERANCE ) // you KNOW that low_value_prev > low_value
-            {
-                std::cerr << "Couldn't adjust low.  Returning low (= "
-                          << low << "); F(" << low <<
-                    ") = " << GSL_FN_EVAL( &F, low ) << "; r0 = " << r0 << ", "
-                          << dump() << std::endl;
-                return low;
-            }
-            low_value_prev = low_value;
-            low *= .1;
-        }
-    }
-    // END OF SUPERUGLY CODE
 
     // find the intersection of the cummulative survival probability and the randomly generated number
     const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );	// initialize the solver
@@ -908,7 +888,7 @@ FirstPassagePairGreensFunction2D::drawEventType( const Real rnd,
     THROW_UNLESS( std::invalid_argument, sigma <= r0 && r0 < a );
     THROW_UNLESS( std::invalid_argument, t > 0.0 );
 
-    if( kf == 0 )	// if there cannot be any flow through the radiating boundary it is always an escape
+    if( kf == 0.0 )	// if there cannot be any flow through the radiating boundary it is always an escape
     {
         return ESCAPE;
     }
@@ -919,7 +899,7 @@ FirstPassagePairGreensFunction2D::drawEventType( const Real rnd,
     // leavea() and/or leaves().
 
     // Here, use a rather large threshold for safety.
-    const unsigned int H( 6 ); 				// what does this do? Why 6??
+    const unsigned int H( 6 ); 				// 6 times the msd travelled as threshold
     const Real max_dist( H * sqrt( 4.0 * D * t ) );
     const Real a_dist( a - r0 );
     const Real s_dist( r0 - sigma );
@@ -946,11 +926,11 @@ FirstPassagePairGreensFunction2D::drawEventType( const Real rnd,
 
     if( rnd <= value )  
     {
-	return REACTION;   // leaves
+	return REACTION;   // leaves -> return 0
     }
     else 
     {
-	return ESCAPE;     // leavea
+	return ESCAPE;     // leavea -> return 1
     }
 }
 
@@ -1172,10 +1152,6 @@ FirstPassagePairGreensFunction2D::makep_mTable( RealVector& p_mTable,
 					      const Real r0, 
 					      const Real t ) const
 {
-	const Real sigma( this->getSigma() );		// get some constants
-	const Real a( this->geta() );
-	const Real D(this->getD());
-
 	p_mTable.clear();
 
 	const Real p_0( this->p_m( 0, r, r0, t ) );	// This is the p_m where m is 0, for the denominator
@@ -1194,43 +1170,38 @@ FirstPassagePairGreensFunction2D::makep_mTable( RealVector& p_mTable,
 	const Real tolerance( THETA_TOLERANCE ); 
 	const Real threshold( fabs( tolerance * p_1  ) );
 
-	Real p_m_prev_abs( fabs( p_1 ) );	// store the previous term
-	unsigned int m( 2 );
-	while( true )
+	Real p_m_abs (fabs (p_1));
+	Real p_m_prev_abs;	// store the previous term
+	unsigned int m( 1 );
+	do
 	{
-		Real p_m( this->p_m( m, r, r0, t ) / p_0 );	// get the next term
-//		std::cout << "m p_m: " << m << " " << p_m << "\n";
+		p_m_prev_abs = p_m_abs;
 
-		if( ! std::isfinite( p_m ) )			// if the calculated value is not valid->exit
+		m++;
+		const Real p_m( this->p_m( m, r, r0, t ) / p_0 );	// get the next term
+
+		if( ! std::isfinite( p_m ) )		// if the calculated value is not valid->exit
 		{
 			std::cerr << "makep_mTable: invalid value; " <<
 				p_m << "( m= " << m << ")." << std::endl;
 			break;
 		}
 
-		p_mTable.push_back( p_m );			// put the result in the table
+		p_m_abs = fabs( p_m );					// take the absolute value
+		p_mTable.push_back( p_m );				// put the result in the table
         
-//		std::cerr << m << " " << p_m << " " << threshold << std::endl;
-
-		const Real p_m_abs( fabs( p_m ) );
-							// truncate when converged enough.
-		if( p_m_abs < threshold &&		// if the current term is smaller than threshold
-            		p_m_prev_abs < threshold &&	// AND the previous term is also smaller
-	    		p_m_abs <= p_m_prev_abs )	// AND the current term is smaller than the previous
-		{
-			break;
-		}
-	
-
 		if( m >= this->MAX_ORDER )		// If the number of terms is too large
 		{
-			std::cerr << "p_m didn't converge." << std::endl;
+			std::cerr << "p_m didn't converge (m=" << m << "), continuing..." << std::endl;
 			break;
 		}
 	
-		++m;
-		p_m_prev_abs = p_m_abs;
 	}
+	while (p_m_abs >= threshold || p_m_prev_abs >= threshold || p_m_abs >= p_m_prev_abs );
+	// truncate when converged enough.
+	// if the current term is smaller than threshold
+	// AND the previous term is also smaller than threshold
+	// AND the current term is smaller than the previous
 }
 
 // This method calculates the constants for the drawTheta method when the particle is at the boundary
@@ -1300,10 +1271,6 @@ FirstPassagePairGreensFunction2D::makedp_m_at_aTable( RealVector& p_mTable,
 						    const Real r0, 
 						    const Real t ) const
 {
-        const Real sigma( this->getSigma() );           // get some constants
-        const Real a( this->geta() );
-        const Real D(this->getD());
-
         p_mTable.clear();
 
         const Real p_0( this->dp_m_at_a( 0, r0, t ) );// This is the p_m where m is 0, for the denominator
@@ -1322,38 +1289,39 @@ FirstPassagePairGreensFunction2D::makedp_m_at_aTable( RealVector& p_mTable,
         const Real tolerance( THETA_TOLERANCE );
         const Real threshold( fabs( tolerance * p_1  ) );
 
-        Real p_m_prev_abs( fabs( p_1 ) );       // store the previous term
-        unsigned int m( 2 );
-        while( true )
+	Real p_m_abs (fabs (p_1));
+        Real p_m_prev_abs;      // store the previous term
+        unsigned int m( 1 );
+        do
         {
-                Real p_m( this->dp_m_at_a( m, r0, t ) / p_0 );     // get the next term
-//              std::cout << "m p_m: " << m << " " << p_m << "\n";
-                if( ! std::isfinite( p_m ) )                    // if the calculated value is not valid->exit
+                p_m_prev_abs = p_m_abs;
+
+                m++;
+                const Real p_m( this->dp_m_at_a( m, r0, t ) / p_0 );       // get the next term
+
+                if( ! std::isfinite( p_m ) )            // if the calculated value is not valid->exit
                 {
                         std::cerr << "makedp_m_at_aTable: invalid value; " <<
                                 p_m << "( m= " << m << ")." << std::endl;
                         break;
                 }
 
-                p_mTable.push_back( p_m );                      // put the result in the table
+                p_m_abs = fabs( p_m );                                  // take the absolute value
+                p_mTable.push_back( p_m );                              // put the result in the table
 
-//              std::cerr << m << " " << p_m << " " << threshold << std::endl;
-                const Real p_m_abs( fabs( p_m ) );
-                                                                // truncate when converged enough.
-                if( p_m_abs < threshold &&              // if the current term is smaller than threshold
-                        p_m_prev_abs < threshold &&     // AND the previous term is also smaller
-                        p_m_abs <= p_m_prev_abs )       // AND the current term is smaller than the previous
-                {
-                        break;
-                }
                 if( m >= this->MAX_ORDER )              // If the number of terms is too large
                 {
-                        std::cerr << "p_m didn't converge." << std::endl;
+                        std::cerr << "dp_m didn't converge (m=" << m << "), continuing..." << std::endl;
                         break;
                 }
-                ++m;
-                p_m_prev_abs = p_m_abs;
+
         }
+        while (p_m_abs >= threshold || p_m_prev_abs >= threshold || p_m_abs >= p_m_prev_abs );
+        // truncate when converged enough.
+        // if the current term is smaller than threshold
+        // AND the previous term is also smaller than threshold
+        // AND the current term is smaller than the previous
+
 }
 
 // This calculates the m-th term of the summation for the drawTheta calculation
@@ -1408,15 +1376,16 @@ FirstPassagePairGreensFunction2D::drawTheta( const Real rnd,
 {
     const Real sigma( this->getSigma() );
     const Real a( this->geta() );
+    const Real D( this->getD() );
 
     // input parameter range checks.
     THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
-    THROW_UNLESS( std::invalid_argument, sigma <= r0 && r0 < a );
+    THROW_UNLESS( std::invalid_argument, sigma <= r0 && r0 <= a );
     THROW_UNLESS( std::invalid_argument, sigma <= r && r <= a);
     THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 
     // t == 0 means no move.
-    if( t == 0.0 )
+    if( t == 0.0 || D == 0 || r0 == a )
     {
 	return 0.0;
     }

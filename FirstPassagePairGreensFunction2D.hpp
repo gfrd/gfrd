@@ -24,8 +24,8 @@ class FirstPassagePairGreensFunction2D
 
     static const Real MIN_T_FACTOR = 1e-8;
 
-    static const unsigned int MAX_ORDER = 20;
-    static const unsigned int MAX_ALPHA_SEQ = 2000;
+    static const unsigned int MAX_ORDER = 30;		// The maximum number of m terms
+    static const unsigned int MAX_ALPHA_SEQ = 2000;	// The maximum number of n terms
 
 
 public:
@@ -158,21 +158,9 @@ public:
 
     }
 
-protected:
-
-    void clearAlphaTable() const;
-
-
-    RealVector& getAlphaTable( const size_t n ) const
-    {
-	return this->alphaTable[n];
-    }
-
-
     const Real getAlpha0( const RealVector::size_type i ) const
     {	return this->getAlpha (0, i);
     }
-
 /*    {
 	RealVector& alphaTable( this->alphaTable[0] );
 	
@@ -191,6 +179,16 @@ protected:
 	return alphaTable[i];
     }
 */
+
+protected:
+
+    void clearAlphaTable() const;
+
+
+    RealVector& getAlphaTable( const size_t n ) const
+    {
+	return this->alphaTable[n];
+    }
 
     const Real p_int_r_table( const Real r,
 				const RealVector& Y0_aAnTable,

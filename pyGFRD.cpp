@@ -425,6 +425,14 @@ BOOST_PYTHON_MODULE( _gfrd )
 	.def( "drawEventType", &FirstPassagePairGreensFunction2D::drawEventType )
 	.def( "drawR", &FirstPassagePairGreensFunction2D::drawR )
 	.def( "drawTheta", &FirstPassagePairGreensFunction2D::drawTheta )
+	.def( "getAlpha", &FirstPassagePairGreensFunction2D::getAlpha )
+	.def( "getAlpha0", &FirstPassagePairGreensFunction2D::getAlpha0 )
+	.def( "f_alpha", &FirstPassagePairGreensFunction2D::f_alpha )
+	.def( "f_alpha0", &FirstPassagePairGreensFunction2D::f_alpha0 )
+	.def( "alpha_i", &FirstPassagePairGreensFunction2D::alpha_i )
+	.def( "p_survival", &FirstPassagePairGreensFunction2D::p_survival )
+	.def( "leaves", &FirstPassagePairGreensFunction2D::leaves )
+	.def( "leavea", &FirstPassagePairGreensFunction2D::leavea )
 	;
 
 

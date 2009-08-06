@@ -214,6 +214,10 @@ FirstPassageGreensFunction1DRad::drawEventType( const Real rnd, const Real r0, c
         THROW_UNLESS( std::invalid_argument, -a <= r0 && r0 <= a );
         THROW_UNLESS( std::invalid_argument, t > 0.0 );		// if t=0 nothing has happened->no event!!
 
+	if ( k == 0 || r0 == a )
+	{	return ESCAPE;
+	}
+
 	const Real fluxratio (this->fluxRatioRadTot(r0, t));
 
 	if (rnd > fluxratio )
@@ -243,12 +247,22 @@ double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
 const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd, const Real r0) const
 {
 	const Real a(this->geta());
+	const Real k(this->getk());
+	const Real D(this->getD());
 
 	THROW_UNLESS( std::invalid_argument, -a <= r0 && r0 <= a );
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 
+	if ( D == 0 || a == INFINITY )
+	{	return INFINITY;
+	}
+
+	if ( rnd == 0.0 || a == 0 || r0 == a)
+	{	return 0.0;
+	}
+
 	const Real L(a*2);
-	const Real h(this->getk()/this->getD());
+	const Real h(k/D);
 	const Real r0_2(r0 + a);
 
 	struct drawT_params parameters;	// the structure to store the numbers to calculate the numbers for 1-S

@@ -33,7 +33,7 @@ int main (void)
 	FirstPassagePairGreensFunction2D gf(D, k, sigma);
 	gf.seta (a);
 
-
+/*
 	// Producing data by drawing from the distributions
 	for (int i=0; i<10000; i++)
 	{
@@ -63,10 +63,10 @@ int main (void)
 
 		cout << endl;
 	}
+*/
 
-/*
 	// Producing time dependent data
-	for (t=0.0001; t < 0.3; t+= 0.001)
+	for (t=0.0001; t < 0.03; t+= 0.0001)
 	{
 		cout << t << " ";				// Put down the time
 
@@ -85,5 +85,5 @@ int main (void)
 
 		cout << endl;
 	}
-*/
+
 }
