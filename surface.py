@@ -34,7 +34,7 @@ class Surface( object ):
 class DefaultSurface( Surface ):
     # If no surface is specified, particles are tagged with this one.
     def __init__( self ):
-        Surface.__init__( self, 'DefaultSurface' )
+        Surface.__init__( self, 'defaultworld' )
         self.defaultSingle = SphericalSingle3D
         self.defaultPair = SphericalPair3D
 

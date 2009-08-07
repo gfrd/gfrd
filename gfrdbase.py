@@ -569,6 +569,7 @@ class ParticleSimulatorBase( object ):
 
         if surface == None:
             # Particle in cytoplasm.
+            raise Stop('gfrdbase.py: placeParticle. surface==None')
             surface = self.defaultSurface
             
         particle = self.createParticle( species, pos, surface )

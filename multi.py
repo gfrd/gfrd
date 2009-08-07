@@ -1,12 +1,16 @@
 from bd import *
-#from shell import *
+
+class Shell( object ):
+    def __init__( self, pos, radius ):
+        self.pos = pos.copy()
+        self.radius = radius
 
 
 '''
 Used internally by Multi.
 '''
 
-### This is the simulator that is used for multis.
+# This is the simulator that is used for multis.
 class MultiBDCore( BDSimulatorCoreBase ):
     
     def __init__( self, main, multi ):
@@ -48,7 +52,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
     def sync( self ):
         for particle in self.particleList:
             self.main.updateOnParticleMatrix( particle, particle.pos )
-'''
+    '''
 
     def updateShellMatrix( self ):
 

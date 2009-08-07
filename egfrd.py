@@ -53,7 +53,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         ParticleSimulatorBase.__init__( self )
 
-        self.MULTI_SHELL_FACTOR = 1.0   #0.05
+        self.MULTI_SHELL_FACTOR = 0.5   #0.05 # SHould be smaller than SINGLE_SHELL_FACTOR!
         self.SINGLE_SHELL_FACTOR = 1.0  # 0.1
 
         self.isDirty = True
@@ -462,7 +462,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Surface detection.
         distanceToSurface, closestSurface = self.getClosestSurface( pos, ignore ) 
         if distanceToSurface < 0:
-            raise Stop( 'distancToSurface < 0' )
+            raise Stop( 'distanceToSurface < 0' )
         if distanceToSurface < radius:
             neighbors.append( closestSurface )
             distances.append( distanceToSurface )
@@ -742,6 +742,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Probably everything would work just fine still if we didn't restore
         # here, since those burstedSingles are already in the scheduler with a
         # dt=0 and they have been given a shell with size minSize.
+        #
+        # Todo. Seems like this is really needed, but why?
 	self.restoreSingleShells( burstedSingles )
 
         # Note for future reference. Always return single.dt here for the  
@@ -885,7 +887,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		raise NoSpace()
 
 	    if isinstance( rt, SurfaceUnbindingReactionType ):
-		newSurface = DefaultSurface( )
+		newSurface = self.defaultSurface
 		newpos = oldSurface.randomUnbindingSite( oldpos, productSpecies.radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 newSurface = single.interactionSurface
@@ -1137,16 +1139,17 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	assert neighbors
 	bursted = []
 
-	# Try interaction
+        # Try interaction
 	if isinstance( neighbors[0], Surface ):
 	    obj = self.formInteraction( single, neighbors[0], neighbors[1:] )
 	    if obj:
 		return obj, neighbors[1:]
-        # Try forming a Pair only if singles are on same surface.
-        elif (isinstance( neighbors[0], Single ) and single.surface == neighbors[0].surface):
-	    obj = self.formPair( single, neighbors[0], neighbors[1:] )
-	    if obj:
-		return obj, neighbors[1:]
+        elif isinstance( neighbors[0], Single ):
+            # Try forming a Pair only if singles are on same surface.
+            if single.surface == neighbors[0].surface:
+                obj = self.formPair( single, neighbors[0], neighbors[1:] )
+                if obj:
+                    return obj, neighbors[1:]
 
 	# Then, a Multi.
 	log.debug( '\tDebug. Try to form Multi: %s + %s' % (single, neighbors) )
@@ -1365,9 +1368,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     Decide if pair makes sense, and create it if so.
     '''
     def formPair( self, single1, single2, bursted ):
-	#log.debug( '\tDebug. trying to form %s' %
-	#           'Pair( %s, %s )' % ( single1.particle, 
-	#                                single2.particle ) )
+	log.debug( '\tDebug. Trying to form %s.' %
+	           'Pair( %s, %s )' % ( single1.particle, 
+	                                single2.particle ) )
 	assert single1.isReset()
 	assert single2.isReset()
 
@@ -1463,14 +1466,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    assert shellSize < closestShellDistance
 
 	else:
-	    assert isinstance( closest, ( Pair, Multi, DummySingle ) ), closest
+	    assert isinstance( closest, ( Pair, Multi, Surface, DummySingle ) ), closest
 
 	    shellSize = closestShellDistance / SAFETY
 
 	if shellSize <= minShellSizeWithMargin:
-	    log.debug( '\tDebug. %s not formed: squeezed by %s' %
+	    log.debug( '\tDebug. %s not formed: squeezed by %s. shellSize=%g. minShellSizeWithMargin=%g' %
 		       ( 'Pair( %s, %s )' % ( single1.particle, 
-					      single2.particle ), closest ) )
+					      single2.particle ), closest, shellSize, minShellSizeWithMargin ) )
 	    return None
 
 	d1 = self.distance( com, single1.pos )

@@ -6,11 +6,6 @@ from shape import Sphere, Cylinder
 from domain import RadialDomain1D, CartesianDomain1D, RadialDomain2D
 
 
-'''
-Not true anymore:
-Note: a single is unaware of surface it is on.  Retrieve from particle if 
-you need to know. (No duplication of information).
-'''
 class Single( object ):
     def __init__( self, particle, reactionTypes ):
         self.particle = particle
