@@ -1,5 +1,5 @@
 from bd import *
-from shell import *
+#from shell import *
 
 
 '''
@@ -170,7 +170,6 @@ class MultiBDCore( BDSimulatorCoreBase ):
                 'not all particles within the shell.'
 
 
-### How can this be so much shorter than the Pair class?
 class Multi( object ):
 
     def __init__( self, main ):

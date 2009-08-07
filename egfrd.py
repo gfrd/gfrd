@@ -22,6 +22,16 @@ class Delegate( object ):
     def __call__( self, *arg ):
         return self.method( self.obj, *arg )
 
+class Stop( Exception ):
+    '''
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+    '''
+
+    pass
 
 # Notes:
 # EGFRDSimulator.distance takes into account the periodic boundary conditions.  
@@ -30,7 +40,7 @@ class Delegate( object ):
 class EGFRDSimulator( ParticleSimulatorBase ):
     def __init__( self, logdir = None ):
         if logdir:
-            log.info('Started vtk logger: ' + logdir)
+            log.info( 'Started vtk logger: ' + logdir )
             self.vtklogger = VTKLogger( self, logdir )
         else:
             self.vtklogger = None
@@ -43,7 +53,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         ParticleSimulatorBase.__init__( self )
 
-        self.MULTI_SHELL_FACTOR = 0.05
+        self.MULTI_SHELL_FACTOR = 1.0   #0.05
         self.SINGLE_SHELL_FACTOR = 1.0  # 0.1
 
         self.isDirty = True
@@ -94,6 +104,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.lastEvent = None
         self.lastReaction = None
         self.isDirty = True
+        self.errors = 0
         #self.initialize()
 
 
@@ -133,9 +144,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         event = self.scheduler.getTopEvent()
         self.t, self.lastEvent = event.getTime(), event.getArg()
 
-        log.info( '\n\n%d: t=%g dt=%g\nevent=%s reactions=%d interactions=%d rejectedmoves=%d' 
+        log.info( '\n\n%d: t=%g dt=%g\nevent=%s reactions=%d interactions=%d rejectedmoves=%d errors=%d' 
                       % ( self.stepCounter, self.t, self.dt, self.lastEvent, 
-                          self.reactionEvents, self.interactionEvents, self.rejectedMoves ) )
+                          self.reactionEvents, self.interactionEvents, self.rejectedMoves, self.errors ) )
         
         self.scheduler.step()
 
@@ -146,7 +157,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         if self.dt == 0:
             self.zeroSteps += 1
             if self.zeroSteps >= max( self.scheduler.getSize() * 3, 10 ):
-                raise RuntimeError, 'too many dt=zero steps.  simulator halted?'
+                raise Stop( 'Too many dt=zero steps.  simulator halted?' )
         else:
             self.zeroSteps = 0
         assert self.scheduler.getSize() != 0
@@ -155,7 +166,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     def stop( self, t ):
         if self.vtklogger:
             self.vtklogger.stop()
-        log.info( 'stop at %g' % t )
+        log.info( 'Stop at %g.' % t )
 
         if self.t == t:
             return
@@ -174,7 +185,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             if isinstance( obj, Pair ) or isinstance( obj, Multi ):
                 nonSingleList.append( obj )
             elif isinstance( obj, Single ):
-                log.debug( 'burst %s, lastTime= %g' % 
+                log.debug( '\tDebug. burst %s, lastTime= %g' % 
                            ( str( obj ), obj.lastTime ) )
                 self.burstSingle( obj )
             else:
@@ -182,7 +193,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
         # then burst all Pairs and Multis.
-        log.debug( 'burst %s' % nonSingleList )
+        log.debug( '\tDebug. burst %s' % nonSingleList )
         self.burstObjs( nonSingleList )
         self.dt = 0.0
 
@@ -377,16 +388,16 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         distances = [ INF ]
         ignoreSurfaces = []
         for obj in ignore:
-            if isinstance( obj, Surface ):
-                ignoreSurfaces.append( obj )
-            else:
-                # For example: ignore surface that particle is currently 
-                # on.
+            if isinstance( obj.surface, Surface ):
+                # Ignore surface that particle is currently on.
                 ignoreSurfaces.append( obj.surface )
 	for surface in self.surfaceList:
             if surface not in ignoreSurfaces:
 		posTransposed = cyclicTranspose( pos, surface.origin, self.worldSize )
-		distances.append( surface.signedDistanceTo( posTransposed ) )
+	        distanceToSurface = surface.signedDistanceTo( posTransposed )
+                if distanceToSurface < 0.0:
+                    self.errors += 1
+                distances.append( distanceToSurface )
 		surfaces.append( surface )
         return min( zip( distances, surfaces ))
 
@@ -451,7 +462,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Surface detection.
         distanceToSurface, closestSurface = self.getClosestSurface( pos, ignore ) 
         if distanceToSurface < 0:
-            self.stop( self.t )
+            raise Stop( 'distancToSurface < 0' )
         if distanceToSurface < radius:
             neighbors.append( closestSurface )
             distances.append( distanceToSurface )
@@ -463,11 +474,15 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def objDistance( self, pos, obj ):
-        dists = numpy.zeros( len( obj.shellList ) )
-        for i, shell in enumerate( obj.shellList ):
-            posTransposed = cyclicTranspose( pos, shell.origin, self.worldSize )
-            dists[i] = shell.signedDistanceTo( posTransposed )
-        return min( dists )
+        if isinstance( obj, Surface ):
+            posTransposed = cyclicTranspose( pos, obj.origin, self.worldSize )
+            return obj.signedDistanceTo( posTransposed )
+        else:
+            dists = numpy.zeros( len( obj.shellList ) )
+            for i, shell in enumerate( obj.shellList ):
+                posTransposed = cyclicTranspose( pos, shell.origin, self.worldSize )
+                dists[i] = shell.signedDistanceTo( posTransposed )
+            return min( dists )
 
 
     def objDistanceArray( self, pos, objs ):
@@ -480,12 +495,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     consistency checkers
     '''
     def checkObj( self, obj ):
+	log.debug( '\tDebug. checkObj: %s' % (obj) )
         obj.check()
 
         allshells = [ ( obj, i ) for i in range( len( obj.shellList ) ) ]
         for i, shell in enumerate( obj.shellList ):
             closest, distance = self.getClosestObj( shell.origin,
-                                                    ignore = [obj, obj.surface] )
+                                                    ignore = [obj,] )
             radius = shell.radius
 
 
@@ -615,12 +631,16 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	return single
 
 
+    '''
+    A single particle either reacts or leaves it's shell. Here these
+    events are executed.
+    '''
     def fireSingle( self, single ):
 	assert abs( single.dt + single.lastTime - self.t ) <= 1e-18 * self.t
 
         # 0. Reaction.
 	if single.eventType == EventType.REACTION:
-	    log.info( str( single.eventType ) )
+	    log.info( '' + str( single.eventType ) )
 
 	    self.propagateSingle( single )
 	    try:
@@ -649,7 +669,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	'''
         if single.dt != 0.0:
             single.eventType = single.activeDomain.drawEventType( single.dt )
-        log.info( str(single.eventType) )
+        log.info( '' + str(single.eventType) )
 
         if single.dt != 0.0:
             self.propagateSingle( single )
@@ -673,30 +693,55 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
 	# (2) Clear volume.
+        # The single was just propagated and initialized, so it's shell has
+        # size getMinSize().
 	minShell = single.getMinRadius() * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+        # We already know there are no other objects within getMinSize()
+        # (particle radius), because propagateSingle checked it. Now check if
+        # there are any within minShell, and also get closest outside of
+        # minShell.
 	closeNeighbors, distances, closest, closestShellDistance = \
 		self.getNeighbors( single.pos, minShell, ignore=[single,] )
 
 	bursted = []
 	if closeNeighbors:
+            # If a closeNeighbor is already a multi, don't burst it, but
+            # let it absorb the single in the next step.
 	    bursted = self.burstNonMultis( closeNeighbors )
             for b in bursted:
                 assert not isinstance( b, InteractionSingle )
 	    obj, b = self.formInteractionOrPairOrMulti( single, bursted )
+            # Now obj can be a pair or a multi, b contains all singles that 
+            # were not added to it.
             # Todo. Why extend?
 	    bursted.extend( b )
 	    if obj:
+                # Maybe restore bursted singles here? They are added to the 
+                # scheduler with dt=0 already, so works this way also.
 		single.dt = -INF # remove by rescheduling to past.
 		return single.dt
 
 	    # if nothing was formed, recheck closest and restore shells.
+            # Maybe some other particle has come closer during the
+            # bursting (while no multi had to be formed).
 	    closest, closestShellDistance = \
 		self.getClosestObj( single.pos, ignore = [ single, ] )
 
 	# All neighbors are more than minShell away.
+        #
+        # We can get here if:
+        # 1. there were closeNeighbors. But it wasn't possible to build a pair 
+        # or necessary to build a multi.
+        # 2. there was not a neighbor nearby.
+        #
+        # Update single.
 	self.updateSingle( single, closest, closestShellDistance )
+
 	bursted = uniq( bursted )
 	burstedSingles = [ s for s in bursted if isinstance( s, Single ) ]
+        # Probably everything would work just fine still if we didn't restore
+        # here, since those burstedSingles are already in the scheduler with a
+        # dt=0 and they have been given a shell with size minSize.
 	self.restoreSingleShells( burstedSingles )
 
         # Note for future reference. Always return single.dt here for the  
@@ -767,8 +812,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	    self.updateSingle( single, c, d )
 	    self.updateEvent( self.t + single.dt, single )
-	    log.debug( 'restore shell %s %g dt %g closest %s %g' %
-		       ( single, single.radius, single.dt, c, d ) )
+	    #log.debug( '\tDebug. restore shell %s %g dt %g closest %s %g' %
+            #	       ( single, single.radius, single.dt, c, d ) )
 
 
     # Draw new shell + new event time.
@@ -790,7 +835,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	single.lastTime = self.t
 	# No need for self.updateEvent(), single.dt is returned from fireSingle().
 	self.updateShellMatrix( single )
-	log.info( 'Updated %s. radius=%g. dt=%g.' % ( single, single.radius, single.dt ) )
+	log.info( 'Updated %s. radius=%g. dt=%g. closest=%s. distanceToShell=%s' % ( single, single.radius, single.dt, closest, distanceToShell ) )
 
 
     def calculateSingleShellSize( self, single, closest, 
@@ -1030,7 +1075,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	# Escaping through a_r or escaping through a_R. Make use of escape flag 
 	# magic.
 	if eventType == EventType.ESCAPE:
-	    log.debug( 'pairDistance = %g, dt = %g, %s' %
+	    log.debug( '\tDebug. pairDistance = %g, dt = %g, %s' %
 			   ( pair.pairDistance, pair.dt, pair.pgf.dump() ) )
 	    self.propagatePair( pair )
 	else:
@@ -1097,20 +1142,20 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    obj = self.formInteraction( single, neighbors[0], neighbors[1:] )
 	    if obj:
 		return obj, neighbors[1:]
-        # Try forming a Pair.
-        # Todo. What if singles are on different surface?
+        # Try forming a Pair only if singles are on same surface.
         elif (isinstance( neighbors[0], Single ) and single.surface == neighbors[0].surface):
 	    obj = self.formPair( single, neighbors[0], neighbors[1:] )
 	    if obj:
 		return obj, neighbors[1:]
 
 	# Then, a Multi.
+	log.debug( '\tDebug. Try to form Multi: %s + %s' % (single, neighbors) )
 	minShell = single.getMinRadius() * ( 1.0 + self.MULTI_SHELL_FACTOR )
 
         # Todo. Add surfaces to multi somehow.
-        neighbors = [ n for n in neighbors if not isinstance( n, Surface ) ]
-	if not neighbors:
-	    return None, bursted
+        #neighbors = [ n for n in neighbors if not isinstance( n, Surface ) ]
+	#if not neighbors:
+        #    return None, bursted
 
 	neighborDists = self.objDistanceArray( single.pos, neighbors )
 	neighbors = [ neighbors[i] for i in 
@@ -1120,7 +1165,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    return None, bursted
 
 	closest = neighbors[0]
-	if isinstance( closest, Single ):
+	if isinstance( closest, Single ) or isinstance( closest, Surface ):
 
 	    multi = self.createMulti()
 	    self.addToMulti( single, multi )
@@ -1160,21 +1205,38 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     is not interfering with other shells. Miedema's algorithm.
     '''
     def formInteraction( self, single, surface, bursted ):
-	assert bursted == [] # Todo.
-	#log.debug( 'formInteraction: %s + %s' % (single, surface) )
+	#log.debug( '\tDebug. formInteraction: %s + %s' % (single, surface) )
 
         particle = single.particle
 	projectedPoint, projectionDistance = surface.calculateProjection( single.pos )
 
         # For interaction with a planar surface, decide orientation.  
-        # Important.
 	orientationVector = cmp(projectionDistance, 0) * surface.unitZ 
         particleDistance = abs( projectionDistance )
 
         particleRadius = particle.species.radius
-        minShell = particle.species.radius * SAFETY # Todo. SAFETY needed?
 
-        # Initialize dr, dzl, dzr.
+        '''
+        Initialize dr, dzl, dzr.
+
+        For an interaction with a PlanarSurface:
+        * dr is the radius of the cylinder.
+        * dzl determines how much the cylinder is sticking out on the 
+        other side of the surface, measured from the projected point.
+        * dzr is the distance between the particle and the edge of the 
+        cylinder in the z direction.
+
+        For interaction with a CylindricalSurface:
+        * dr is the distance between the particle and the edge of the 
+        cylinder in the r direction.
+        * dzl is the distance from the projected point to the left edge of 
+          the cylinder.
+        * dzr is the distance from the projected point to the right edge 
+          of the cylinder.
+        '''
+        mindr  = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+        mindzl = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+        mindzr = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
         dr = self.getMaxShellSize()
 	dzl = self.getMaxShellSize()
         dzr = self.getMaxShellSize()
@@ -1187,10 +1249,24 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	for object in allNeighbors:
 	    shell = object.shellList[0]
-            # Also works if shell is a cylinder parallel to the same
+            # Also works if shell is a cylinder parallel to the same 
             # CylindricalSurface, because getRadius magically returns the size 
-            # of the cylinder.
+            # of the cylinder then.
 	    objectRadius = shell.radius
+
+            '''
+            Make bursted singles look bigger, like in formPair, because the 
+            size of their shell is only particle.radius (not yet multiplied by 
+            SINGLE_SHELL_FACTOR) (and no we can not do that immediately after 
+            they are bursted, singles might start overlapping).
+            '''
+            if object.dt == 0.0 and object.getD() > 0:
+                # This is one of the bursted singles.
+                # Or a particle that just escaped it's multi!!!
+                # Should account for this also in formPair???
+                objectRadius *= ( 1.0 + self.SINGLE_SHELL_FACTOR )
+                #assert bursted.__contains__( object ), 'bursted=%s does not contain %s. radius=%g.' %(bursted, object, object.radius)
+
 	    objectVector = shell.origin - projectedPoint
 
             # Calculate zi and ri for this object.
@@ -1204,7 +1280,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    if isinstance( surface, Cylinder ):
 		dri -= particleDistance
 
-            # Calculate dzli or dzri (both are normally positive values).
+            # Calculate dzli or dzri (both are usually positive values).
             if zi < 0:
                 # Calculate dzli for this object.
                 dzli = - zi - objectRadius
@@ -1232,8 +1308,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                     else:
                         dr = dri
 
-        if dr < minShell or dzl < particleRadius or dzr < minShell:
-            log.debug( 'interaction not possible: %s + %s' % ( single, surface ) )
+        if dr < mindr or dzl < mindzl or dzr < mindzr:
+            log.debug( '\tDebug. Interaction not possible: %s + %s. dr=%g. mindr=%g. dzl=%g. mindzl=%g. dzr=%g. mindzr=%g.' % ( single, surface, dr, mindr, dzl, mindzl, dzr, mindzr ) )
             return None
 
 	if isinstance( surface, Box ):
@@ -1280,7 +1356,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	cylinder = interaction.shellList[0]
 	log.info( 'New %s. radius=%g. size=%g. dt=%g.' % (interaction, cylinder.radius, cylinder.size, interaction.dt) )
 
-	assert self.checkObj( interaction )
+        assert self.checkObj( interaction )
 
 	return interaction
 
@@ -1289,7 +1365,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     Decide if pair makes sense, and create it if so.
     '''
     def formPair( self, single1, single2, bursted ):
-	#log.debug( 'trying to form %s' %
+	#log.debug( '\tDebug. trying to form %s' %
 	#           'Pair( %s, %s )' % ( single1.particle, 
 	#                                single2.particle ) )
 	assert single1.isReset()
@@ -1332,7 +1408,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 			    distanceFromSigma * 100 + sigma + shellSizeMargin )
 
 	if minShellSizeWithMargin >= maxShellSize:
-	    log.debug( '%s not formed: minShellSize >= maxShellSize' %
+	    log.debug( '\tDebug. %s not formed: minShellSize >= maxShellSize' %
 		       ( 'Pair( %s, %s )' % ( single1.particle, 
 					      single2.particle ) ) )
 	    return None
@@ -1355,7 +1431,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		    closest, closestShellDistance = b, d
 
 	if closestShellDistance <= minShellSizeWithMargin:
-	    log.debug( '%s not formed: squeezed by bursted neighbor %s' %
+	    log.debug( '\tDebug. %s not formed: squeezed by bursted neighbor %s' %
 		       ( 'Pair( %s, %s )' % ( single1.particle, 
 					      single2.particle ), closest ) )
 	    return None
@@ -1364,7 +1440,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	if d < closestShellDistance:
 	    closest, closestShellDistance = c, d
 
-	log.debug( 'Pair closest neighbor: %s %g, minShellWithMargin %g' %
+	log.debug( '\tDebug. Pair closest neighbor: %s %g, minShellWithMargin %g' %
 		   ( closest, closestShellDistance, minShellSizeWithMargin ) )
 
 	if isinstance( closest, Single ):
@@ -1392,7 +1468,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    shellSize = closestShellDistance / SAFETY
 
 	if shellSize <= minShellSizeWithMargin:
-	    log.debug( '%s not formed: squeezed by %s' %
+	    log.debug( '\tDebug. %s not formed: squeezed by %s' %
 		       ( 'Pair( %s, %s )' % ( single1.particle, 
 					      single2.particle ), closest ) )
 	    return None
@@ -1404,7 +1480,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 			    ( 1.0 + self.SINGLE_SHELL_FACTOR ), \
 				d2 + single2.getMinRadius() * \
 				( 1.0 + self.SINGLE_SHELL_FACTOR ) ) * 1.3:
-	    log.debug( '%s not formed: singles are better' %
+	    log.debug( '\tDebug. %s not formed: singles are better' %
 		       'Pair( %s, %s )' % ( single1.particle, 
 					    single2.particle ) )
 	    return None
@@ -1499,7 +1575,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def addToMultiRecursive( self, obj, multi ):
-	if isinstance( obj, Single ):
+        if isinstance( obj, Surface ):
+            # Todo.
+            pass
+	elif isinstance( obj, Single ):
 	    if obj.particle in multi.sim.particleList:  # Already in the Multi.
 		return
 	    assert obj.isReset()
@@ -1526,13 +1605,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		self.removeFromShellMatrix( obj )
 		self.removeEvent( obj )
 	    else:
-		log.debug( '%s already added. skipping.' % obj )
+		log.debug( '\tDebug. %s already added. skipping.' % obj )
 	else:
 	    assert False, 'do not reach here.'  # Pairs are bursted
 
 
+
     def addToMulti( self, single, multi ):
-	log.info( 'adding %s to %s' % ( single, multi ) )
+	log.info( 'Adding %s to %s' % ( single, multi ) )
 
 	shellSize = single.particle.species.radius * \
 	    ( 1.0 + self.MULTI_SHELL_FACTOR )

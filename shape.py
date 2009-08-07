@@ -158,6 +158,7 @@ class Box( Shape ):
                     # Inside box. Pick negative distance closest to 0.
 		    distance = max( max(dx,dy), dz )
 
+        #print '\tBox.signedDistanceTo = ', distance
         return distance
 
 

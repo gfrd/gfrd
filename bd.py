@@ -13,7 +13,7 @@ from surface import *
 from gfrdbase import *
 import _gfrd
 
-DEFAULT_DT_FACTOR = 1e-5
+DEFAULT_DT_FACTOR = 1 #1e-5
 
 def calculateBDDt( speciesList, factor ):
 
@@ -364,9 +364,7 @@ class BDSimulatorCoreBase( object ):
                                       ignore=[particle,] )
 
 
-
 class BDSimulatorCore( BDSimulatorCoreBase ):
-    
 
     def __init__( self, main ):
 
@@ -415,7 +413,6 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
     def clearVolume( self, pos, radius, ignore=[] ):
         
         pass
-
 
 
 class BDSimulator( ParticleSimulatorBase ):

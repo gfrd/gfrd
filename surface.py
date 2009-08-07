@@ -57,7 +57,8 @@ class CuboidalSurface( Surface, Box ):
  
 
     '''
-    Overrule signedDistanceTo from Box.
+    Overrule signedDistanceTo from Box. 
+    Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
     '''
     def signedDistanceTo( self, pos ):
         print 'CuboidalSurface.signedDistanceTo(). Is this ever used?'

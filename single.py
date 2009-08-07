@@ -268,6 +268,8 @@ class InteractionSingle2D( InteractionSingle ):
         # Interaction possible in z direction.
         # Todo. Correct gf.
         gfz = FirstPassageGreensFunction( particle.species.D )
+        # Todo. This origin and size is not correct! That's why we get the 
+        # particles inside the surfaces without them having interacted. Fix.
         zDomain = CartesianDomain1D( particleOffset[1], (interactionType.k, 0), size - particle.species.radius, gfz )
 
         self.domains = [ rDomain, zDomain ]

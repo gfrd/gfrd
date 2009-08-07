@@ -123,10 +123,14 @@ def run( ):
     Simulation.
     '''
     s.initialize()
-    for i in range(100):
+    for i in range(1000):
         #s.dumpScheduler()
-        s.step()
-        s.check()
+        try:
+            s.step()
+        except Stop, message:
+            print message
+            break
+        #s.check()
     s.stop( s.t )
     
 if __name__ == '__main__':
