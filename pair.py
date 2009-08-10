@@ -54,6 +54,7 @@ class Pair( object ):
         self.biggestParticleRadius = max( particle1.species.radius, particle2.species.radius )
 
         self.D1, self.D2 = particle1.species.D, particle2.species.D
+        # Todo. Is this also correct for 1D and 2D?
         self.D_tot = self.D1 + self.D2
         self.D_geom = math.sqrt( self.D1 * self.D2 )  # geometric mean
 
@@ -301,8 +302,6 @@ class SphericalPair3D( Pair ):
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
                                                         self.sigma )
-        self.pgf.seta( self.a_r )
-
         comDomain = RadialDomain1D( a_R, self.sgf )
         ivDomain = RadialDomain2D( self.sigma, self.pairDistance, self.a_r, self.pgf )
         self.domains = [ comDomain, ivDomain ]
@@ -420,10 +419,8 @@ class CylindricalPair2D( Pair ):
 
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
-        self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
+        self.pgf = FirstPassagePairGreensFunction2D( self.D_tot, self.rt.k, 
                                                         self.sigma )
-        self.pgf.seta( self.a_r )
-
         comDomain = RadialDomain1D( a_R, self.sgf )
         ivDomain = RadialDomain2D( self.sigma, self.pairDistance, self.a_r, self.pgf )
         self.domains = [ comDomain, ivDomain ]
@@ -436,12 +433,11 @@ class CylindricalPair2D( Pair ):
 
 
     def calculateNewIV( self, (r, theta) ):
-        # Later.
+        # Todo.
         return (r, theta)
 
 
     def choosePairGreensFunction( self, dt ):
-        # Todo.
         return self.pgf
 
 
@@ -469,6 +465,8 @@ class CylindricalPair2D( Pair ):
 
 '''
 Rods.
+
+Todo. Greens functions.
 '''
 class CylindricalPair1D( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
@@ -480,17 +478,17 @@ class CylindricalPair1D( Pair ):
 
         a_R, self.a_r = self.determineRadii()
 
-        # Green's function for centre of mass inside absorbing sphere.
-        self.sgf = FirstPassageGreensFunction( self.D_geom )
-
-        # Green's function for interparticle vector inside absorbing sphere.  
-        # This exact solution is used for drawing times.
+        # Convert a_r and a_R to sensible values in 1D.
         # Todo.
-        self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
-                                                        self.sigma )
-        self.pgf.seta( self.a_r )
 
-        comDomain = CartesianDomain1D( 0, (0, 0), a_R, self.sgf )
+        # Green's function for centre of mass inside absorbing sphere.
+        self.sgf = FirstPassageGreensFunction1D( self.D_geom )
+
+        # Green's function for interparticle vector.
+        # This exact solution is used for drawing times.
+        self.pgf = FirstPassageGreensFunction1DRad( self.D_tot, self.rt.k )
+
+        comDomain = CartesianDomain1D( 0, a_R, self.sgf )
         # Todo.
         #ivDomain = RadialDomain2D( 0, (self.rt.k, 0), self.a_r, self.pgf )
         ivDomain = RadialDomain2D( self.sigma, self.pairDistance, self.a_r, self.pgf )

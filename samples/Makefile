@@ -8,7 +8,7 @@ DATA=data/run/files.pvd data/run/files/*
 .PHONY: bd
 bd:
 	echo
-	#cd bd_test && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python irr.py data/output.out 0.000001 1
+	cd bd_test && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python irr.py data/output.out 0.000001 1
 
 .PHONY: cylinders
 cylinders:

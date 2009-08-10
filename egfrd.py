@@ -119,10 +119,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Get particle data from particleMatrix, because we need to know the 
         # surface they are on.
         particles = self.particleMatrix.getAll( )
-        for p in particles:
-            # Todo. Get reference to real Particle. I think this is needed.
-            #particle = Particle( p.species, serial=p.serial, surface=p.surface )
-            single = self.createSingle( p )
+        for particle in particles:
+            single = self.createSingle( particle )
 
         nParticles = sum( [ s.pool.size for s in self.speciesList.values() ] )
         assert nParticles == len( particles )
@@ -375,44 +373,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         return closestObject, closestDistance
 
 
-    '''
-    Returns sorted list of pairs:
-    - distance to surface
-    - surface itself
-
-    We can not use objectmatrix, it would miss a surface if the origin of the 
-    surface would not be in the same or neighboring cells as pos.
-    '''
-    def getClosestSurface( self, pos, ignore ):
-        surfaces = [ None ]
-        distances = [ INF ]
-        ignoreSurfaces = []
-        for obj in ignore:
-            if isinstance( obj.surface, Surface ):
-                # Ignore surface that particle is currently on.
-                ignoreSurfaces.append( obj.surface )
-	for surface in self.surfaceList:
-            if surface not in ignoreSurfaces:
-		posTransposed = cyclicTranspose( pos, surface.origin, self.worldSize )
-	        distanceToSurface = surface.signedDistanceTo( posTransposed )
-                if distanceToSurface < 0.0:
-                    self.errors += 1
-                distances.append( distanceToSurface )
-		surfaces.append( surface )
-        return min( zip( distances, surfaces ))
-
-    def getClosestSurfaceWithinRadius( self, pos, radius, ignore ):
-        distanceToSurface, closestSurface = self.getClosestSurface( pos, ignore ) 
-        if distanceToSurface < radius:
-            return  closestSurface, distanceToSurface
-        else:
-            return None, INF
-
-
-
-    '''
-    Todo: no surface detection needed?
-    '''
     def getNeighborsWithinRadiusNoSort( self, pos, radius, ignore=[] ):
         neighbors = []
         for objectMatrix in self.objectMatrices:
@@ -1085,8 +1045,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	# Escaping through a_r or escaping through a_R. Make use of escape flag 
 	# magic.
 	if eventType == EventType.ESCAPE:
-	    log.debug( '\tDebug. pairDistance = %g, dt = %g, %s' %
-			   ( pair.pairDistance, pair.dt, pair.pgf.dump() ) )
 	    self.propagatePair( pair )
 	else:
 	    raise SystemError, 'Bug: invalid eventType.'
@@ -1344,19 +1302,24 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             dzl = particleRadius 
 	    radius = dr
 	    size = ( particleDistance + dzl + dzr ) / 2
+            # Only in this case sizeOfDomain is different from size of 
+            # cylinder.
+            sizeOfDomain = ( particleDistance + dzr - surface.Lz ) / 2
 	elif isinstance( surface, Cylinder ):
 	    radius = dr + particleDistance
 	    size = ( dzl + dzr ) / 2
 
         # Compute new origin.
-        shiftZ = ( size - dzl ) * orientationVector
-        origin = projectedPoint + shiftZ
+        shiftZ = size - dzl
+        origin = projectedPoint + shiftZ * orientationVector
 
-        # Compute new particle offset in r and z-direction relative to origin 
-        # of new cylinder.
         if isinstance( surface, Box ):
-            particleOffset = [ 0, particleDistance - shiftZ ]
+            # Compute new particl offset relative to origin of the domain in 
+            # the z-direction (!).
+            particleOffset = [ 0, particleDistance - surface.Lz - sizeOfDomain ]
 	elif isinstance( surface, Cylinder ):
+            # Compute new particle offset in r and z-direction relative to 
+            # origin of new cylinder.
             particleOffset = [ particleDistance, - shiftZ ]
 
 
@@ -1369,7 +1332,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         reactionTypes = self.getReactionType1( particle.species )
 	interactionType = self.getInteractionType( particle.species, surface )
 
-        interaction = surface.defaultInteractionSingle( particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint )
+
+        interaction = surface.defaultInteractionSingle( particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint, sizeOfDomain )
         interaction.initialize( self.t )
 
 	self.addToShellMatrix( interaction )

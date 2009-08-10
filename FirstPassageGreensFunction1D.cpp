@@ -93,7 +93,7 @@ double FirstPassageGreensFunction1D::drawT_f (double t, void *p)
 }
 
 // Trekt een tijd uit de propensity function, een first passage time.
-const Real FirstPassageGreensFunction1D::drawTime (const Real rnd) const
+const Real FirstPassageGreensFunction1D::drawTime (const Real rnd, const Real r0) const
 {
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 
@@ -209,7 +209,7 @@ double FirstPassageGreensFunction1D::drawR_f (double z, void *p)
 
 // Berekent een positie gegeven dat het deeltje zich nog in het domein bevindt en er twee absorbing
 // boundary conditions gelden
-const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) const
+const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real r0, const Real t) const
 {
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 	THROW_UNLESS( std::invalid_argument, t >= 0.0 );

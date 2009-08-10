@@ -45,11 +45,11 @@ public:
         }
 
 	// Trekt een tijd uit de propensity function, een first passage time.
-	const Real drawTime (const Real rnd) const;
+	const Real drawTime (const Real rnd, const Real r0) const;
 
 	// Berekent een positie gegeven dat het deeltje zich nog in het domein bevindt en er twee absorbing
 	// boundary conditions gelden
-	const Real drawR (const Real rnd, const Real t) const;
+	const Real drawR (const Real rnd, const Real r0, const Real t) const;
 
 
 

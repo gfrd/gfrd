@@ -86,12 +86,12 @@ def run( ):
     r1 = SurfaceUnbindingReactionType( dnaA, worldA, 1e10 )
     s.addReactionType( r1 )
 
-    i2 = SurfaceBindingInteractionType( worldA, membrane, membraneA, 1e8 )
+    i2 = SurfaceBindingInteractionType( worldA, membrane, membraneA, 1 )
     s.addInteractionType( i2 )
     r2 = SurfaceUnbindingReactionType( membraneA, worldA, 1e10 )
     s.addReactionType( r2 )
 
-    i2 = SurfaceBindingInteractionType( worldA, membrane2, membrane2A, 1e8 )
+    i2 = SurfaceBindingInteractionType( worldA, membrane2, membrane2A, 1 )
     s.addInteractionType( i2 )
     r2 = SurfaceUnbindingReactionType( membrane2A, worldA, 1e10 )
     s.addReactionType( r2 )
@@ -123,14 +123,12 @@ def run( ):
     Simulation.
     '''
     s.initialize()
-    for i in range(1000):
-        #s.dumpScheduler()
+    for i in range(200):
         try:
             s.step()
         except Stop, message:
             print message
             break
-        #s.check()
     s.stop( s.t )
     
 if __name__ == '__main__':

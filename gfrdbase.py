@@ -417,6 +417,41 @@ class ParticleSimulatorBase( object ):
         pass
 
 
+    '''
+    Returns sorted list of pairs:
+    - distance to surface
+    - surface itself
+
+    We can not use objectmatrix, it would miss a surface if the origin of the 
+    surface would not be in the same or neighboring cells as pos.
+    '''
+    def getClosestSurface( self, pos, ignore ):
+        surfaces = [ None ]
+        distances = [ INF ]
+        ignoreSurfaces = []
+        for obj in ignore:
+            if isinstance( obj.surface, Surface ):
+                # Ignore surface that particle is currently on.
+                ignoreSurfaces.append( obj.surface )
+	for surface in self.surfaceList:
+            if surface not in ignoreSurfaces:
+		posTransposed = cyclicTranspose( pos, surface.origin, self.worldSize )
+	        distanceToSurface = surface.signedDistanceTo( posTransposed )
+                if distanceToSurface < 0.0:
+                    self.errors += 1
+                distances.append( distanceToSurface )
+		surfaces.append( surface )
+        return min( zip( distances, surfaces ))
+
+
+    def getClosestSurfaceWithinRadius( self, pos, radius, ignore ):
+        distanceToSurface, closestSurface = self.getClosestSurface( pos, ignore ) 
+        if distanceToSurface < radius:
+            return  closestSurface, distanceToSurface
+        else:
+            return None, INF
+
+
     def reconstructParticleMatrix( self ):
 
         self.particleMatrix.clear()
@@ -616,11 +651,10 @@ class ParticleSimulatorBase( object ):
                                     pos, particle.species.radius )
 
 
-    ### checkOverlap return true if there are no particles within the
-    ### particles radius.
+    # checkOverlap return true if there are no particles within the
+    # particles radius.
     # In subSpaceSimulator called from: fireSingleReaction. Asserts in:
     # propagateSingle, firePair, burstSingle, breakUpPair.
-    # Todo: we don't have to check for surfaces do we?
     def checkOverlap( self, pos, radius, ignore=[] ):
         
         particles, _ = \

@@ -275,7 +275,7 @@ class BDSimulatorCoreBase( object ):
     
 	    if isinstance( rt, SurfaceUnbindingReactionType ):
 		newSurface = self.main.defaultSurface
-		newpos = oldSurface.randomUnbindingSite( oldpos, radius )
+		newpos = currentSurface.randomUnbindingSite( oldpos, radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 # Get interaction surface from reactants list.
                 newSurface = rt.reactants[1]
@@ -372,7 +372,7 @@ class BDSimulatorCoreBase( object ):
 
 
     def fireReaction2( self, particle1, particle2, rt ):
-        # Todo.
+        # Todo. Direct binding.
         assert particle1.surface == particle2.surface
         newSurface = particle1.surface
 
@@ -457,10 +457,10 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
     def updateParticleList( self ):
         self.clearParticleList()
 
-        particles = self.particleMatrix.getAll( )
-        for p  in particles:
-            # This adds surface also.
-            self.addToParticleList( Particle( s, index = i ) )
+        particles = self.main.particleMatrix.getAll( )
+        # This way particle.surface is also known.
+        for particle in particles:
+            self.addToParticleList( particle )
 
     def addParticle( self, particle ):
         self.main.addParticle( particle )

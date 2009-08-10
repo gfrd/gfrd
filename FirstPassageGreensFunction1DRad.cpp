@@ -17,7 +17,7 @@
 
 #include "findRoot.hpp"
 
-#define TERMEN 500
+//#define TERMEN 100
 #define THRESHOLD 1E-9
 
 #include "FirstPassageGreensFunction1DRad.hpp"

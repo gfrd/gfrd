@@ -1,6 +1,6 @@
 import math
 import numpy
-from _gfrd import EventType, FirstPassageGreensFunction, FirstPassagePairGreensFunction
+from _gfrd import * #EventType, FirstPassageGreensFunction, FirstPassagePairGreensFunction
 from utils import INF, NOWHERE, SAFETY, randomVector, randomVector2D, length, normalize, rotateVector
 from shape import Sphere, Cylinder
 from domain import RadialDomain1D, CartesianDomain1D, RadialDomain2D
@@ -185,7 +185,7 @@ class CylindricalSingle2D( FreeSingle ):
         self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.surface.Lz * SAFETY + 2 * particle.radius ) ]
 
         # Create a radial domain of size mobilityRadius=0.
-        gf = FirstPassageGreensFunction( particle.species.D )
+        gf = FirstPassageGreensFunction2D( particle.species.D )
         self.domains = [ RadialDomain1D( self.getMobilityRadius(), gf ) ]
 
 
@@ -205,8 +205,8 @@ class CylindricalSingle1D( FreeSingle ):
         self.shellList = [ Cylinder( particle.pos, self.surface.radius * SAFETY + 2 * particle.radius, self.surface.unitZ, self.getMinRadius() ) ]
 
         # Create a cartesian domain of size mobilityRadius=0.
-        gf = FirstPassageGreensFunction( particle.species.D )
-        self.domains = [ CartesianDomain1D( 0, (0, 0), self.getMobilityRadius(), gf ) ]
+        gf = FirstPassageGreensFunction1D( particle.species.D )
+        self.domains = [ CartesianDomain1D( 0, self.getMobilityRadius(), gf ) ]
 
 
     def calculateDisplacement( self, z ):
@@ -252,21 +252,19 @@ class InteractionSingle( Single ):
 Interaction with plane.
 '''
 class InteractionSingle2D( InteractionSingle ):
-    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint = None ):
+    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint = None, sizeOfDomain = None ):
         InteractionSingle.__init__( self, particle, surface, reactionTypes, interactionType )
 
         self.shellList = [ Cylinder( origin, radius, orientationVector, size ) ]
 
         # Free diffusion in r direction.
-        gfr = FirstPassageGreensFunction( particle.species.D )
+        gfr = FirstPassageGreensFunction2D( particle.species.D )
         rDomain = RadialDomain1D( radius - particle.species.radius, gfr )
 
         # Interaction possible in z direction.
-        # Todo. Correct gf.
-        gfz = FirstPassageGreensFunction( particle.species.D )
-        # Todo. This origin and size is not correct! That's why we get the 
-        # particles inside the surfaces without them having interacted. Fix.
-        zDomain = CartesianDomain1D( particleOffset[1], (interactionType.k, 0), size - particle.species.radius, gfz )
+        gfz = FirstPassageGreensFunction1DRad( particle.species.D, interactionType.k )
+
+        zDomain = CartesianDomain1D( particleOffset[1], sizeOfDomain - particle.species.radius, gfz )
 
         self.domains = [ rDomain, zDomain ]
 
@@ -289,33 +287,29 @@ class InteractionSingle1D( InteractionSingle ):
         self.shellList = [ Cylinder( origin, radius, orientationVector, size ) ]
 
         # Interaction possible in r direction.
-        # Todo. Correct gf.
-        gfr = FirstPassagePairGreensFunction( particle.species.D, interactionType.k, surface.radius )
-        self.pgf = gfr
-        gfr.seta( radius )
-        rDomain = RadialDomain2D( surface.radius + particle.species.radius, particleOffset[0], radius - particle.species.radius, gfr )
+        self.pgf = FirstPassagePairGreensFunction2D( particle.species.D, interactionType.k, surface.radius )
+        rDomain = RadialDomain2D( surface.radius + particle.species.radius, particleOffset[0], radius - particle.species.radius, self.pgf )
 
         # Free diffusion in z direction.
-        gfz = FirstPassageGreensFunction( particle.species.D )
-        zDomain = CartesianDomain1D( particleOffset[1], (0, 0), size - particle.species.radius, gfz )
+        gfz = FirstPassageGreensFunction1D( particle.species.D )
+        zDomain = CartesianDomain1D( particleOffset[1], size - particle.species.radius, gfz )
 
         self.domains = [ rDomain, zDomain ]
 
 
     def drawNewPosition( self, dt ):
-        # Todo, gf.
         gf = self.choosePairGreensFunction( dt )
         r, theta = self.domains[0].drawPosition( gf, dt )
         z = self.domains[1].drawPosition( dt )
         # Calculate new position starting from origin.
         newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, theta )
-        # Don't use surface.unitZ here.
+        # Don't use surface.unitZ here, orientation matters (+ or -)
         return self.pos + newVectorR + z * self.shellList[0].unitZ
 
 
     def choosePairGreensFunction( self, dt ):
-        # Todo.
         return self.pgf
+
 
 class DummySingle( object ):
     def __init__( self ):

@@ -1,6 +1,7 @@
 import numpy
 import random
 from _gfrd import EventType
+#from gfrdbase import log
 
 
 class Domain( object ):
@@ -14,50 +15,34 @@ class Domain( object ):
                              # drawPosition works properly.
     
 
-    def drawTime( self ):
-        # Todo. This only works this simple if all parameters have been set in 
-        # greens function, like gf.seta(), but also gf.ka() and gf.kb().
-	try:
-            rnd = numpy.random.uniform()
-	    dt = self.gf.drawTime( rnd )
-	except Exception, e:
-	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g, %s' %\
-		( str( e ), rnd, self.gf.dump() )
-	return dt
-
-
     def geta( self ):
         return self._a
     def seta( self, a ):
         self._a = a
+        # Set a of Greens' function here.
         self.gf.seta( a )
     a = property(geta, seta)
 
 
-    def anyGreensFunctionDrawR( self, dt ):
-        try:
-            rnd = numpy.random.uniform()
-            r = self.gf.drawR( rnd , dt )
-        except Exception, e:
-            raise Exception, 'gf.drawR failed; %s; rnd=%g, t=%g, %s' %\
-                ( str( e ), rnd, dt, self.gf.dump() )
-        return r
-
-
-
 '''
-For example the x-domain.
+For example the z-domain.
 '''
 class CartesianDomain1D( Domain ):
-    def __init__( self, r0, (kInner, kOuter), a, gf ):
+    def __init__( self, r0, a, gf ):
         self.r0 = r0         # Initial position
-        self.kInner = kInner # Inner interaction rate.
-        self.kOuter = kOuter # Outer interaction rate.
-        """
-        self.newPos = a      # Position in this domain where particle will end 
-                             # up after an escape.
-        """
         Domain.__init__( self, a, gf )
+
+
+    def drawTime( self ):
+        assert self.escape == False
+	try:
+            rnd = numpy.random.uniform()
+            #print( '\tDebug. Cartesian drawTime.' )
+	    dt = self.gf.drawTime( rnd, self.r0 )
+	except Exception, e:
+	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; r0=%g; a=%g' %\
+		( str( e ), rnd, self.r0, self.a )
+	return dt
 
 
     '''
@@ -66,21 +51,14 @@ class CartesianDomain1D( Domain ):
     (!) Not a pure function.
     '''
     def drawEventType( self, dt ):
+        # Set escape flag.
         self.escape = True
-        # Todo after here. Flux stuff.
-        choice = random.choice( [-1,1] )
-        self.newPos = self.a * choice
-        if choice == -1:
-            return EventType.REACTION
-        else:
-            return EventType.ESCAPE
-
         try:
-            eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, 
-                self.kInner, self.kOuter, dt )
+            #print( '\tDebug. Cartesian drawEventType.' )
+            eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, dt )
 	except Exception, e:
-            raise Exception, 'gf.drawEventType() failed; %s; r0=%g, %s' %\
-                ( str( e ), self.r0, self.pgf.dump() )
+            raise Exception, 'gf.drawEventType() failed; %s; r0=%g; dt=%g; a=%g' %\
+                ( str( e ), self.r0, self.dt, self.a )
         if eventType == EventType.REACTION:
             # Interaction.
             self.newPos = - self.a
@@ -91,18 +69,39 @@ class CartesianDomain1D( Domain ):
 
     
     # (!) Not a pure function.
+    # Returns displacement, not absolute position in this domain!
     def drawPosition( self, dt ):
         if self.escape:
             # Escape through this domain. We already know which side.
             self.escape = False
             return self.newPos
-        r = self.anyGreensFunctionDrawR( dt )
-        return r * random.choice( [-1,1] ) # Cartesian domain. Move either left or right.
+
+        try:
+            rnd = numpy.random.uniform()
+            #print( '\tDebug. Cartesian drawR.' )
+            r = self.gf.drawR( rnd, self.r0, dt  )
+        except Exception, e:
+            raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, r0=%g, a=%g' %\
+                ( str( e ), rnd, dt, self.r0, self.a )
+
+        # Return displacement.
+        return r - self.r0
 
 
 class RadialDomain1D( Domain ):
     def __init__( self, a, gf ):
         Domain.__init__( self, a, gf )
+
+
+    def drawTime( self ):
+	try:
+            rnd = numpy.random.uniform()
+            #print( '\tDebug. Radial drawTime.' )
+	    dt = self.gf.drawTime( rnd )
+	except Exception, e:
+	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; a=%g' %\
+		( str( e ), rnd, self.a )
+	return dt
 
 
     # (!) Not a pure function.
@@ -117,7 +116,15 @@ class RadialDomain1D( Domain ):
             # Escape through this domain. We already know the new r.
             self.escape = False
             return self.a
-	return self.anyGreensFunctionDrawR( dt )
+        try:
+            rnd = numpy.random.uniform()
+            #print( '\tDebug. Radial drawR.' )
+            r = self.gf.drawR( rnd, dt  )
+        except Exception, e:
+            raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, a=%g' %\
+                ( str( e ), rnd, dt, self.a )
+
+	return r
 
 
 '''
@@ -129,17 +136,16 @@ class RadialDomain2D( Domain ):
         self.r0 = r0                    # Starting position.
         Domain.__init__( self, a, gf )  # Greens function holds D, sigma, k.
 
-    # Overloaded method.
+
     def drawTime( self ):
         assert self.escape == False
-        # Todo. This only works this simple if all parameters have been set in 
-        # greens function, like gf.seta(), but also gf.ka() and gf.kb().
 	try:
             rnd = numpy.random.uniform()
+            #print( '\tDebug. Radial2D drawTime.' )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
-	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g, %s' %\
-		( str( e ), rnd, self.gf.dump() )
+	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g, sigma=%g, r0=%g, a=%g' %\
+		( str( e ), rnd, self.sigma, self.r0, self.a )
         self.check_dt = dt
         self.check_gf = self.gf
 	return dt
@@ -149,11 +155,12 @@ class RadialDomain2D( Domain ):
     def drawEventType( self, dt ):
         try:
             rnd = numpy.random.uniform()
+            #print( '\tDebug. Radial2D drawEventType.' )
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
             raise Exception,\
-                'gf.drawEventType() failed; %s; r0=%g, %s' %\
-                ( str( e ), self.r0, self.gf.dump() )
+                'gf.drawEventType() failed; %s; sigma=%g; r0=%g; a=%g; dt=%g' %\
+                ( str( e ), self.sigma, self.r0, self.a, self.dt )
         if eventType == EventType.ESCAPE:
             self.escape = True
         return eventType     # 0 (REACTION) or 1 (ESCAPE r)
@@ -175,6 +182,7 @@ class RadialDomain2D( Domain ):
     def drawR_pair( self, gf, dt ):
         try:
             rnd = numpy.random.uniform()
+            #print( '\tDebug. Radial2D drawR_pair.' )
             r = gf.drawR( rnd, self.r0, dt )
             # redraw; shouldn't happen often
             while r >= self.a or r <= self.sigma: 
@@ -184,8 +192,8 @@ class RadialDomain2D( Domain ):
                 r = gf.drawR( rnd, self.r0, dt )
         except Exception, e:
             raise Exception,\
-                'gf.drawR_pair() failed; %s; rnd= %g, r0= %g, dt= %g, %s' %\
-                ( str( e ), rnd, self.r0, dt, gf.dump() )
+                'gf.drawR_pair() failed; %s; rnd= %g, sigma=%g, r0= %g, a=%g, dt= %g' %\
+                ( str( e ), rnd, self.sigma, self.r0, self.a, dt )
         return r
 
 
@@ -193,11 +201,12 @@ class RadialDomain2D( Domain ):
     def drawTheta_pair( self, gf, r, dt ):
         try:
             rnd = numpy.random.uniform()
+        #print( '\tDebug. Radial2D drawTheta_pair.' )
             theta = gf.drawTheta( rnd, r, self.r0, dt )
         except Exception, e:
             raise Exception,\
-                'gf.drawTheta() failed; %s; rnd= %g, r= %g, r0= %g, dt=%g, %s' %\
-                ( str( e ), rnd, r, self.r0, dt, gf.dump() )
+                'gf.drawTheta() failed; %s; rnd= %g, r=%g, sigma=%g, r0=%g, a=%g, dt=%g' %\
+                ( str( e ), rnd, r, self.sigma, self.r0, self.a, dt  )
 
         '''
         Heads up. For cylinders theta should be between [-pi,pi]. For spheres 

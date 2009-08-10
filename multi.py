@@ -96,6 +96,8 @@ class MultiBDCore( BDSimulatorCoreBase ):
         self.updateParticle( particle, pos )
 
         
+    # Check if particle has escaped from multi.
+    # Todo. How does this work.
     def clearVolume( self, pos, radius, ignore=[] ):
 
         if not self.withinShell( pos, radius ):

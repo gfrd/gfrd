@@ -18,7 +18,7 @@
 #include "findRoot.hpp"
 #include "Defs.hpp"
 
-#define TERMEN 500
+#define TERMEN 100
 /*
 enum EventType
 {
