@@ -115,6 +115,7 @@ class ObjectMatrix( object ):
         offset = cellSize / 2   # Sample midpoint of cell.
 
         steps = [ offset + stepSize * i for i in range( numSteps ) ]
+        # Sample all these points:
         points = [[x,y,z] for x in steps for y in steps for z in steps ] 
 
         seen = {} 

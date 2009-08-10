@@ -1,15 +1,16 @@
 from bd import *
 
+'''
 class Shell( object ):
     def __init__( self, pos, radius ):
         self.pos = pos.copy()
         self.radius = radius
+'''
 
 
 '''
 Used internally by Multi.
 '''
-
 # This is the simulator that is used for multis.
 class MultiBDCore( BDSimulatorCoreBase ):
     
@@ -28,6 +29,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
         self.escaped = False
 
+        self.surfaceList = []
 
         
     def updateParticle( self, particle, pos ):
@@ -59,6 +61,9 @@ class MultiBDCore( BDSimulatorCoreBase ):
         self.shellMatrix.clear()
         for shell in self.multiref().shellList:
             self.shellMatrix.add( shell, shell.origin, shell.radius )
+
+    def addSurface( self, surface ):
+        self.surfaceList.append( surface )
 
     def addParticle( self, particle ):
 
@@ -136,7 +141,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
         return [ n for n in neighbors if n not in ignore ]
 
 
-    ### Why don't we borrow this stuff from ParticleSimulatorBase?
+    # Todo. Why don't we borrow this stuff from ParticleSimulatorBase?
     def getClosestParticle( self, pos, ignore=[] ):
 
         neighbors, distances =\
@@ -168,7 +173,6 @@ class MultiBDCore( BDSimulatorCoreBase ):
             assert d[1] - shell.radius < 0.0, 'shells are not contiguous.'
 
         # all particles within the shell.
-                
         for p in self.particleList:
             assert self.withinShell( p.pos, p.species.radius ),\
                 'not all particles within the shell.'
@@ -178,11 +182,11 @@ class Multi( object ):
 
     def __init__( self, main ):
 
-        ### A multi does not have a shell of itself.
+        # A multi does not have a shell of itself.
         self.shellList = []
         self.eventID = None
 
-        ### Each multi has it's own BD simulator!
+        # Each multi has it's own MultiBD simulator.
         self.sim = MultiBDCore( main, self )
 
 
@@ -206,13 +210,15 @@ class Multi( object ):
 
     multiplicity = property( getMultiplicity )
 
-    ### So a multi contains particles+their shells, but not singles.
+    # A multi contains particles+their shells, but not singles.
     def addParticle( self, particle ):
         self.sim.addParticle( particle )
 
     def addShell( self, origin, radius ):
         self.shellList.append( Sphere( origin, radius ) )
 
+    def addSurface( self, surface ):
+        self.sim.addSurface( surface )
 
     def check( self ):
 

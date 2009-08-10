@@ -210,6 +210,7 @@ class CylindricalSingle1D( FreeSingle ):
 
 
     def calculateDisplacement( self, z ):
+        # z can be pos or min.
         return z * self.shellList[0].unitZ
 
 
@@ -308,6 +309,7 @@ class InteractionSingle1D( InteractionSingle ):
         z = self.domains[1].drawPosition( dt )
         # Calculate new position starting from origin.
         newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, theta )
+        # Don't use surface.unitZ here.
         return self.pos + newVectorR + z * self.shellList[0].unitZ
 
 

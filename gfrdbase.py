@@ -10,7 +10,7 @@ import scipy
 
 
 from utils import *
-from surface import DefaultSurface
+from surface import *
 # _gfrd is a library that is written in C++ and pythonified using Boost 
 # library.
 from _gfrd import *
@@ -70,11 +70,6 @@ def p_free( r, t, D ):
     return p * jacobian
     
 
-def drawR_free( t, D ):
-    ro = math.sqrt( 2.0 * D * t )
-    return numpy.random.normal( 0.0, ro, 3 )
-
-
 class NoSpace( Exception ):
     pass
 
@@ -128,7 +123,10 @@ class ReactionType( object ):
     def __str__( self ):
         s = ''
         for i in self.reactants:
-            s += i.id
+            if isinstance( i, Surface ):
+                s += str( i )
+            else:
+                s += i.id
             s += ' '
 
         s += '-> '
@@ -183,6 +181,11 @@ class SurfaceBindingInteractionType( ReactionType ):
         ReactionType.__init__( self, [ reactantSpecies, surface ], [ productSpecies, ], k )
 
 
+class SurfaceDirectBindingInteractionType( ReactionType ):
+    def __init__( self, reactantSpecies1, reactantSpecies2, surface, productSpecies,  k ):
+        ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2, surface ], [ productSpecies, ], k )
+
+
 class SurfaceRepulsionInteractionType( ReactionType ):
     def __init__( self, species, surface ):
         ReactionType.__init__( self, [ species, surface ], [], 0.0 )
@@ -191,11 +194,19 @@ class SurfaceRepulsionInteractionType( ReactionType ):
 # Unbinding is a Poisson process.
 # A species can only exist on 1 surface ever.
 class SurfaceUnbindingReactionType( ReactionType ):
-    def __init__( self, reactantSpecies, surface, productSpecies, k ):
+    def __init__( self, reactantSpecies, productSpecies, k ):
         # After unbinding from a surface the particle always ends up on the 
         # defaultSurface (world) for now.
-        self.surface = surface
         ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies, ], k )
+
+
+# Direct unbinding is a Poisson process.
+class SurfaceDirectUnbindingReactionType( ReactionType ):
+    def __init__( self, reactantSpecies, surface, productSpecies1, productSpecies2, k ):
+        # After unbinding from a surface, particle2 always ends up on the 
+        # defaultSurface (world), and particle1 stays on the surface it was 
+        # on.
+        ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies1, productSpecies2 ], k )
 
 
 class Reaction:
@@ -399,7 +410,8 @@ class ParticleSimulatorBase( object ):
 
         # Needed when creating a shell around a particle whose surface is not 
         # specified. Backward compatibility.
-        self.defaultSurface = DefaultSurface()
+        self.defaultSurface = World( )
+
 
     def initialize( self ):
         pass
@@ -545,7 +557,7 @@ class ParticleSimulatorBase( object ):
                             SurfaceRepulsionInteractionType( species,surface )
         
 
-    def throwInParticles( self, species, n, surface ):
+    def throwInParticles( self, species, n, surface=None ):
         log.info( 'throwing in %s %s particles' % ( n, species.id ) )
 
         for i in range( int( n ) ):
@@ -567,17 +579,18 @@ class ParticleSimulatorBase( object ):
         if not self.checkOverlap( pos, radius ):
             raise NoSpace, 'overlap check failed'
 
-        if surface == None:
-            # Particle in cytoplasm.
-            raise Stop('gfrdbase.py: placeParticle. surface==None')
-            surface = self.defaultSurface
-            
         particle = self.createParticle( species, pos, surface )
         return particle
 
 
     def createParticle( self, species, pos, surface ):
         newserial = species.newParticle( pos )
+
+        if isinstance( surface, CuboidalSurface ) or surface == None:
+            # Particle in cytoplasm.
+            # For backward compatibility.
+            surface = self.defaultSurface
+
         newparticle = Particle( species, serial=newserial, surface=surface )
         self.addToParticleMatrix( newparticle, pos )
         return newparticle

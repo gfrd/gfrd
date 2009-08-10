@@ -32,20 +32,22 @@ def calculateBDDt( speciesList, factor ):
 
     return dt
 
+'''
+Used by 
+- BDSimulatorCore (for BDSimulator).
+- MultiBDCore (for Multi.core)
+'''
 class BDSimulatorCoreBase( object ):
     
     '''
-    BDSimulatorCore borrows the following from the main simulator:
+    BDSimulatorCoreBase borrows the following from the main simulator:
     - speciesList
     - reactionTypes list (both 1 and 2)
     
     '''
-    ### Because BDSimulator inherits ParticleSimulatorBase. And BDSimulator
-    ### calls us by setting: self.core = BDSimulatorCore( self ), and we have
-    ### this self.main = weakref.proxy( main ) in our constructor. Somehow.
-
     def __init__( self, main ):
 
+        # Reference to the main (egfrd) simulator.
         self.main = weakref.proxy( main )
 
         self.particleList = []
@@ -94,6 +96,7 @@ class BDSimulatorCoreBase( object ):
         self.dt = calculateBDDt( self.speciesList.values(), self.dtFactor )
 
 
+    # Obey detailed balance.
     def getP_acct( self, rt, D, sigma ):
 
         try:
@@ -101,6 +104,7 @@ class BDSimulatorCoreBase( object ):
 
         except KeyError:
             I = _gfrd.I_bd( sigma, self.dt, D )
+            print 'I = ', I
             p = rt.k * self.dt / ( I * 4.0 * numpy.pi )
             if not 0.0 <= p < 1.0:
                 raise RuntimeError,\
@@ -122,6 +126,7 @@ class BDSimulatorCoreBase( object ):
 
     def propagate( self ):
         
+        # Copy particlelist, because it may change
         self.particlesToStep = self.particleList[:]
 
         random.shuffle( self.particlesToStep )
@@ -136,6 +141,7 @@ class BDSimulatorCoreBase( object ):
 
         rt1 = self.attemptSingleReactions( species )
         if rt1:
+            # Todo. Shouldn't we propagate first???
             try:
                 self.fireReaction1( particle, rt1 )
             except NoSpace:
@@ -146,13 +152,16 @@ class BDSimulatorCoreBase( object ):
         if D == 0.0:
             return
 
-        displacement = drawR_free( self.dt, D )
+        displacement = particle.surface.drawBDdisplacement( self.dt, D )
 
         newpos = particle.pos + displacement
         newpos %= self.main.worldSize   #self.applyBoundary( newpos )
         
         neighbors = self.getParticlesWithinRadiusNoSort( newpos, species.radius,
                                                          ignore=[particle] )
+        '''
+        Try reaction of 2 particles first, even if newpos also overlaps with surface. 
+        '''
         if neighbors:
 
             if len( neighbors ) >= 2:
@@ -183,8 +192,37 @@ class BDSimulatorCoreBase( object ):
             else:
                 log.info( 'collision move rejected' )
 
+            # Neighbor is reflecting us. Don't move.
             return
 
+        surface, distanceToSurface = self.main.getClosestSurfaceWithinRadius( newpos, species.radius, ignore=[particle] )
+        if surface:
+            rt = self.main.getInteractionType( species, surface )
+
+            if rt.k != 0.0:
+                radius12 = species.radius + surface.Lz
+                p = self.getP_acct( rt, D, radius12 )
+
+                rnd = numpy.random.uniform()
+
+                if p > rnd:
+                    log.info( 'fire interaction' )
+                    try:
+                        self.fireReaction1( particle, rt )
+                    except NoSpace:
+                        log.info( 'fireReaction1 move rejected' )
+                    return
+
+            else:
+                log.info( 'interaction move rejected' )
+
+            # Surface is reflecting us. Don't move.
+            return
+
+
+
+
+        # No reaction or interaction. 
         try:
             self.clearVolume( newpos, particle.radius, ignore=[particle] )
             self.moveParticle( particle, newpos )
@@ -220,7 +258,7 @@ class BDSimulatorCoreBase( object ):
 
 
     def fireReaction1( self, particle, rt ):
-        newSurface = particle.surface
+        currentSurface = particle.surface
         
         oldpos = particle.pos.copy()
 
@@ -234,16 +272,29 @@ class BDSimulatorCoreBase( object ):
             
             productSpecies = rt.products[0]
             radius = productSpecies.radius
+    
+	    if isinstance( rt, SurfaceUnbindingReactionType ):
+		newSurface = self.main.defaultSurface
+		newpos = oldSurface.randomUnbindingSite( oldpos, radius )
+            elif isinstance( rt, SurfaceBindingInteractionType ):
+                # Get interaction surface from reactants list.
+                newSurface = rt.reactants[1]
+                # Todo. This does not obey detailed balance. Tunneling.
+                # Select position on surface with z=0.
+                newpos, _ = newSurface.calculateProjection( oldpos )
+            else:
+                newSurface = currentSurface
+                newpos = oldpos
 
-            if not self.checkOverlap( oldpos, radius,
+            if not self.checkOverlap( newpos, radius,
                                       ignore = [ particle, ] ):
                 log.info( 'no space for product particle.' )
                 raise NoSpace()
 
-            self.clearVolume( oldpos, radius, ignore = [ particle ] )
+            self.clearVolume( newpos, radius, ignore = [ particle ] )
                 
             self.removeParticle( particle )
-            newparticle = self.createParticle( productSpecies, oldpos, newSurface )
+            newparticle = self.createParticle( productSpecies, newpos, newSurface )
 
             self.lastReaction = Reaction( rt, [particle], [newparticle] )
 
@@ -262,19 +313,29 @@ class BDSimulatorCoreBase( object ):
             radius12 = radius1 + radius2
 
             for i in range( 100 ):
-
                 rnd = numpy.random.uniform()
                 pairDistance = drawR_gbd( rnd, radius12, self.dt, D12 )
 
-                unitVector = randomUnitVector()
-                vector = unitVector * pairDistance # * (1.0 + 1e-10) # safety
-            
-                # place particles according to the ratio D1:D2
-                # this way, species with D=0 doesn't move.
-                # FIXME: what if D1 == D2 == 0?
-                newpos1 = oldpos + vector * ( D1 / D12 )
-                newpos2 = oldpos - vector * ( D2 / D12 )
-                #FIXME: check surfaces here
+                if isinstance( rt, SurfaceDirectUnbindingReactionType ):
+                    # Direct unbinding.
+                    # Particle2 ends up in world (defaultSurface).
+                    newSurface1 = currentSurface
+                    newSurface2 = self.main.defaultSurface
+                    newpos1 = oldpos
+                    # Todo. Does not obey detailed balance at all.
+                    newpos2 = curretSurface.randomUnbindingSite( oldpos, pairDistance )
+                else:
+                    vector = surface.randomVector( pairDistance ) # (1.0 + 1e-10) # safety
+                
+                    # place particles according to the ratio D1:D2
+                    # this way, species with D=0 doesn't move.
+                    # FIXME: what if D1 == D2 == 0?
+                    newpos1 = oldpos + vector * ( D1 / D12 )
+                    newpos2 = oldpos - vector * ( D2 / D12 )
+                    newSurface1 = currentSurface
+                    newSurface2 = currentSurface
+                    #FIXME: check surfaces here
+
             
                 self.applyBoundary( newpos1 )
                 self.applyBoundary( newpos2 )
@@ -296,8 +357,8 @@ class BDSimulatorCoreBase( object ):
             # move accepted
             self.removeParticle( particle )
 
-            newparticle1 = self.createParticle( productSpecies1, newpos1, newSurface )
-            newparticle2 = self.createParticle( productSpecies2, newpos2, newSurface )
+            newparticle1 = self.createParticle( productSpecies1, newpos1, newSurface1 )
+            newparticle2 = self.createParticle( productSpecies2, newpos2, newSurface2 )
 
             self.lastReaction = Reaction( rt, [particle], 
                                           [newparticle1, newparticle2] )
@@ -311,6 +372,7 @@ class BDSimulatorCoreBase( object ):
 
 
     def fireReaction2( self, particle1, particle2, rt ):
+        # Todo.
         assert particle1.surface == particle2.surface
         newSurface = particle1.surface
 
@@ -364,11 +426,16 @@ class BDSimulatorCoreBase( object ):
                                       ignore=[particle,] )
 
 
+
+##########################################################################
+'''
+Used by BDSimulator only.  
+'''
 class BDSimulatorCore( BDSimulatorCoreBase ):
 
     def __init__( self, main ):
 
-        ### main can be BDSimulator object. 
+        # main can be a BDSimulator object. 
         BDSimulatorCoreBase.__init__( self, main )
 
         self.checkOverlap = self.main.checkOverlap
@@ -384,15 +451,16 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
     def initialize( self ):
         BDSimulatorCoreBase.initialize( self )
 
+        # BDSimulator uses a particle list instead of the particleMatrix.
         self.updateParticleList()
 
     def updateParticleList( self ):
-
         self.clearParticleList()
 
-        for s in self.speciesList.values():
-            for i in range( s.pool.size ):
-                self.addToParticleList( Particle( s, index = i ) )
+        particles = self.particleMatrix.getAll( )
+        for p  in particles:
+            # This adds surface also.
+            self.addToParticleList( Particle( s, index = i ) )
 
     def addParticle( self, particle ):
         self.main.addParticle( particle )
@@ -415,6 +483,9 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
         pass
 
 
+'''
+Can be used for a Brownian Dynamics simulation.
+'''
 class BDSimulator( ParticleSimulatorBase ):
     
     def __init__( self ):

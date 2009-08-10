@@ -120,9 +120,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # surface they are on.
         particles = self.particleMatrix.getAll( )
         for p in particles:
-            # Get reference to real Particle. I think this is needed.
-            particle = Particle( p.species, serial=p.serial, surface=p.surface )
-            single = self.createSingle( particle )
+            # Todo. Get reference to real Particle. I think this is needed.
+            #particle = Particle( p.species, serial=p.serial, surface=p.surface )
+            single = self.createSingle( p )
 
         nParticles = sum( [ s.pool.size for s in self.speciesList.values() ] )
         assert nParticles == len( particles )
@@ -400,6 +400,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 distances.append( distanceToSurface )
 		surfaces.append( surface )
         return min( zip( distances, surfaces ))
+
+    def getClosestSurfaceWithinRadius( self, pos, radius, ignore ):
+        distanceToSurface, closestSurface = self.getClosestSurface( pos, ignore ) 
+        if distanceToSurface < radius:
+            return  closestSurface, distanceToSurface
+        else:
+            return None, INF
+
 
 
     '''
@@ -863,7 +871,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.removeFromShellMatrix( single )
 
 	reactantSpecies = single.particle.species
-	oldSurface = single.surface
+	currentSurface = single.surface
 	oldpos = single.particle.pos.copy()  # Why copy?
 	
         if interactionFlag:
@@ -888,7 +896,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	    if isinstance( rt, SurfaceUnbindingReactionType ):
 		newSurface = self.defaultSurface
-		newpos = oldSurface.randomUnbindingSite( oldpos, productSpecies.radius )
+		newpos = currentSurface.randomUnbindingSite( oldpos, productSpecies.radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 newSurface = single.interactionSurface
                 # Todo. This does not obey detailed balance. Tunneling.
@@ -899,7 +907,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    else: 
 		# No change.
 		newpos = oldpos
-		newSurface = oldSurface
+		newSurface = currentSurface
 
 	    self.removeParticle( single.particle )
             self.applyBoundary( newpos )
@@ -929,8 +937,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    self.clearVolume( oldpos, rad )
 
 	    for _ in range( 100 ):
-		unitVector = randomUnitVector()
-		vector = unitVector * particleRadius12 * ( 1.0 + 1e-7 )
+
+		vector = currentSurface.randomVector( particleRadius12 * ( 1.0 + 1e-7 ) )
 	    
 		'''
 		place particles according to the ratio D1:D2
@@ -958,8 +966,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		raise NoSpace()
 
 	    self.removeParticle( single.particle )
-	    particle1 = self.createParticle( productSpecies1, newpos1, oldSurface )
-	    particle2 = self.createParticle( productSpecies2, newpos2, oldSurface )
+	    particle1 = self.createParticle( productSpecies1, newpos1, currentSurface )
+	    particle2 = self.createParticle( productSpecies2, newpos2, currentSurface )
 	    newsingle1 = self.createSingle( particle1 )
 	    newsingle2 = self.createSingle( particle2 )
 
@@ -1051,13 +1059,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		assert self.distance( pair.CoM, newCoM ) + species3.radius <\
 		    pair.shellSize
 
-		oldSurface = particle1.surface
+		currentSurface = particle1.surface
 		self.applyBoundary( newCoM )
 
 		self.removeParticle( particle1 )
 		self.removeParticle( particle2 )
 
-		particle = self.createParticle( species3, newCoM, oldSurface  )
+		particle = self.createParticle( species3, newCoM, currentSurface  )
 		newsingle = self.createSingle( particle )
 
 		self.reactionEvents += 1
@@ -1138,6 +1146,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     def formInteractionOrPairOrMulti( self, single, neighbors ):
 	assert neighbors
 	bursted = []
+
+        # Todo.
+        # 1. Would be better to return surfaces seperately from getNeighbors.
+        # 2. If multi within neighbors, return multi.
+        # 3. Elif surface in surfacelist, try and return interaction.
+        # 4. Else or if no interaction possible and single in surfacelist, try 
+        # and return pair.
+        # 5. Else. Multi.
 
         # Try interaction
 	if isinstance( neighbors[0], Surface ):
@@ -1315,6 +1331,12 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             log.debug( '\tDebug. Interaction not possible: %s + %s. dr=%g. mindr=%g. dzl=%g. mindzl=%g. dzr=%g. mindzr=%g.' % ( single, surface, dr, mindr, dzl, mindzl, dzr, mindzr ) )
             return None
 
+        '''
+        Compute radius and size of new cylinder.
+
+        Todo. Should we make it even smaller? Like updateSingle: depending on 
+        diffusion constant etc.
+        '''
 	if isinstance( surface, Box ):
             # On the other side (left side) than the particle's side, make 
             # sure there is just enough space for the particle to stick out, 
@@ -1579,8 +1601,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
     def addToMultiRecursive( self, obj, multi ):
         if isinstance( obj, Surface ):
-            # Todo.
-            pass
+            # No need to add other particles recursively, surface doesn't 
+            # move.
+            multi.addSurface( obj )
 	elif isinstance( obj, Single ):
 	    if obj.particle in multi.sim.particleList:  # Already in the Multi.
 		return

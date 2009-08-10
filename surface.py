@@ -6,7 +6,7 @@ import random
 from shape import Cylinder, Box
 from single import SphericalSingle3D, CylindricalSingle1D, CylindricalSingle2D, InteractionSingle1D, InteractionSingle2D
 from pair import SphericalPair3D, CylindricalPair1D, CylindricalPair2D
-from utils import length, normalize, SAFETY, randomVector2D
+from utils import length, normalize, SAFETY, randomVector2D, randomVector
 
 
 class Surface( object ):
@@ -31,7 +31,7 @@ class Surface( object ):
         return self.name
 
 
-class DefaultSurface( Surface ):
+class World( Surface ):
     # If no surface is specified, particles are tagged with this one.
     def __init__( self ):
         Surface.__init__( self, 'defaultworld' )
@@ -39,6 +39,19 @@ class DefaultSurface( Surface ):
         self.defaultPair = SphericalPair3D
 
 
+    def randomVector( self, length ):
+        return randomVector( length )
+
+
+    def drawBDdisplacement( self, t, D ):
+        ro = math.sqrt( 2.0 * D * t )
+        return numpy.random.normal( 0.0, ro, 3 )
+
+
+'''
+Surface that is only used for throwing in particles. Those particles will than 
+later be tagged with surface=defaultSurface (World).
+'''
 class CuboidalSurface( Surface, Box ):
     '''
     origin -- = [ x0, y0, z0 ] is the origin.
@@ -52,8 +65,6 @@ class CuboidalSurface( Surface, Box ):
         Ly = size[1]
         Lz = size[2]
         Box.__init__( self, origin + self.size/2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx/2, Ly/2, Lz/2 ) 
-        self.defaultSingle = SphericalSingle3D
-        self.defaultPair = SphericalPair3D
  
 
     '''
@@ -94,6 +105,18 @@ class PlanarSurface( Surface, Box ):
         self.defaultPair = CylindricalPair2D
         self.defaultInteractionSingle = InteractionSingle2D
 
+
+    def drawBDdisplacement( self, t, D ):
+        ro = math.sqrt( 2.0 * D * t )
+        x, y = numpy.random.normal( 0.0, ro, 2 )
+        return x*self.unitX + y*self.unitY
+
+
+    def randomVector( self, r ):
+        x, y = randomVector2D( r )
+        return x * self.unitX + y * self.unitY
+
+
     '''
     Only uniform if vectorX and vectorY have same length.
     '''
@@ -112,6 +135,16 @@ class CylindricalSurface( Surface, Cylinder ):
         self.defaultSingle = CylindricalSingle1D
         self.defaultPair = CylindricalPair1D
         self.defaultInteractionSingle = InteractionSingle1D
+
+
+    def drawBDdisplacement( self, t, D ):
+        ro = math.sqrt( 2.0 * D * t )
+        z = numpy.random.normal( 0.0, ro, 1 )
+        return z*self.unitZ
+
+
+    def randomVector( self, r ):
+        return random.choice( [-1, 1] ) * r * self.unitZ
 
 
     def randomPosition( self ):
