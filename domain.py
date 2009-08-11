@@ -2,6 +2,7 @@ import numpy
 import random
 from _gfrd import EventType
 from log import *
+from utils import *
 
 '''
 A domain represents 1 coordinate (2 in case of composite domain) of a position 
@@ -61,8 +62,8 @@ class CartesianDomain( Domain ):
             log.debug( '\tDebug. Cartesian drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
-	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; r0=%g; a=%g' %\
-		( str( e ), rnd, self.r0, self.a )
+	    raise Stop( 'gf.drawTime() failed; %s; rnd=%g; r0=%g; a=%g' %\
+		( str( e ), rnd, self.r0, self.a ) )
 	return dt
 
 
@@ -78,8 +79,8 @@ class CartesianDomain( Domain ):
             log.debug( '\tDebug. Cartesian drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, dt )
 	except Exception, e:
-            raise Exception, 'gf.drawEventType() failed; %s; r0=%g; dt=%g; a=%g' %\
-                ( str( e ), self.r0, self.dt, self.a )
+            raise Stop( 'gf.drawEventType() failed; %s; r0=%g; dt=%g; a=%g' %\
+                ( str( e ), self.r0, self.dt, self.a ) )
         if eventType == EventType.REACTION:
             # Interaction.
             self.newPos = - self.a
@@ -102,8 +103,8 @@ class CartesianDomain( Domain ):
             log.debug( '\tDebug. Cartesian drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, self.r0, dt  )
         except Exception, e:
-            raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, r0=%g, a=%g' %\
-                ( str( e ), rnd, dt, self.r0, self.a )
+            raise Stop( 'gf.drawR failed; %s; rnd=%g, dt=%g, r0=%g, a=%g' %\
+                ( str( e ), rnd, dt, self.r0, self.a ) )
 
         # Return displacement.
         return r - self.r0
@@ -126,8 +127,8 @@ class RadialDomain( Domain ):
             log.debug( '\tDebug. Radial drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
-	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; a=%g' %\
-		( str( e ), rnd, self.a )
+	    raise Stop( 'gf.drawTime() failed; %s; rnd=%g; a=%g' %\
+		( str( e ), rnd, self.a ) )
 	return dt
 
 
@@ -148,8 +149,8 @@ class RadialDomain( Domain ):
             log.debug( '\tDebug. Radial drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, dt  )
         except Exception, e:
-            raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, a=%g' %\
-                ( str( e ), rnd, dt, self.a )
+            raise Stop( 'gf.drawR failed; %s; rnd=%g, dt=%g, a=%g' %\
+                ( str( e ), rnd, dt, self.a ) )
 
 	return r
 
@@ -172,8 +173,8 @@ class CompositeDomain( Domain ):
             log.debug( '\tDebug. Radial2D drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
-	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g, sigma=%g, r0=%g, a=%g' %\
-		( str( e ), rnd, self.sigma, self.r0, self.a )
+	    raise Stop( 'gf.drawTime() failed; %s; rnd=%g, sigma=%g, r0=%g, a=%g' %\
+		( str( e ), rnd, self.sigma, self.r0, self.a ) )
         self.check_dt = dt
         self.check_gf = self.gf
 	return dt
@@ -186,9 +187,8 @@ class CompositeDomain( Domain ):
             log.debug( '\tDebug. Radial2D drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
-            raise Exception,\
-                'gf.drawEventType() failed; %s; sigma=%g; r0=%g; a=%g; dt=%g' %\
-                ( str( e ), self.sigma, self.r0, self.a, self.dt )
+            raise Stop( 'gf.drawEventType() failed; %s; sigma=%g; r0=%g; a=%g; dt=%g' %\
+                ( str( e ), self.sigma, self.r0, self.a, self.dt ) )
         if eventType == EventType.ESCAPE:
             self.escape = True
         return eventType     # 0 (REACTION) or 1 (ESCAPE r)
@@ -219,9 +219,8 @@ class CompositeDomain( Domain ):
                 rnd = numpy.random.uniform()
                 r = gf.drawR( rnd, self.r0, dt )
         except Exception, e:
-            raise Exception,\
-                'gf.drawR_pair() failed; %s; rnd= %g, sigma=%g, r0= %g, a=%g, dt= %g' %\
-                ( str( e ), rnd, self.sigma, self.r0, self.a, dt )
+            raise Stop( 'gf.drawR_pair() failed; %s; rnd= %g, sigma=%g, r0= %g, a=%g, dt= %g' %\
+                ( str( e ), rnd, self.sigma, self.r0, self.a, dt ) )
         return r
 
 
@@ -232,9 +231,8 @@ class CompositeDomain( Domain ):
             log.debug( '\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
             theta = gf.drawTheta( rnd, r, self.r0, dt )
         except Exception, e:
-            raise Exception,\
-                'gf.drawTheta() failed; %s; rnd= %g, r=%g, sigma=%g, r0=%g, a=%g, dt=%g' %\
-                ( str( e ), rnd, r, self.sigma, self.r0, self.a, dt  )
+            raise Stop( 'gf.drawTheta() failed; %s; rnd= %g, r=%g, sigma=%g, r0=%g, a=%g, dt=%g' %\
+                ( str( e ), rnd, r, self.sigma, self.r0, self.a, dt  ) )
 
         '''
         Heads up. For cylinders theta should be between [-pi,pi]. For spheres 

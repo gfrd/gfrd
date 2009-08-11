@@ -24,17 +24,6 @@ class Delegate( object ):
         return self.method( self.obj, *arg )
 
 
-class Stop( Exception ):
-    '''
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-    '''
-    pass
-
-
 '''
 Returning a dt to the scheduler reschedules the event, -INF removes it.
 '''
@@ -808,7 +797,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	single.dt, single.eventType, single.activeDomain = single.determineNextEvent( )
 	single.lastTime = self.t
-	# No need for self.updateEvent(), single.dt is returned from fireSingle().
+        # No need for self.updateEvent(), single.dt is returned from 
+        # fireSingle(), or this is done in restoreSingleShells.
 	self.updateShellMatrix( single )
 	log.info( 'Updated %s. radius=%g. dt=%g. closest=%s. distanceToShell=%s' % ( single, single.radius, single.dt, closest, distanceToShell ) )
 

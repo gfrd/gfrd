@@ -21,6 +21,16 @@ class NeverGetHere( Exception ):
     pass
 
 
+class Stop( Exception ):
+    '''
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+    '''
+    pass
+
 
 def Mtom3( rate ):
     return rate / ( 1000 * N_A )

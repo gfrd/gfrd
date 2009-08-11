@@ -253,15 +253,14 @@ class Pair( object ):
 
         # check 1: particles don't overlap.
         if newDistance <= particleRadius12:
-            raise RuntimeError, 'New particles overlap'
+            raise Stop( 'New particles overlap' )
 
         # check 2: particles within mobility radius.
         d1 = self.distance( oldCoM, pos1 ) + species1.radius
         d2 = self.distance( oldCoM, pos2 ) + species2.radius
         if d1 > self.shellSize or d2 > self.shellSize:
-            raise RuntimeError, \
-                'New particle(s) out of protective sphere. %s' % \
-                'radius = %g, d1 = %g, d2 = %g ' % ( self.shellSize, d1, d2 )
+            raise Stop( 'New particle(s) out of protective sphere. %s' % \
+                'radius = %g, d1 = %g, d2 = %g ' % ( self.shellSize, d1, d2 ) )
         return True
 
 
