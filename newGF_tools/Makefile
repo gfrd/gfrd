@@ -1,43 +1,48 @@
 # You can only run this Makefile when the rest of the system (ie the GreensFunctions) are already made
 # These 'tools' depend on them
 # So run 'make' in the parent directory first
-#
+
+
+COMPILE = gcc -c $(CPPFLAGS)
+LINK = gcc -o
+
+
 all: GF2D_test GF2DRad_test GF1D_test GF1DRad_test
 	make -f Makefile GF2D_test GF2DRad_test GF1D_test GF1DRad_test
 
 GF2D_test : GF2D_test.o ../FirstPassageGreensFunction2D.o
-	libtool --mode=link gcc -o GF2D_test GF2D_test.o ../findRoot.lo ../FirstPassageGreensFunction2D.o \
+	libtool --mode=link $(LINK) GF2D_test GF2D_test.o ../findRoot.lo ../FirstPassageGreensFunction2D.o \
 	../funcSum.lo ../freeFunctions.lo -lgsl -lgslcblas -lstdc++
 
 GF2D_test.o : GF2D_test.cpp
-	gcc -c GF2D_test.cpp
+	$(COMPILE) GF2D_test.cpp
 
 
 
 GF2DRad_test : GF2DRad_test.o ../FirstPassagePairGreensFunction2D.o
-	libtool --mode=link gcc -o GF2DRad_test GF2DRad_test.o ../FirstPassagePairGreensFunction2D.o \
+	libtool --mode=link $(LINK) GF2DRad_test GF2DRad_test.o ../FirstPassagePairGreensFunction2D.o \
         ../funcSum.lo ../freeFunctions.lo ../findRoot.lo -lgsl -lgslcblas -lstdc++
 
 GF2DRad_test.o : GF2DRad_test.cpp
-	gcc -c GF2DRad_test.cpp
+	$(COMPILE) GF2DRad_test.cpp
 
 
 
 GF1DRad_test : GF1DRad_test.o ../FirstPassageGreensFunction1DRad.o
-	libtool --mode=link gcc -o GF1DRad_test GF1DRad_test.o ../FirstPassageGreensFunction1DRad.o \
+	libtool --mode=link $(LINK) GF1DRad_test GF1DRad_test.o ../FirstPassageGreensFunction1DRad.o \
 	../findRoot.lo -lgsl -lgslcblas -lstdc++
 
 GF1DRad_test.o : GF1DRad_test.cpp
-	gcc -c GF1DRad_test.cpp
+	$(COMPILE) GF1DRad_test.cpp
 
 
 
 GF1D_test : GF1D_test.o ../FirstPassageGreensFunction1D.o
-	libtool --mode=link gcc -o GF1D_test GF1D_test.o ../FirstPassageGreensFunction1D.o \
+	libtool --mode=link $(LINK) GF1D_test GF1D_test.o ../FirstPassageGreensFunction1D.o \
 	../findRoot.lo -lgsl -lgslcblas -lstdc++
 
 GF1D_test.o : GF1D_test.cpp
-	gcc -c GF1D_test.cpp
+	$(COMPILE) GF1D_test.cpp
 
 
 
