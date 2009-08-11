@@ -3,11 +3,20 @@ import os
 #import re
 #import logging
 import numpy
-from vtk_xml_serial_unstructured import VTK_XML_Serial_Unstructured
-from shape import DummyCylinder, DummyBox, Cylinder, Box
+from vtk_xml_serial_unstructured import *
+from shape import *
 
 INF = numpy.inf
 BROWNIAN = False
+
+class DummyCylinder( Cylinder ):
+    def __init__( self ):
+        Cylinder.__init__( self, [0,0,0], 1e-20, [0,0,1], 1e-20 ) 
+
+
+class DummyBox( Box ):
+    def __init__( self ):
+        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 1e-20, 1e-20, 1e-20 ) 
 
 
 # Logger that can be used to visualize data with Kitware ParaView.

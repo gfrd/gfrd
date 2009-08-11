@@ -185,12 +185,3 @@ class Box( Shape ):
                               str( self.vectorY ) + " " + str( self.vectorZ )
 
 
-class DummyCylinder( Cylinder ):
-    def __init__( self ):
-        Cylinder.__init__( self, [0,0,0], 0, [0,0,1], 0 ) 
-
-
-class DummyBox( Box ):
-    def __init__( self ):
-        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 0, 0, 0 ) 
-
