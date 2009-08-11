@@ -290,13 +290,14 @@ class SphericalPair( Pair ):
 
         # Green's function for centre of mass inside absorbing sphere.
         sgf = FirstPassageGreensFunction( self.D_geom )
+        comDomain = RadialDomain( a_R, sgf )
 
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
                                                         self.sigma )
-        comDomain = RadialDomain( a_R, sgf )
         ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, self.pgf )
+
         self.domains = [ comDomain, ivDomain ]
 
 
@@ -415,13 +416,14 @@ class PlanarSurfacePair( Pair ):
 
         # Green's function for centre of mass inside absorbing sphere.
         sgf = FirstPassageGreensFunction( self.D_geom )
+        comDomain = RadialDomain( a_R, sgf )
 
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction2D( self.D_tot, self.rt.k, 
                                                         self.sigma )
-        comDomain = RadialDomain( a_R, sgf )
         ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, self.pgf )
+
         self.domains = [ comDomain, ivDomain ]
 
 
@@ -434,6 +436,7 @@ class PlanarSurfacePair( Pair ):
         unitX = self.surface.unitX
         unitY = self.surface.unitY
         angle = vectorAngle( unitX, self.IV )
+        # Todo. Test if nothing changes when theta=0.
         newAngle = angle + theta
         
         rotated = r * math.cos(newAngle) * unitX + r * math.sin(newAngle) * unitY
@@ -451,6 +454,7 @@ class PlanarSurfacePair( Pair ):
 
     def drawNewIV( self, dt ):
         r, theta = self.domains[1].drawPosition( self.pgf, dt )
+        assert r > self.sigma and r <= self.a_r
         return r, theta
 
 
@@ -460,8 +464,6 @@ class PlanarSurfacePair( Pair ):
 
 '''
 2 Particles inside a (cylindrical) shell on a CylindricalSurface. (Rods).
-
-Todo. Greens functions.
 '''
 class CylindricalSurfacePair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
@@ -473,20 +475,22 @@ class CylindricalSurfacePair( Pair ):
 
         a_R, self.a_r = self.determineRadii()
 
-        # Convert a_r and a_R to sensible values in 1D.
-        # Todo.
-
         # Green's function for centre of mass inside absorbing sphere.
         sgf = FirstPassageGreensFunction1D( self.D_geom )
+        # a_R can be used as is for cartesian domain.
+        comDomain = CartesianDomain( 0, a_R, sgf )
 
         # Green's function for interparticle vector.
-        # This exact solution is used for drawing times.
         self.pgf = FirstPassageGreensFunction1DRad( self.D_tot, self.rt.k )
+        # Calculate a and r0 for a cartesian domain. A bit tricky. Needed 
+        # because normally iv is used with an r-theta domain, and then r goes 
+        # from sigma (radiating boundary) to a_r (absorbing boundary). Now, 
+        # cartesian domain goes from -a_cartesian (radiating boundary) to 
+        # a_cartesian (absorbing boundary).
+        a_cartesian = (self.a_r - self.sigma ) / 2
+        r0_cartesian = self.pairDistance - self.sigma - a_cartesian
+        ivDomain = CartesianDomain( r0_cartesian, a_cartesian, self.pgf )
 
-        comDomain = CartesianDomain( 0, a_R, sgf )
-        # Todo.
-        #ivDomain = CompositeDomain( 0, (self.rt.k, 0), self.a_r, self.pgf )
-        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, pgf )
         self.domains = [ comDomain, ivDomain ]
 
 
@@ -503,16 +507,16 @@ class CylindricalSurfacePair( Pair ):
 
 
     def drawNewIV( self, dt ):
-        r, theta = self.domains[1].drawPosition( self.pgf, dt )
-        # Todo.
-        '''
-        def calculateNewIV( self, r_r ):
-            assert abs(r_r[0]) > self.sigma
-            # Todo.
-            return r_r[0] * self.surface.unitZ
-        '''
-
-
+        r_cartesian = self.domains[1].drawPosition( dt )
+        # Convert back from cartesian domain (-a_cartesian to a_cartesian) to 
+        # something that can be used for the length of the iv vector (sigma to 
+        # a_r.
+        a_cartesian = self.domains[1].a
+        r = r_cartesian + self.sigma + a_cartesian
+        assert r > self.sigma and r <= self.a_r
+        # Note: using self.surface.unitZ here might accidently interchange the 
+        # particles.
+        return r * normalize( self.IV )
 
 
     def __str__( self ):

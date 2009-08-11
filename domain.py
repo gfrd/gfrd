@@ -73,14 +73,14 @@ class CartesianDomain( Domain ):
     (!) Not a pure function.
     '''
     def drawEventType( self, dt ):
-        # Set escape flag.
+        # Set escape flag (can still be an interaction).
         self.escape = True
         try:
             log.debug( '\tDebug. Cartesian drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, dt )
 	except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; r0=%g; dt=%g; a=%g' %\
-                ( str( e ), self.r0, self.dt, self.a ) )
+                ( str( e ), self.r0, dt, self.a ) )
         if eventType == EventType.REACTION:
             # Interaction.
             self.newPos = - self.a
@@ -135,6 +135,7 @@ class RadialDomain( Domain ):
     # (!) Not a pure function.
     def drawEventType( self, _ ):
 	self.escape = True
+        # Always return escape.
 	return EventType.ESCAPE
 
 
@@ -188,7 +189,7 @@ class CompositeDomain( Domain ):
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; sigma=%g; r0=%g; a=%g; dt=%g' %\
-                ( str( e ), self.sigma, self.r0, self.a, self.dt ) )
+                ( str( e ), self.sigma, self.r0, self.a, dt ) )
         if eventType == EventType.ESCAPE:
             self.escape = True
         return eventType     # 0 (REACTION) or 1 (ESCAPE r)

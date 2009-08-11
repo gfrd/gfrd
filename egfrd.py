@@ -621,12 +621,17 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    single.lastTime = self.t
 	    return single.dt
 	
-	'''
-	Propagate this particle to the exit point on the shell. This is done by 
-	setting the escape flag in the active domain.
-	'''
+        # Propagate if dt != 0.
         if single.dt != 0.0:
+            # All Singles, including NonInteractionSingles, should call 
+            # drawEventType, even if it is already known that it is going to 
+            # be an escape. This is because drawEventType also sets the escape 
+            # flag in the active domain, which is used when calling 
+            # propagateSingle and signals that in this domain the exitpoint is 
+            # already known.
             single.eventType = single.activeDomain.drawEventType( single.dt )
+
+            # Propagate this particle to the exit point on the shell.
             self.propagateSingle( single )
 
         if single.eventType == EventType.REACTION:
@@ -641,6 +646,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 return single.dt
         else:
             log.info( 'ESCAPE' )
+
 
         if isinstance( single, InteractionSingle ):
             # A new single is created, either in propagateSingle or in 
@@ -970,7 +976,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	# First handle *single* reaction case.
 	if pair.eventType == EventType.REACTION:
 	    reactingsingle = pair.reactingSingle
-	    log.info( 'SINGLE REACTION' )
+	    log.info( 'Pair SINGLE REACTION' )
 	    if reactingsingle == pair.single1:
 		theothersingle = pair.single2
 	    else:
@@ -996,14 +1002,23 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	
 	Decide if this is a *pair* reaction (0) or an escape (1) through either r 
 	or R. 
-	
-	Reaction: IV domain is active, but escape flag is not set (wouldn't be 
-	used anyway, because only CoM is updated)
-	Escape: escape flag is set in active domain, fixes exit point on 
-	appropriate shell.
+
+        When this pair was initialized, pair.determineNextEvent() was called, 
+        and that set the pair.activeDomain we use here. Two possibilities
+        If active:
+        * IV domain: 
+            drawEventType returns either:
+            - Reaction. Escape flag is not set (wouldn't be used anyway, 
+              because only CoM is updated)
+            - Escape. drawEventType sets escape flag in IV domain, fixes exit 
+              point on IV shell, used via propagatePair.
+        * CoM domain:
+            drawEventType returns:
+            - Escape. drawEventType sets escape flag in CoM domain, fixes exit 
+              point on CoM shell, used via propagatePair.
 	'''
 	eventType = pair.activeDomain.drawEventType( pair.dt )
-        log.info( str( eventType ) )
+        log.info( 'Pair ' + str( eventType ) )
 
 
 	if eventType == EventType.REACTION:
