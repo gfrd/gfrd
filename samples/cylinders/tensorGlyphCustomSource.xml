@@ -32,7 +32,7 @@
 
 
   <ProxyGroup name="filters">
-   <SourceProxy name="Tensor Glyph" class="vtkTensorGlyph">
+   <SourceProxy name="Tensor Glyph With Custom Source" class="vtkTensorGlyph">
        <InputProperty
         name="Input"
         command="SetInputConnection">
@@ -97,11 +97,6 @@
            <DataTypeDomain name="input_type">
              <DataType value="vtkPolyData"/>
            </DataTypeDomain>
-           <ProxyListDomain name="proxy_list">
-              <Proxy group="sources" name="CylinderSource" />
-              <Proxy group="sources" name="CubeSource" />
-              <Proxy group="sources" name="ArrowSource" />
-           </ProxyListDomain>
            <Documentation>
              This property determines which type of glyph will be placed at the 
 points in the input dataset.
