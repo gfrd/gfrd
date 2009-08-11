@@ -13,6 +13,7 @@ from shape import *
 from itertools import izip
 from vtklogger import VTKLogger
 
+from log import *
 
 class Delegate( object ):
     def __init__( self, obj, method ):

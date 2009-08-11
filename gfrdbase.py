@@ -3,7 +3,6 @@
 
 import math
 import random
-import sys
 
 import numpy
 import scipy
@@ -17,46 +16,7 @@ from _gfrd import *
 
 from cObjectMatrix import *
 
-import os
-import logging
-import logging.handlers
-
-
-def setupLogging():
-    global log 
-
-    log = logging.getLogger( 'pdpp' )
-
-    if 'LOGFILE' in os.environ:
-        if 'LOGSIZE' in os.environ and int( os.environ[ 'LOGSIZE' ] ) != 0:
-            handler = logging.handlers.\
-                RotatingFileHandler( os.environ[ 'LOGFILE' ], mode='w',
-                                     maxBytes=int( os.environ[ 'LOGSIZE' ] ) )
-        else:
-            handler = logging.FileHandler( os.environ[ 'LOGFILE' ], 'w', )
-            
-    else:
-        handler = logging.StreamHandler( sys.stdout )
-
-    formatter = logging.Formatter( '%(message)s' )
-    handler.setFormatter( formatter )
-    log.addHandler( handler )
-        
-    LOGLEVELS = { 'CRITICAL': logging.CRITICAL,
-                  'ERROR': logging.ERROR,
-                  'WARNING': logging.WARNING,
-                  'INFO': logging.INFO, 
-                  'DEBUG': logging.DEBUG, 
-                  'NOTSET': logging.NOTSET }
-
-    if 'LOGLEVEL' in os.environ:
-        log.setLevel( LOGLEVELS[ os.environ[ 'LOGLEVEL' ] ] )
-    else:
-        log.setLevel( logging.INFO )
-
-
-setupLogging()
-
+from log import *
 
 def p_free( r, t, D ):
     Dt4 = D * t * 4.0

@@ -1,7 +1,7 @@
 import numpy
 import random
 from _gfrd import EventType
-
+from log import *
 
 '''
 A domain represents 1 coordinate (2 in case of composite domain) of a position 
@@ -58,7 +58,7 @@ class CartesianDomain( Domain ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Cartesian drawTime. ' + str(self.gf) )
+            log.debug( '\tDebug. Cartesian drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
 	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; r0=%g; a=%g' %\
@@ -75,7 +75,7 @@ class CartesianDomain( Domain ):
         # Set escape flag.
         self.escape = True
         try:
-            print( '\tDebug. Cartesian drawEventType. ' + str(self.gf) )
+            log.debug( '\tDebug. Cartesian drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, dt )
 	except Exception, e:
             raise Exception, 'gf.drawEventType() failed; %s; r0=%g; dt=%g; a=%g' %\
@@ -99,7 +99,7 @@ class CartesianDomain( Domain ):
 
         try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Cartesian drawR. ' + str(self.gf) )
+            log.debug( '\tDebug. Cartesian drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, self.r0, dt  )
         except Exception, e:
             raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, r0=%g, a=%g' %\
@@ -123,7 +123,7 @@ class RadialDomain( Domain ):
     def drawTime( self ):
 	try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Radial drawTime. ' + str(self.gf) )
+            log.debug( '\tDebug. Radial drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
 	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; a=%g' %\
@@ -145,7 +145,7 @@ class RadialDomain( Domain ):
             return self.a
         try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Radial drawR. ' + str(self.gf) )
+            log.debug( '\tDebug. Radial drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, dt  )
         except Exception, e:
             raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, a=%g' %\
@@ -169,7 +169,7 @@ class CompositeDomain( Domain ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Radial2D drawTime. ' + str(self.gf) )
+            log.debug( '\tDebug. Radial2D drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
 	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g, sigma=%g, r0=%g, a=%g' %\
@@ -183,7 +183,7 @@ class CompositeDomain( Domain ):
     def drawEventType( self, dt ):
         try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Radial2D drawEventType. ' + str(self.gf) )
+            log.debug( '\tDebug. Radial2D drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
             raise Exception,\
@@ -210,7 +210,7 @@ class CompositeDomain( Domain ):
     def drawR_pair( self, gf, dt ):
         try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Radial2D drawR_pair. ' + str(self.gf) )
+            log.debug( '\tDebug. Radial2D drawR_pair. ' + str(self.gf) )
             r = gf.drawR( rnd, self.r0, dt )
             # redraw; shouldn't happen often
             while r >= self.a or r <= self.sigma: 
@@ -229,7 +229,7 @@ class CompositeDomain( Domain ):
     def drawTheta_pair( self, gf, r, dt ):
         try:
             rnd = numpy.random.uniform()
-            print( '\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
+            log.debug( '\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
             theta = gf.drawTheta( rnd, r, self.r0, dt )
         except Exception, e:
             raise Exception,\

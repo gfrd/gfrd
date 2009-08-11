@@ -6,7 +6,9 @@ import numpy
 
 INF = numpy.inf
 
-
+'''
+This logging faciliy can be used to write particle traces to file.
+'''
 class Logger:
 
     def __init__( self, sim, logname = 'log', directory = 'data',

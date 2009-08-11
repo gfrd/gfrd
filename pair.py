@@ -2,6 +2,7 @@ from utils import *
 from _gfrd import *
 from shape import *
 from domain import *
+from log import *
 
 
 '''
