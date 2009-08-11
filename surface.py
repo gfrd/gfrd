@@ -1,14 +1,16 @@
-#from utils import *
 import math
 import numpy
 import random
 
-from shape import Cylinder, Box
-from single import SphericalSingle3D, CylindricalSingle1D, CylindricalSingle2D, InteractionSingle1D, InteractionSingle2D
-from pair import SphericalPair3D, CylindricalPair1D, CylindricalPair2D
-from utils import length, normalize, SAFETY, randomVector2D, randomVector
+from shape import *
+from single import *
+from pair import *
+from utils import *
 
 
+'''
+Surface should be added to the egfrd simulator by calling sim.addSurface().
+'''
 class Surface( object ):
     def __init__( self, name ):
         self.name = name
@@ -31,68 +33,9 @@ class Surface( object ):
         return self.name
 
 
-class World( Surface ):
-    # If no surface is specified, particles are tagged with this one.
-    def __init__( self ):
-        Surface.__init__( self, 'defaultworld' )
-        self.defaultSingle = SphericalSingle3D
-        self.defaultPair = SphericalPair3D
-
-
-    def randomVector( self, length ):
-        return randomVector( length )
-
-
-    def drawBDdisplacement( self, t, D ):
-        ro = math.sqrt( 2.0 * D * t )
-        return numpy.random.normal( 0.0, ro, 3 )
-
-
 '''
-Surface that is only used for throwing in particles. Those particles will than 
-later be tagged with surface=defaultSurface (World).
+For example a membrane.
 '''
-class CuboidalSurface( Surface, Box ):
-    '''
-    origin -- = [ x0, y0, z0 ] is the origin.
-    size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
-    point.
-    '''
-    def __init__( self, origin, size, name='CuboidalSurface' ):
-        Surface.__init__( self, name )
-        self.size = numpy.array(size)
-        Lx = size[0]
-        Ly = size[1]
-        Lz = size[2]
-        Box.__init__( self, origin + self.size/2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx/2, Ly/2, Lz/2 ) 
- 
-
-    '''
-    Overrule signedDistanceTo from Box. 
-    Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
-    '''
-    def signedDistanceTo( self, pos ):
-        print 'CuboidalSurface.signedDistanceTo(). Is this ever used?'
-        edge = self.origin - size/2
-        dists = numpy.concatenate( ( edge - pos,
-                                     edge+self.size-pos ) )
-        absdists = numpy.abs( dists )
-        i = numpy.argmin( absdists )
-        return dists[i]
-
-
-    '''
-    Returns a random position equidistributed within
-    the region in space defined by negative signed distance.
-    See also signedDistanceTo().
-    '''
-    def randomPosition( self ):
-        edge = self.origin - self.size/2
-        return numpy.array( [ random.uniform( edge[0], self.size[0] ),
-                              random.uniform( edge[1], self.size[1] ),
-                              random.uniform( edge[2], self.size[2] )])
-
-
 class PlanarSurface( Surface, Box ):
     def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, name="PlanarSurface" ):
         Surface.__init__( self, name )
@@ -101,9 +44,9 @@ class PlanarSurface( Surface, Box ):
         # Orientation of surface is decided here.
         vectorZ = numpy.cross( vectorX, vectorY )
         Box.__init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ) 
-        self.defaultSingle = CylindricalSingle2D
-        self.defaultPair = CylindricalPair2D
-        self.defaultInteractionSingle = InteractionSingle2D
+        self.defaultSingle = PlanarSurfaceSingle
+        self.defaultPair = PlanarSurfacePair
+        self.defaultInteractionSingle = PlanarSurfaceInteraction
 
 
     def drawBDdisplacement( self, t, D ):
@@ -129,13 +72,16 @@ class PlanarSurface( Surface, Box ):
         return pos + random.choice( [-1,1] ) * (self.Lz * SAFETY + radius ) * self.unitZ
 
 
+'''
+For example the DNA.
+'''
 class CylindricalSurface( Surface, Cylinder ):
     def __init__( self, origin, radius, orientation, size, name="CylindricalSurface" ):
         Surface.__init__( self, name )
         Cylinder.__init__( self, origin, radius, orientation, size )
-        self.defaultSingle = CylindricalSingle1D
-        self.defaultPair = CylindricalPair1D
-        self.defaultInteractionSingle = InteractionSingle1D
+        self.defaultSingle = CylindricalSurfaceSingle
+        self.defaultPair = CylindricalSurfacePair
+        self.defaultInteractionSingle = CylindricalSurfaceInteraction
 
 
     def drawBDdisplacement( self, t, D ):
@@ -156,4 +102,70 @@ class CylindricalSurface( Surface, Cylinder ):
         # Todo. SAFETY.
         x, y = randomVector2D( self.radius * SAFETY + radius )
         return pos + x * self.unitX + y * self.unitY
+
+
+'''
+Surface that is only used for throwing in particles. Those particles will than 
+later be tagged with surface=defaultSurface, which is an instance of the World 
+class. See gfrdbase.py.
+'''
+class CuboidalSurface( Surface, Box ):
+    '''
+    origin -- = [ x0, y0, z0 ] is one edge of the cube.
+    size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
+    point.
+    '''
+    def __init__( self, origin, size, name='CuboidalSurface' ):
+        Surface.__init__( self, name )
+        self.size = numpy.array(size)
+        Lx = size[0]
+        Ly = size[1]
+        Lz = size[2]
+        Box.__init__( self, origin + self.size/2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx/2, Ly/2, Lz/2 ) 
+ 
+
+    '''
+    Overrule signedDistanceTo from Box. 
+    Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
+    '''
+    def signedDistanceTo( self, pos ):
+        raise 'You should not add CuboidalSurfaces to the surfacelist using s.addSurface()!'
+        edge = self.origin - size/2
+        dists = numpy.concatenate( ( edge - pos,
+                                     edge+self.size-pos ) )
+        absdists = numpy.abs( dists )
+        i = numpy.argmin( absdists )
+        return dists[i]
+
+
+    '''
+    Returns a random position equidistributed within
+    the region in space defined by negative signed distance.
+    See also signedDistanceTo().
+    '''
+    def randomPosition( self ):
+        edge = self.origin - self.size/2
+        return numpy.array( [ random.uniform( edge[0], self.size[0] ),
+                              random.uniform( edge[1], self.size[1] ),
+                              random.uniform( edge[2], self.size[2] )])
+
+
+'''
+If no surface is specified, particles are tagged with an instance of this one.
+'''
+class World( Surface ):
+    def __init__( self ):
+        Surface.__init__( self, 'world' )
+        self.defaultSingle = SphericalSingle
+        self.defaultPair = SphericalPair
+
+
+    def randomVector( self, length ):
+        return randomVector( length )
+
+
+    def drawBDdisplacement( self, t, D ):
+        ro = math.sqrt( 2.0 * D * t )
+        return numpy.random.normal( 0.0, ro, 3 )
+
 

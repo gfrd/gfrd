@@ -1,9 +1,30 @@
 import numpy
 import random
 from _gfrd import EventType
-#from gfrdbase import log
 
 
+'''
+A domain represents 1 coordinate (2 in case of composite domain) of a position 
+vector.
+
+The position of a particle inside a shell can be specified by a vector. Which 
+coordinates are used for this vector depends on the surface the particle is 
+on (if any). For example for a particle inside a sphere, not on a surface, 
+this is (r,theta,phi). But for a particle on a CylindricalSurface, moving in 1 
+dimension, just (z) is sufficient.
+
+In the files single.py and pair.py it is defined which coordinates are needed 
+to define the position of the particle inside its shell for each Single and 
+Pair. Then, for each such coordinate, that can not be randomly chosen, a 
+domain is constructed.
+
+There are 3 types of domains:
+    * CartesianDomain: for example the z-domain.
+    * RadialDomain: for example the r-domain.
+    * CompositeDomain: for example the r-theta-domain.
+
+All Greens Functions should be called from this file only.
+'''
 class Domain( object ):
     def __init__( self, a, gf ):
         self.gf = gf         # Green's function.
@@ -13,7 +34,7 @@ class Domain( object ):
                              # this domain in case of a propagate. By default 
                              # all escape flags have to be set to False, so 
                              # drawPosition works properly.
-    
+
 
     def geta( self ):
         return self._a
@@ -27,7 +48,7 @@ class Domain( object ):
 '''
 For example the z-domain.
 '''
-class CartesianDomain1D( Domain ):
+class CartesianDomain( Domain ):
     def __init__( self, r0, a, gf ):
         self.r0 = r0         # Initial position
         Domain.__init__( self, a, gf )
@@ -37,7 +58,7 @@ class CartesianDomain1D( Domain ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            #print( '\tDebug. Cartesian drawTime.' )
+            print( '\tDebug. Cartesian drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
 	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; r0=%g; a=%g' %\
@@ -54,7 +75,7 @@ class CartesianDomain1D( Domain ):
         # Set escape flag.
         self.escape = True
         try:
-            #print( '\tDebug. Cartesian drawEventType.' )
+            print( '\tDebug. Cartesian drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, dt )
 	except Exception, e:
             raise Exception, 'gf.drawEventType() failed; %s; r0=%g; dt=%g; a=%g' %\
@@ -78,7 +99,7 @@ class CartesianDomain1D( Domain ):
 
         try:
             rnd = numpy.random.uniform()
-            #print( '\tDebug. Cartesian drawR.' )
+            print( '\tDebug. Cartesian drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, self.r0, dt  )
         except Exception, e:
             raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, r0=%g, a=%g' %\
@@ -88,7 +109,13 @@ class CartesianDomain1D( Domain ):
         return r - self.r0
 
 
-class RadialDomain1D( Domain ):
+'''
+For example the r-domain. 
+
+The initial position of the particle is always at r=0, so theta can and should 
+be choosen at random.
+'''
+class RadialDomain( Domain ):
     def __init__( self, a, gf ):
         Domain.__init__( self, a, gf )
 
@@ -96,7 +123,7 @@ class RadialDomain1D( Domain ):
     def drawTime( self ):
 	try:
             rnd = numpy.random.uniform()
-            #print( '\tDebug. Radial drawTime.' )
+            print( '\tDebug. Radial drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
 	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g; a=%g' %\
@@ -118,7 +145,7 @@ class RadialDomain1D( Domain ):
             return self.a
         try:
             rnd = numpy.random.uniform()
-            #print( '\tDebug. Radial drawR.' )
+            print( '\tDebug. Radial drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, dt  )
         except Exception, e:
             raise Exception, 'gf.drawR failed; %s; rnd=%g, dt=%g, a=%g' %\
@@ -128,9 +155,10 @@ class RadialDomain1D( Domain ):
 
 
 '''
-For example the (r-theta) domain.
+For example the (r-theta) domain used with PairGreensFunctions (3D as well as 
+2D).
 '''
-class RadialDomain2D( Domain ):
+class CompositeDomain( Domain ):
     def __init__( self, sigma, r0, a, gf ):
         self.sigma = sigma              # Inner radius.
         self.r0 = r0                    # Starting position.
@@ -141,7 +169,7 @@ class RadialDomain2D( Domain ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            #print( '\tDebug. Radial2D drawTime.' )
+            print( '\tDebug. Radial2D drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
 	    raise Exception, 'gf.drawTime() failed; %s; rnd=%g, sigma=%g, r0=%g, a=%g' %\
@@ -155,7 +183,7 @@ class RadialDomain2D( Domain ):
     def drawEventType( self, dt ):
         try:
             rnd = numpy.random.uniform()
-            #print( '\tDebug. Radial2D drawEventType.' )
+            print( '\tDebug. Radial2D drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
             raise Exception,\
@@ -182,7 +210,7 @@ class RadialDomain2D( Domain ):
     def drawR_pair( self, gf, dt ):
         try:
             rnd = numpy.random.uniform()
-            #print( '\tDebug. Radial2D drawR_pair.' )
+            print( '\tDebug. Radial2D drawR_pair. ' + str(self.gf) )
             r = gf.drawR( rnd, self.r0, dt )
             # redraw; shouldn't happen often
             while r >= self.a or r <= self.sigma: 
@@ -201,7 +229,7 @@ class RadialDomain2D( Domain ):
     def drawTheta_pair( self, gf, r, dt ):
         try:
             rnd = numpy.random.uniform()
-        #print( '\tDebug. Radial2D drawTheta_pair.' )
+            print( '\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
             theta = gf.drawTheta( rnd, r, self.r0, dt )
         except Exception, e:
             raise Exception,\

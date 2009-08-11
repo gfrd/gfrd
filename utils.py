@@ -1,4 +1,3 @@
-
 import math
 import numpy
 import scipy
@@ -58,6 +57,15 @@ def cyclicTranspose( pos1, pos2, fsize ):
         numpy.less( diff, -halfsize ) * fsize
 
     return pos1 + reloc
+
+
+'''
+Just a free func ver of Pair.getCoM().
+'''
+def calculatePairCoM( pos1, pos2, D1, D2, worldSize ):
+    pos2t = cyclicTranspose( pos2, pos1, worldSize )
+    return ( ( D2 * pos1 + D1 * pos2t ) / ( D1 + D2 ) ) % worldSize
+
 
 '''
 def distanceSq_Simple( position1, position2, fsize = None ):

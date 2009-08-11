@@ -1,17 +1,17 @@
 from utils import *
 from _gfrd import *
-from shape import Sphere, Cylinder
-from domain import RadialDomain1D, RadialDomain2D, CartesianDomain1D
+from shape import *
+from domain import *
 
 
 '''
-Just a free func ver of Pair.getCoM().
+There are 3 types of pairs:
+    * SphericalPair
+    * PlanarSurfacePair
+    * CylindricalSurfacePair
+
+Todo. Add more comments.
 '''
-def calculatePairCoM( pos1, pos2, D1, D2, worldSize ):
-    pos2t = cyclicTranspose( pos2, pos1, worldSize )
-    return ( ( D2 * pos1 + D1 * pos2t ) / ( D1 + D2 ) ) % worldSize
-
-
 class Pair( object ):
     '''
     Todo. How does this work exactly?
@@ -133,7 +133,7 @@ class Pair( object ):
     subtracted from a_r and a_R to get values of the same type as 
     getMobilityRadius() for singles. 
     
-    Todo. Make dimension specific.
+          Make dimension specific.
     '''
     def determineRadii( self ):
         single1 = self.single1
@@ -147,7 +147,6 @@ class Pair( object ):
         D1_factor = D1 / self.D_tot
         D2_factor = D2 / self.D_tot
 
-        # Todo. Why the Fixme?
         shellSize = self.shellSize / SAFETY  # FIXME:
 
         sqrtD_tot = math.sqrt( self.D_tot )
@@ -275,17 +274,11 @@ class Pair( object ):
         return buf
 
 
-    def drawNewCoM( self, dt ):
-        r_R = self.domains[0].drawPosition( dt )
-        return self.CoM + self.calculateCoMDisplacement( r_R )
-
-
-    def drawNewIV( self, dt ):  
-        gf = self.choosePairGreensFunction( dt )
-        return self.calculateNewIV( self.domains[1].drawPosition( gf, dt ) )
-
-
-class SphericalPair3D( Pair ):
+##############################################################################
+'''
+2 Particles inside a (spherical) shell not on any surface.
+'''
+class SphericalPair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
@@ -296,34 +289,21 @@ class SphericalPair3D( Pair ):
         a_R, self.a_r = self.determineRadii()
 
         # Green's function for centre of mass inside absorbing sphere.
-        self.sgf = FirstPassageGreensFunction( self.D_geom )
+        sgf = FirstPassageGreensFunction( self.D_geom )
 
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
                                                         self.sigma )
-        comDomain = RadialDomain1D( a_R, self.sgf )
-        ivDomain = RadialDomain2D( self.sigma, self.pairDistance, self.a_r, self.pgf )
+        comDomain = RadialDomain( a_R, sgf )
+        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, self.pgf )
         self.domains = [ comDomain, ivDomain ]
-
-
-    def calculateCoMDisplacement( self, r_R ):
-        rnd = numpy.random.uniform( size = 2 )
-        displacement_R_S = [ r_R, rnd[0] * Pi, rnd[1] * 2 * Pi ]
-        return sphericalToCartesian( displacement_R_S )
-
-
-    def calculateNewIV( self, (r, theta) ):
-        newInterParticleS = numpy.array([r, theta, numpy.random.random()*2*Pi])
-        return sphericalToCartesian( newInterParticleS )
 
 
     '''
     Calculate new positions of the pair particles using a new center-of-mass, 
     a new inter-particle vector, and an old inter-particle vector.
     '''
-
-
     def drawNewPositions( self, dt ):
         newCoM, newIV = self.drawNewCoM( dt ), self.drawNewIV( dt )
         #FIXME: need better handling of angles near zero and pi.
@@ -355,6 +335,18 @@ class SphericalPair3D( Pair ):
         newpos1 = newCoM - rotated * ( self.D1 / self.D_tot )
         newpos2 = newCoM + rotated * ( self.D2 / self.D_tot )
         return newpos1, newpos2
+
+
+    def drawNewCoM( self, dt ):
+        r_R = self.domains[0].drawPosition( dt )
+        return self.CoM + randomVector( r_R )
+
+
+    def drawNewIV( self, dt ):  
+        gf = self.choosePairGreensFunction( dt )
+        r, theta = self.domains[1].drawPosition( gf, dt )
+        newInterParticleS = numpy.array([r, theta, numpy.random.random()*2*Pi])
+        return sphericalToCartesian( newInterParticleS )
 
 
     '''
@@ -398,47 +390,39 @@ class SphericalPair3D( Pair ):
 
 
     def __str__( self ):
-        return 'SphericalPair3D' + Pair.__str__( self )
+        return 'SphericalPair' + Pair.__str__( self )
 
 
 '''
-Hockey pucks.
+2 Particles inside a (cylindrical) shell on a PlanarSurface. (Hockey pucks).
 '''
-class CylindricalPair2D( Pair ):
+class PlanarSurfacePair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
-        # Set shellSize directly, without getMinRadius() step. Don't set 
-        # radius again from initialize(). Pairs don't move.
+        '''
+        Hockey pucks stick a bit out of the surface, so that if the 
+        biggest particle would undergo an unbinding reaction, it can still be 
+        placed within the hockey puck (and thus it won't interfere with other 
+        shells.
+
+        Set radius=shellSize directly, without getMinRadius() step. Don't set 
+        radius again from initialize(). Pairs don't move.
+        '''
         self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, self.surface.Lz * SAFETY + 2*self.biggestParticleRadius ) ]
 
         a_R, self.a_r = self.determineRadii()
 
         # Green's function for centre of mass inside absorbing sphere.
-        self.sgf = FirstPassageGreensFunction( self.D_geom )
+        sgf = FirstPassageGreensFunction( self.D_geom )
 
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction2D( self.D_tot, self.rt.k, 
                                                         self.sigma )
-        comDomain = RadialDomain1D( a_R, self.sgf )
-        ivDomain = RadialDomain2D( self.sigma, self.pairDistance, self.a_r, self.pgf )
+        comDomain = RadialDomain( a_R, sgf )
+        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, self.pgf )
         self.domains = [ comDomain, ivDomain ]
-
-
-
-    def calculateCoMDisplacement( self, r_R ):
-        x, y = randomVector2D( r_R )
-        return x * self.surface.unitX + y * self.surface.unitY
-
-
-    def calculateNewIV( self, (r, theta) ):
-        # Todo.
-        return (r, theta)
-
-
-    def choosePairGreensFunction( self, dt ):
-        return self.pgf
 
 
     '''
@@ -459,16 +443,27 @@ class CylindricalPair2D( Pair ):
         return newpos1, newpos2
 
 
+    def drawNewCoM( self, dt ):
+        r_R = self.domains[0].drawPosition( dt )
+        x, y = randomVector2D( r_R )
+        return self.CoM + x * self.surface.unitX + y * self.surface.unitY
+
+
+    def drawNewIV( self, dt ):
+        r, theta = self.domains[1].drawPosition( self.pgf, dt )
+        return r, theta
+
+
     def __str__( self ):
-        return 'CylindricalPair2D' + Pair.__str__( self )
+        return 'PlanarSurfacePair' + Pair.__str__( self )
 
 
 '''
-Rods.
+2 Particles inside a (cylindrical) shell on a CylindricalSurface. (Rods).
 
 Todo. Greens functions.
 '''
-class CylindricalPair1D( Pair ):
+class CylindricalSurfacePair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
@@ -482,27 +477,17 @@ class CylindricalPair1D( Pair ):
         # Todo.
 
         # Green's function for centre of mass inside absorbing sphere.
-        self.sgf = FirstPassageGreensFunction1D( self.D_geom )
+        sgf = FirstPassageGreensFunction1D( self.D_geom )
 
         # Green's function for interparticle vector.
         # This exact solution is used for drawing times.
         self.pgf = FirstPassageGreensFunction1DRad( self.D_tot, self.rt.k )
 
-        comDomain = CartesianDomain1D( 0, a_R, self.sgf )
+        comDomain = CartesianDomain( 0, a_R, sgf )
         # Todo.
-        #ivDomain = RadialDomain2D( 0, (self.rt.k, 0), self.a_r, self.pgf )
-        ivDomain = RadialDomain2D( self.sigma, self.pairDistance, self.a_r, self.pgf )
+        #ivDomain = CompositeDomain( 0, (self.rt.k, 0), self.a_r, self.pgf )
+        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, pgf )
         self.domains = [ comDomain, ivDomain ]
-
-
-    def calculateCoMDisplacement( self, r_R ):
-        return r_R * self.surface.unitZ
-
-
-    def calculateNewIV( self, r_r ):
-        assert abs(r_r[0]) > self.sigma
-        # Todo.
-        return r_r[0] * self.surface.unitZ
 
 
     def drawNewPositions( self, dt ):
@@ -512,10 +497,25 @@ class CylindricalPair1D( Pair ):
         return newpos1, newpos2
 
 
-    def choosePairGreensFunction( self, dt ):
+    def drawNewCoM( self, dt ):
+        r_R = self.domains[0].drawPosition( dt )
+        return self.CoM + r_R * self.surface.unitZ
+
+
+    def drawNewIV( self, dt ):
+        r, theta = self.domains[1].drawPosition( self.pgf, dt )
         # Todo.
-        return self.pgf
+        '''
+        def calculateNewIV( self, r_r ):
+            assert abs(r_r[0]) > self.sigma
+            # Todo.
+            return r_r[0] * self.surface.unitZ
+        '''
+
+
 
 
     def __str__( self ):
-        return 'CylindricalPair1D' + Pair.__str__( self )
+        return 'CylindricalSurfacePair' + Pair.__str__( self )
+
+

@@ -138,61 +138,98 @@ class ReactionType( object ):
         return s
 
 
+'''
+Reaction Types.
 
+A -> B
+'''
 class UnimolecularReactionType( ReactionType ):
 
     def __init__( self, s1, p1, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, ], k )
 
 
+'''
+A -> None
+'''
 class DecayReactionType( ReactionType ):
 
     def __init__( self, s1, k ):
         ReactionType.__init__( self, [ s1, ], [], k )
 
 
+'''
+A + B -> C
+'''
 class BindingReactionType( ReactionType ):
 
     def __init__( self, s1, s2, p1, k ):
         ReactionType.__init__( self, [ s1, s2 ], [ p1, ], k )
-        # ??
+        # Todo. These are not used.
         D = s1.D + s2.D
         sigma = s1.radius + s2.radius
 
 
-class RepulsionReactionType( ReactionType ):
-
-    def __init__( self, s1, s2 ):
-        ReactionType.__init__( self, [ s1, s2 ], [], 0.0 )
-
-        # ??
-        D = s1.D + s2.D
-        sigma = s1.radius + s2.radius
-
-
+'''
+C -> A + B
+'''
 class UnbindingReactionType( ReactionType ):
 
     def __init__( self, s1, p1, p2, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, p2 ], k )
+ 
+
+'''
+A + B is repulsive.
+'''
+class RepulsionReactionType( ReactionType ):
+
+    def __init__( self, s1, s2 ):
+        ReactionType.__init__( self, [ s1, s2 ], [], 0.0 )
+        # Todo. These are not used.
+        D = s1.D + s2.D
+        sigma = s1.radius + s2.radius
 
 
+'''
+Surface binding.
+
+Surface binding is not a Poisson process, so interactions should not be added 
+to the reaction list using addReactionType but added to the interaction list using
+addInteractionType.
+
+A + Surface -> B_on_Surface
+'''
 class SurfaceBindingInteractionType( ReactionType ):
     def __init__( self, reactantSpecies, surface, productSpecies,  k ):
         ReactionType.__init__( self, [ reactantSpecies, surface ], [ productSpecies, ], k )
 
 
+'''
+A + B_on_Surface + Surface -> C_on_Surface
+A + Surface should be repulsive.
+'''
 class SurfaceDirectBindingInteractionType( ReactionType ):
     def __init__( self, reactantSpecies1, reactantSpecies2, surface, productSpecies,  k ):
         ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2, surface ], [ productSpecies, ], k )
 
 
+'''
+A + Surface is repulsive.
+'''
 class SurfaceRepulsionInteractionType( ReactionType ):
     def __init__( self, species, surface ):
         ReactionType.__init__( self, [ species, surface ], [], 0.0 )
 
 
-# Unbinding is a Poisson process.
-# A species can only exist on 1 surface ever.
+'''
+Surface unbinding.
+
+Surface unbinding is a Poisson process, so these reactions can be added to the 
+reaction list by using addReactionType.
+
+A_on_Surface -> B
+'''
 class SurfaceUnbindingReactionType( ReactionType ):
     def __init__( self, reactantSpecies, productSpecies, k ):
         # After unbinding from a surface the particle always ends up on the 
@@ -200,14 +237,18 @@ class SurfaceUnbindingReactionType( ReactionType ):
         ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies, ], k )
 
 
-# Direct unbinding is a Poisson process.
+'''
+A_on_Surface -> B_on_Surface + C
+'''
 class SurfaceDirectUnbindingReactionType( ReactionType ):
-    def __init__( self, reactantSpecies, surface, productSpecies1, productSpecies2, k ):
+    def __init__( self, reactantSpecies, productSpecies1, productSpecies2, k ):
         # After unbinding from a surface, particle2 always ends up on the 
         # defaultSurface (world), and particle1 stays on the surface it was 
         # on.
         ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies1, productSpecies2 ], k )
 
+
+##############################################################################
 
 class Reaction:
     def __init__( self, type, reactants, products ):
@@ -592,7 +633,7 @@ class ParticleSimulatorBase( object ):
                             SurfaceRepulsionInteractionType( species,surface )
         
 
-    def throwInParticles( self, species, n, surface=None ):
+    def throwInParticles( self, species, n, surface ):
         log.info( 'throwing in %s %s particles' % ( n, species.id ) )
 
         for i in range( int( n ) ):
@@ -711,7 +752,7 @@ class ParticleSimulatorBase( object ):
     """
     def getNeighborParticles( self, pos, n=None ):
         n, d = self.particleMatrix.getNeighbors( pos, n )
-        # Todo. This doesn't seem right.
+        # This doesn't seem right.
         neighbors = [ Particle( i[0], i[1] ) for i in n ]
         return neighbors, d
 

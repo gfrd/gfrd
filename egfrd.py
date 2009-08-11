@@ -8,19 +8,20 @@ from gfrdbase import *
 from single import *
 from pair import *
 from multi import *
-from shape import Sphere, Cylinder
+from shape import *
 
 from itertools import izip
 from vtklogger import VTKLogger
 
-class Delegate( object ):
 
+class Delegate( object ):
     def __init__( self, obj, method ):
         self.obj = weakref.proxy( obj )
         self.method = method
 
     def __call__( self, *arg ):
         return self.method( self.obj, *arg )
+
 
 class Stop( Exception ):
     '''
@@ -30,13 +31,12 @@ class Stop( Exception ):
     def __str__(self):
         return repr(self.value)
     '''
-
     pass
 
-# Notes:
-# EGFRDSimulator.distance takes into account the periodic boundary conditions.  
-# Very handy!
-# Returning a dt to the scheduler reschedules the event, -INF removes it.
+
+'''
+Returning a dt to the scheduler reschedules the event, -INF removes it.
+'''
 class EGFRDSimulator( ParticleSimulatorBase ):
     def __init__( self, logdir = None ):
         if logdir:
@@ -142,7 +142,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         event = self.scheduler.getTopEvent()
         self.t, self.lastEvent = event.getTime(), event.getArg()
 
-        log.info( '\n\n%d: t=%g dt=%g\nevent=%s reactions=%d interactions=%d rejectedmoves=%d errors=%d' 
+        log.info( '\n\n%d: t=%g dt=%g\nevent=%s. reactions=%d interactions=%d rejectedmoves=%d errors=%d.' 
                       % ( self.stepCounter, self.t, self.dt, self.lastEvent, 
                           self.reactionEvents, self.interactionEvents, self.rejectedMoves, self.errors ) )
         
@@ -608,9 +608,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         # 0. Reaction.
 	if single.eventType == EventType.REACTION:
-	    log.info( '' + str( single.eventType ) )
-
 	    self.propagateSingle( single )
+	    log.info( str( single.eventType ) )
+
 	    try:
 		self.fireSingleReaction( single )
 	    except NoSpace:
@@ -637,12 +637,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	'''
         if single.dt != 0.0:
             single.eventType = single.activeDomain.drawEventType( single.dt )
-        log.info( '' + str(single.eventType) )
-
-        if single.dt != 0.0:
             self.propagateSingle( single )
 
         if single.eventType == EventType.REACTION:
+            log.info( 'INTERACTION' )
             try:
                 self.fireSingleReaction( single, True )
             except NoSpace:
@@ -651,11 +649,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 self.rejectedMoves += 1
                 single.reset()
                 return single.dt
+        else:
+            log.info( 'ESCAPE' )
 
         if isinstance( single, InteractionSingle ):
             # A new single is created, either in propagateSingle or in 
             # fireSingleReaction. Remove the old single from scheduler.
-            # For interactions as well as escapes! No other way.
+            # For eventType is interaction as well as escapes. No other way.
             single.dt = -INF
             return single.dt
 
@@ -727,19 +727,19 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	assert self.t <= single.lastTime + single.dt
 	assert single.radius >= single.getMinRadius()
 
-        # Make sure propagateSingle thinks this is an escape for 
-        # interactionSingles. Maybe make nicer later.
+        # Make sure propagateSingle thinks this is an escape. Only needed for 
+        # interactionSingles because of the way propagateSingle works. Maybe 
+        # make nicer later.
         single.eventType = EventType.ESCAPE
-        oldsingle = single
-	single = self.propagateSingle( single )
+	newsingle = self.propagateSingle( single )
 
-        if isinstance( oldsingle, InteractionSingle ):
+        if isinstance( single, InteractionSingle ):
             # We can not do this in propagate, but don't forget it.
-            self.removeEvent( oldsingle )
+            self.removeEvent( single )
         else:
-            self.updateEvent( self.t, oldsingle )
+            self.updateEvent( self.t, single )
 
-        return single
+        return newsingle
 
     ''' 
     The difference between a burst and a propagate is that a burst always takes 
@@ -752,11 +752,11 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     The return value is only used if called from burstSingle.
     '''
     def propagateSingle( self, single ):
-	single.pos = single.drawNewPosition(self.t - single.lastTime) 
-	self.applyBoundary( single.pos )
-	assert self.checkOverlap( single.pos, single.getMinRadius(),
+	newpos = single.drawNewPosition(self.t - single.lastTime) 
+	self.applyBoundary( newpos )
+	assert self.checkOverlap( newpos, single.getMinRadius(),
 				  ignore = [ single.particle ] )
-	self.moveParticle( single.particle, single.pos )
+	self.moveParticle( single.particle, newpos )
 
         if single.eventType == EventType.ESCAPE:
             if isinstance( single, InteractionSingle ):
@@ -770,9 +770,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 log.info( 'New %s. radius=%g. dt=%g.' % ( newsingle, newsingle.radius, newsingle.dt ) )
                 return newsingle
             else:
+                single.pos = newpos
                 single.initialize( self.t )
                 self.updateShellMatrix( single )
                 return single
+        else:
+            # REACTION. No need to update, single is removed anyway.
+            pass
 
 
     def restoreSingleShells( self, singles ):
@@ -860,7 +864,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 newSurface = single.interactionSurface
                 # Todo. This does not obey detailed balance. Tunneling.
-                newpos, _ = newSurface.calculateProjection( oldpos )
+                newpos, _ = newSurface.projectedPoint( oldpos )
 
                 self.reactionEvents -= 1 # Because we do +1 at end of this method.
                 self.interactionEvents += 1
@@ -1185,7 +1189,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	#log.debug( '\tDebug. formInteraction: %s + %s' % (single, surface) )
 
         particle = single.particle
-	projectedPoint, projectionDistance = surface.calculateProjection( single.pos )
+	projectedPoint, projectionDistance = surface.projectedPoint( single.pos )
 
         # For interaction with a planar surface, decide orientation.  
 	orientationVector = cmp(projectionDistance, 0) * surface.unitZ 

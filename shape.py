@@ -1,5 +1,5 @@
 import numpy
-from utils import length, normalize
+from utils import *
 import math
 
 class Shape( object ):
@@ -25,7 +25,6 @@ class Sphere( Shape ):
         return length( pos - self.origin ) - self.radius
 
 
-
 class Cylinder( Shape ):
     def __init__( self, origin, radius, orientationZ, size ):
         Shape.__init__( self )
@@ -44,11 +43,13 @@ class Cylinder( Shape ):
         self.unitX = normalize( numpy.cross( self.unitZ, basisVector ) )
         self.unitY = normalize( numpy.cross( self.unitZ, self.unitX ) )
 
+
     def getSize( self ):
         return self._size
     def setSize( self, size ):
         self._size = size
     size = property( getSize, setSize )
+
 
     # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
@@ -93,7 +94,7 @@ class Cylinder( Shape ):
        cylinder.
     2. the distance (always +) between that point and 'pos'.
     '''
-    def calculateProjection( self, pos ):
+    def projectedPoint( self, pos ):
         r, z = self.toInternal( pos )
         return self.origin + z*self.unitZ, r
 
@@ -101,11 +102,6 @@ class Cylinder( Shape ):
     def __str__( self ):
         return "Cylinder: " + str( self.origin ) + " " + str( self.radius ) + " " + \
                               str( self.unitZ ) + " " + str( self.size )
-
-
-class DummyCylinder( Cylinder ):
-    def __init__( self ):
-        Cylinder.__init__( self, [0,0,0], 0, [0,0,1], 0 ) 
 
 
 class Box( Shape ):
@@ -179,7 +175,7 @@ class Box( Shape ):
        box.
     2. the distance (+ or -) between that point and 'pos'.
     '''
-    def calculateProjection( self, pos ):
+    def projectedPoint( self, pos ):
         x, y, z = self.toInternal( pos )
         return self.origin + x * self.unitX + y * self.unitY, z
 
@@ -187,6 +183,12 @@ class Box( Shape ):
     def __str__( self ):
         return "Box: " + str( self.origin ) + " " + str( self.vectorX ) + " " + \
                               str( self.vectorY ) + " " + str( self.vectorZ )
+
+
+class DummyCylinder( Cylinder ):
+    def __init__( self ):
+        Cylinder.__init__( self, [0,0,0], 0, [0,0,1], 0 ) 
+
 
 class DummyBox( Box ):
     def __init__( self ):
