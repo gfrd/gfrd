@@ -32,9 +32,8 @@ class Single( object ):
 
 
     def posString( self ):
-        # Todo. Factor to show nanometers.
-        factor = 1e9
-        return '(%3.1f %3.1f %3.1f)' % ( self.pos[0]*factor, self.pos[1]*factor, self.pos[2]*factor ) 
+        factor = 1
+        return '(%g %g %g)' % ( self.pos[0]*factor, self.pos[1]*factor, self.pos[2]*factor ) 
 
 
     def getMinRadius( self ):
@@ -106,7 +105,7 @@ class Single( object ):
 
 
     def __str__( self ):
-        return 'Single' + str( self.particle ) + '. pos=' + self.posString()
+        return str( self.particle ) + '. pos=' + self.posString()
 
 
 ##############################################################################
@@ -167,10 +166,6 @@ class NonInteractionSingle( Single ):
                and self.eventType == EventType.ESCAPE
 
 
-    def __str__( self ):
-        return 'Free' + Single.__str__( self )
-
-
 '''
 1 Particle inside a (spherical) shell not on any surface.
 
@@ -191,6 +186,11 @@ class SphericalSingle( NonInteractionSingle ):
 
     def displacement( self, r ):
         return randomVector(r)
+
+
+    def __str__( self ):
+        return 'SphericalSingle' + Single.__str__( self )
+
 
 
 '''
@@ -221,6 +221,11 @@ class PlanarSurfaceSingle( NonInteractionSingle ):
     def displacement( self, r ):
         x, y = randomVector2D( r )
         return x * self.surface.unitX + y * self.surface.unitY
+
+
+    def __str__( self ):
+        return 'PlanarSurfaceSingle' + Single.__str__( self )
+
 
 
 '''
@@ -264,6 +269,10 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
     radius = property( getRadius, setRadius )
 
 
+    def __str__( self ):
+        return 'CylindricalSurfaceSingle' + Single.__str__( self )
+
+
 ##############################################################################
 '''
 Interactions singles are used when a particle is close to a surface.
@@ -295,10 +304,6 @@ class InteractionSingle( Single ):
 
     def reset( self ):
         raise SystemError, 'Interaction singles should never be reset (reused)'
-
-
-    def __str__( self ):
-        return 'Interaction' + Single.__str__( self )
 
 
 '''
@@ -339,6 +344,10 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         return self.pos + x * self.interactionSurface.unitX + y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
 
 
+    def __str__( self ):
+        return 'PlanarSurfaceInteraction' + Single.__str__( self )
+
+
 '''
 1 Particle close to a CylindricalSurface, inside a cylindrical shell that surrounds the surface.
 
@@ -374,6 +383,10 @@ class CylindricalSurfaceInteraction( InteractionSingle ):
         # Orientation matters (+ or -), so shellList[0].unitZ is used here 
         # instead of surface.unitZ.
         return self.pos + newVectorR + z * self.shellList[0].unitZ
+
+
+    def __str__( self ):
+        return 'CylindricalSurfaceInteraction' + Single.__str__( self )
 
 
 class DummySingle( object ):

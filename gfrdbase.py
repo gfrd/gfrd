@@ -135,7 +135,7 @@ class ReactionType( object ):
             s += i.id
             s += ' '
 
-        return s
+        return s[:-1]
 
 
 '''

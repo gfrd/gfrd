@@ -463,7 +463,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     consistency checkers
     '''
     def checkObj( self, obj ):
-	log.debug( '\tDebug. checkObj: %s' % (obj) )
+	#log.debug( '\tDebug. checkObj: %s' % (obj) )
         obj.check()
 
         allshells = [ ( obj, i ) for i in range( len( obj.shellList ) ) ]
@@ -842,6 +842,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             rt = single.interactionType
         else:
             rt = single.drawReactionType()
+
+        log.debug( '\tDebug. fireSingleReaction: %s.' %( rt ) )
 	
 	if len( rt.products ) == 0:
 	    self.removeParticle( single.particle )
@@ -1130,7 +1132,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                     return obj, neighbors[1:]
 
 	# Then, a Multi.
-	log.debug( '\tDebug. Try to form Multi: %s + %s' % (single, neighbors) )
+	log.debug( '\tDebug. Try to form Multi: %s + %s.' % (single, neighbors) )
 	minShell = single.getMinRadius() * ( 1.0 + self.MULTI_SHELL_FACTOR )
 
         # Todo. Add surfaces to multi somehow.
@@ -1143,6 +1145,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		      ( neighborDists <= minShell ).nonzero()[0] ]
 
 	if not neighbors:
+            log.debug( '\tDebug. Multi not needed.' )
 	    return None, bursted
 
 	closest = neighbors[0]
@@ -1186,7 +1189,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     is not interfering with other shells. Miedema's algorithm.
     '''
     def formInteraction( self, single, surface, bursted ):
-	#log.debug( '\tDebug. formInteraction: %s + %s' % (single, surface) )
+	log.debug( '\tDebug. Try formInteraction: %s + %s.' % (single, surface) )
 
         particle = single.particle
 	projectedPoint, projectionDistance = surface.projectedPoint( single.pos )
@@ -1358,7 +1361,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     Decide if pair makes sense, and create it if so.
     '''
     def formPair( self, single1, single2, bursted ):
-	log.debug( '\tDebug. Trying to form %s.' %
+	log.debug( '\tDebug. Try formPair %s.' %
 	           'Pair( %s, %s )' % ( single1.particle, 
 	                                single2.particle ) )
 	assert single1.isReset()
@@ -1401,7 +1404,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 			    distanceFromSigma * 100 + sigma + shellSizeMargin )
 
 	if minShellSizeWithMargin >= maxShellSize:
-	    log.debug( '\tDebug. %s not formed: minShellSize >= maxShellSize' %
+	    log.debug( '\tDebug. %s not formed: minShellSize >= maxShellSize.' %
 		       ( 'Pair( %s, %s )' % ( single1.particle, 
 					      single2.particle ) ) )
 	    return None
@@ -1424,7 +1427,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		    closest, closestShellDistance = b, d
 
 	if closestShellDistance <= minShellSizeWithMargin:
-	    log.debug( '\tDebug. %s not formed: squeezed by bursted neighbor %s' %
+	    log.debug( '\tDebug. %s not formed: squeezed by bursted neighbor %s.' %
 		       ( 'Pair( %s, %s )' % ( single1.particle, 
 					      single2.particle ), closest ) )
 	    return None
@@ -1433,7 +1436,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	if d < closestShellDistance:
 	    closest, closestShellDistance = c, d
 
-	log.debug( '\tDebug. Pair closest neighbor: %s %g, minShellWithMargin %g' %
+	log.debug( '\tDebug. Try pair. closest neighbor=%s. closestShellDistance=%g. minShellWithMargin=%g.' %
 		   ( closest, closestShellDistance, minShellSizeWithMargin ) )
 
 	if isinstance( closest, Single ):
@@ -1461,7 +1464,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    shellSize = closestShellDistance / SAFETY
 
 	if shellSize <= minShellSizeWithMargin:
-	    log.debug( '\tDebug. %s not formed: squeezed by %s. shellSize=%g. minShellSizeWithMargin=%g' %
+	    log.debug( '\tDebug. %s not formed: squeezed by %s. shellSize=%g. minShellSizeWithMargin=%g.' %
 		       ( 'Pair( %s, %s )' % ( single1.particle, 
 					      single2.particle ), closest, shellSize, minShellSizeWithMargin ) )
 	    return None
@@ -1473,7 +1476,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 			    ( 1.0 + self.SINGLE_SHELL_FACTOR ), \
 				d2 + single2.getMinRadius() * \
 				( 1.0 + self.SINGLE_SHELL_FACTOR ) ) * 1.3:
-	    log.debug( '\tDebug. %s not formed: singles are better' %
+	    log.debug( '\tDebug. %s not formed: singles are better.' %
 		       'Pair( %s, %s )' % ( single1.particle, 
 					    single2.particle ) )
 	    return None
