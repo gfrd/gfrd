@@ -23,6 +23,7 @@ int main (void)
 	const Real a=5E-7;
 
 	Real t = 0.03;			// The time to use when drawing positions
+	Real r0 = 0;
 	Real rnd = 0;
 	srand(23947);                   // even de random functie initialiseren
 
@@ -36,11 +37,11 @@ int main (void)
 	{
 		rnd = Real(rand())/RAND_MAX;			// drawing the firstpassage times
 		cout << rnd << " ";
-		Real time2D = gf.drawTime (rnd);
+		Real time2D = gf.drawTime (rnd, r0);
 		cout << time2D << " ";
 
 		rnd = Real(rand())/RAND_MAX;			// drawing the radius for GIVEN TIME
-		Real place2D = gf.drawR (rnd, t);
+		Real place2D = gf.drawR (rnd, r0, t);
 		cout << rnd << " " << place2D << " ";
 
 		cout << endl;

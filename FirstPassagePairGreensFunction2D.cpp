@@ -1385,7 +1385,7 @@ FirstPassagePairGreensFunction2D::drawTheta( const Real rnd,
     THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 
     // t == 0 means no move.
-    if( t == 0.0 || D == 0 || r0 == a )
+    if( t == 0.0 || D == 0 || r0 == a || rnd == 0.0)
     {
 	return 0.0;
     }
@@ -1440,7 +1440,7 @@ FirstPassagePairGreensFunction2D::drawTheta( const Real rnd,
 
     const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
     gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
-    gsl_root_fsolver_set( solver, &F, 0.0, high );
+    gsl_root_fsolver_set( solver, &F, 0.0, M_PI );
 
 
     const unsigned int maxIter( 100 );
