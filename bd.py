@@ -13,7 +13,7 @@ from surface import *
 from gfrdbase import *
 import _gfrd
 
-DEFAULT_DT_FACTOR = 1 #1e-5
+DEFAULT_DT_FACTOR = 1e-5
 
 def calculateBDDt( speciesList, factor ):
 
@@ -104,7 +104,6 @@ class BDSimulatorCoreBase( object ):
 
         except KeyError:
             I = _gfrd.I_bd( sigma, self.dt, D )
-            print 'I = ', I
             p = rt.k * self.dt / ( I * 4.0 * numpy.pi )
             if not 0.0 <= p < 1.0:
                 raise RuntimeError,\
