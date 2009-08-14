@@ -96,7 +96,7 @@ class BDSimulatorCoreBase( object ):
         self.dt = calculateBDDt( self.speciesList.values(), self.dtFactor )
 
 
-    # Obey detailed balance.
+    # Todo. Does this obey detailed balance?
     def getP_acct( self, rt, D, sigma ):
 
         try:
@@ -278,7 +278,7 @@ class BDSimulatorCoreBase( object ):
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 # Get interaction surface from reactants list.
                 newSurface = rt.reactants[1]
-                # Todo. This does not obey detailed balance. Tunneling.
+                # Todo. Does this obey detailed balance?
                 # Select position on surface with z=0.
                 newpos, _ = newSurface.calculateProjection( oldpos )
             else:
@@ -321,8 +321,8 @@ class BDSimulatorCoreBase( object ):
                     newSurface1 = currentSurface
                     newSurface2 = self.main.defaultSurface
                     newpos1 = oldpos
-                    # Todo. Does not obey detailed balance at all.
-                    newpos2 = curretSurface.randomUnbindingSite( oldpos, pairDistance )
+                    # Todo. Does this obey detailed balance?
+                    newpos2 = currentSurface.randomUnbindingSite( oldpos, pairDistance )
                 else:
                     vector = surface.randomVector( pairDistance ) # (1.0 + 1e-10) # safety
                 

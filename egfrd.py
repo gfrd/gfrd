@@ -862,7 +862,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		newpos = currentSurface.randomUnbindingSite( oldpos, productSpecies.radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 newSurface = single.interactionSurface
-                # Todo. This does not obey detailed balance. Tunneling.
+                # Todo. Does this obey detailed balance?
                 newpos, _ = newSurface.projectedPoint( oldpos )
 
                 self.reactionEvents -= 1 # Because we do +1 at end of this method.
