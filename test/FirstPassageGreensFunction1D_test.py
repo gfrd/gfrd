@@ -1,161 +1,228 @@
 #!/usr/bin/env python
 
-import unittest
+__author__    = 'Laurens Bossen'
+__license__   = 'Don\'t touch my shit'
+__copyright__ = ''
 
-import numpy
+
+import unittest
 
 import _gfrd as mod
 
+import numpy
+
+
 class FirstPassageGreensFunction1DTestCase( unittest.TestCase ):
 
-    def setUp(self):
+    def setUp( self ):
         pass
 
-    def tearDown(self):
+    def tearDown( self ):
         pass
     
-    def test_instantiation( self ):
+    def test_Instantiation( self ):
         D = 1e-12
+        L = 2e-7
+
         gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( 1.0 )
         self.failIf( gf == None )
+        gf.setL( L )
 
-    def test_no_shell( self ):
+
+    def test_DrawTime( self ):
         D = 1e-12
-        a = numpy.inf
-        gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
-        t = gf.drawTime( 0.5 )
-        self.assertEqual( numpy.inf, t )
-
-        # not supported now
-        #r = gf.drawR( 0.5, 1e-6 )
-        #self.assertAlmostEqual( p_free, r )
-
-
-    def test_zero_shell( self ):
-        D = 1e-12
-        a = 0.0
-        gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
+        L = 2e-7
+        r0 = 5e-8
         
-        t = gf.drawTime( 0.5 )
-        self.assertEqual( 0.0, t )
-        r = gf.drawR( 0.5, t )
-        self.assertEqual( 0.0, r )
-
-
-    def test_drawTime( self ):
-        D = 1e-12
-        a = 1e-7
         gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
+        gf.setL( L )
+	gf.setr0 ( r0 )
+	
+        t = gf.drawTime( 0.5 )
+        self.failIf( t <= 0.0 or t >= numpy.inf )
 
         t = gf.drawTime( 0.0 )
+        self.failIf( t < 0.0 or t >= numpy.inf )
+	
+        t = gf.drawTime( 1e-16 )
+        self.failIf( t <= 0.0 or t >= numpy.inf )
+	
+        t = gf.drawTime( 1 - 1e-16 )
+        self.failIf( t <= 0.0 or t >= numpy.inf )
+
+
+    def test_DrawTime_a_equal_sigma( self ):
+        D = 1e-12
+        L = 0
+        r0 = L
+        
+        gf = mod.FirstPassageGreensFunction1D( D )
+        gf.setL( L )
+	gf.setr0 ( r0 )
+
         t = gf.drawTime( 0.5 )
-        t = gf.drawTime( 1.0 - 1e-8 )
+        self.assertEqual( 0.0, t )
 
-    def test_drawR( self ):
+    def test_DrawTime_a_near_sigma( self ):
         D = 1e-12
-        a = 1e-7
+        L = 2e-14
+        r0 = L/2
+        
         gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
+        gf.setL( L )
+	gf.setr0 ( r0 )
 
         t = gf.drawTime( 0.5 )
+        self.failIf( t <= 0.0 or t >= numpy.inf )
 
-        r = gf.drawR( 0.0, t )
-        r = gf.drawR( 0.5, t )
-        r = gf.drawR( 1.0 - 1e-16, t )
-
-    def test_drawR_zerot( self ):
+    def test_DrawTime_r0_equal_a( self ):
         D = 1e-12
-        a = 1e-8
-        t = 0.0
-
+        L = 2e-7
+        r0 = L
+        
         gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
+        gf.setL( L )
+	gf.setr0 ( r0 )
 
-        r = gf.drawR( 0.5, t )
-        self.assertEqual( 0.0, r )
-
-    def test_drawR_smallt( self ):
-        D = 1e-12
-        a = 1e-8
-        gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
         t = gf.drawTime( 0.5 )
+        self.assertEqual( 0.0, t )
 
-        while t > 1e-30:
-            t *= 1e-4
-            r = gf.drawR( 0.0, t )
-            self.failIf( r < -a )
-            self.failIf( r > a )
-
-
-    def test_drawR_large_shell( self ):
+    def test_DrawTime_r0_equal_sigma( self ):
         D = 1e-12
-        a = 1e-3
+        L = 1e-7
+        r0 = 0
+        
         gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
-        t = 1e-10
-        r = gf.drawR( 0.5, t )
-        self.failIf( r < -a )
-        self.failIf( r > a )
+        gf.setL( L )
+	gf.setr0 ( r0 )
 
-    def test_drawR_large_t( self ):
+        t = gf.drawTime( 0.5 )
+        self.failIf( t < 0.0 or t >= numpy.inf )
+
+
+    """
+    # Not yet supported
+    def test_DrawEventType( self ):
         D = 1e-12
-        a = 1e-6
-        gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
-        t = gf.drawTime( 1.0 - 1e-16 )
-        r = gf.drawR( 0.5, t )
+        L = 2e-7
+        r0 = L/2
 
-        self.failIf( r < -a )
-        self.failIf( r > a )
-'''
-    def test_p_int_r_is_p_int_r_free_with_large_shell( self ):
+        gf = mod.FirstPassageGreensFunction1D( D )
+        gf.setL( L )
+	gf.setr0 ( r0 )
+
+        t = gf.drawTime( 0.5 )
+        eventType = gf.drawEventType( 0.5, t )
+        self.failIf( eventType != 0 and eventType != 1 and eventType != 2 )
+
+        eventType = gf.drawEventType( 0.0, t )
+        self.assertEqual( eventType, 0 )
+
+        eventType = gf.drawEventType( 0.999999, t )
+        self.assertEqual( eventType, 1 )
+
+
+    def no_test_DrawEventType_smallt( self ):
         D = 1e-12
-        a = 1e-6
+        L = 2e-6 
+        r0 = L/2
+
         gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
+        gf.setL( L )
+	gf.setr0 ( r0 )
 
-        r = 1e-9
-        t = 1e-6
+        t = gf.drawTime( 0.001 )
 
-        p = gf.p_int_r( r, t )
-        p_free = gf.p_int_r_free( r, t )
+        eventType = gf.drawEventType( 0.5, t )
+        self.failIf( eventType != 0 and eventType != 1 and eventType != 2 )
 
-        self.assertAlmostEqual( p, p_free )
+        eventType = gf.drawEventType( 0.0, t )
+        self.assertEqual( eventType, 0 )
 
+        eventType = gf.drawEventType( 0.9999, t )
+        self.assertEqual( eventType, 1 )
+    """
 
-    def test_p_int_r_at_a_is_p_survival( self ):
+    def test_DrawR( self ):
         D = 1e-12
-        a = 1e-8
+        L = 2e-7
+        r0 = L/2
+        
         gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
-
-        t = 1e-5
-
-        p = gf.p_int_r( a, t )
-        psurv = gf.p_survival( t )
-        print 'ps', p, psurv
-        self.assertAlmostEqual( p, psurv )
-
-    def test_p_int_r_at_a_is_p_survival_2( self ):
-        D = 1e-12
-        a = 1e-9
-        gf = mod.FirstPassageGreensFunction1D( D )
-        gf.seta( a )
+        gf.setL( L )
+	gf.setr0 ( r0 )
 
         t = 1e-3
 
-        p = gf.p_int_r( a, t )
-        psurv = gf.p_survival( t )
-        print 'ps', p, psurv
-        self.assertAlmostEqual( p, psurv )
-'''
+        r = gf.drawR( 0.5, t )
+        self.failIf( r < 0 or r > L )
+
+        r1 = gf.drawR( 0.0, t )
+        r2 = gf.drawR( 0.999999999999, t )
+
+        self.failIf( r1 != 0 )
+        self.failIf( r2 < 0 or r2 > L )
+
+        self.assertAlmostEqual( r1, 0 )
+        self.assertAlmostEqual( r2, L )
 
 
+    def test_DrawR_zerot( self ):
+        D = 1e-12
+        L = 1e-7
+        r0 = L/2
+        
+        gf = mod.FirstPassageGreensFunction1D( D )
+        gf.setL( L )
+	gf.setr0 ( r0 )
 
+        t = 0.0
+
+        r = gf.drawR( 0.5, t )
+        self.assertEqual( r0, r )
+
+
+    def test_DrawR_r0_equal_sigma( self ):
+        D = 1e-12
+        L = 2e-7
+        r0 = 0
+
+        t = 0.0#1e-3
+        
+        gf = mod.FirstPassageGreensFunction1D( D )
+        gf.setL( L )
+	gf.setr0 ( r0 )
+
+	# This raises an exception, which at this point we cannot catch
+        # r = gf.drawR( 0.5, t )
+        # self.failIf( r < 0 or r > L )
+
+    def test_DrawR_squeezed( self ):
+
+        D = 1e-12
+        L = 0.02e-8
+        
+        gf = mod.FirstPassageGreensFunction1D( D )
+        gf.setL( L )
+
+        t = 1e-6
+        r0 = 0
+	gf.setr0 ( r0 )
+        # r = gf.drawR( 0.5, t )
+        # self.failIf( r < 0 or r > L )
+
+        # near s
+        r0 = 0.0001e-8
+	gf.setr0 ( r0 )
+        r = gf.drawR( 0.5, t )
+        self.failIf( r < 0 or r > L )
+
+        # near a
+        r0 = L - 0.0001e-8
+	gf.setr0 ( r0 )
+        r = gf.drawR( 0.5, t )
+        self.failIf( r < 0 or r > L )
+
+        
 if __name__ == "__main__":
     unittest.main()

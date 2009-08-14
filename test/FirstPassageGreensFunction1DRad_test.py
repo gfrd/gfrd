@@ -74,7 +74,9 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
         gf.setL( L )
 	gf.setr0 ( r0 )
 
+	print "drawTime...a near sigma"
         t = gf.drawTime( 0.5 )
+	print "done"
         self.failIf( t <= 0.0 or t >= numpy.inf )
 
     def test_DrawTime_r0_equal_a( self ):

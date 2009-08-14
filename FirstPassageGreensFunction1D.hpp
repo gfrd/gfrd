@@ -17,14 +17,21 @@
 
 #include "findRoot.hpp"
 
-#define TERMEN 500
+#define MAX_TERMEN 500
+#define MIN_TERMEN 20
+
+#define EPSILON 1E-12		// The measure of 'sameness' when comparing floating points numbers
+#define L_TYPICAL 1E-8		// This is a present typical length scale of the system, may not be true!
+#define T_TYPICAL 1E-6		// The typical timescale of the system, may also not be true!!
+#define PDENS_TYPICAL 1	// Is 1E3 a good measure for the probability density?!
+
 
 class FirstPassageGreensFunction1D
 {
 
 public:
         FirstPassageGreensFunction1D(const Real D)
-                : D(D)
+                : D(D), L(INFINITY), r0(0), l_scale(L_TYPICAL), t_scale(T_TYPICAL)
         {       ;       // do nothing
         }
 
@@ -32,24 +39,50 @@ public:
         {       ;       // empty
         }
 
-        void seta(const Real a)
-        {       this->a =a;
+        void setL(const Real L)			// This also sets the scale
+        {       THROW_UNLESS( std::invalid_argument, L >= 0.0 && r0 <= L);
+
+		if ( L <= EPSILON * l_scale )	// Use a typical domain size to determine if we are here
+						// defining a domain of size 0.
+		{	this->L = -1;		// just some random value to show that the domain is zero
+//			this->l_scale = 1.0;	// don't touch the scales
+		}
+		else
+		{	this->l_scale = L;	// set the scale to the given one
+			this->t_scale = (L*L)/D;// set the typical time scale (msd = sqrt(2*d*D*t) )
+			this->L = 1.0;		// L = L/l_scale
+		}
         }
 
-        const Real geta() const
-        {       return this->a;
+        const Real getL() const
+        {       return this->L;
         }
 
         const Real getD() const
-        {       return this->D;
+        {       return this->D/(l_scale*l_scale);
         }
 
+	void setr0(const Real r0)
+        {       if ( this->L < 0.0 )		// if the domain had zero size
+                {       THROW_UNLESS( std::invalid_argument, 0.0 <= r0 && r0 <= EPSILON * l_scale );
+                        this->r0 = 0.0;
+                }
+                else				// The normal case
+                {       THROW_UNLESS( std::invalid_argument, 0.0 <= r0 && r0 <= this->L * l_scale );
+                        this->r0 = r0;
+                }
+        }
+
+	const Real getr0() const
+	{	return this->r0/l_scale;
+	}
+
 	// Trekt een tijd uit de propensity function, een first passage time.
-	const Real drawTime (const Real rnd, const Real r0) const;
+	const Real drawTime (const Real rnd) const;
 
 	// Berekent een positie gegeven dat het deeltje zich nog in het domein bevindt en er twee absorbing
 	// boundary conditions gelden
-	const Real drawR (const Real rnd, const Real r0, const Real t) const;
+	const Real drawR (const Real rnd, const Real t) const;
 
 
 
@@ -57,17 +90,14 @@ public:
 	// de survival probability
 	const Real p_survival (const Real t) const;
 
-	// Berekent de kans om het deeltje op plaats x of y te vinden op tijdstip t
-	const Real prob_r (const Real r, const Real t) const;
-
 	// Berekent de kans om het deeltje op plaats z te vinden op tijdstip t, gegeven dat het deeltje
 	// zich nog in het domein bevindt.
 	const Real calcpcum (const Real r, const Real t) const;
 
 private:
 	struct drawT_params
-	{	double exponent[TERMEN];	// use 10 terms in the summation for now
-		double Xn[TERMEN];
+	{	double exponent[MAX_TERMEN];	// use 10 terms in the summation for now
+		double Xn[MAX_TERMEN];
 		int    terms;
 		double rnd;			// the random number associated with the time
 	};
@@ -75,18 +105,22 @@ private:
 	static double drawT_f (double t, void *p);
 
 	struct drawR_params
-	{	double S_Cn_An[TERMEN];
-		double n_l[TERMEN];
+	{	double S_Cn_An[MAX_TERMEN];
+		double n_l[MAX_TERMEN];
 		int terms;
 		double rnd;			// the random number associated with the time
 	};
 
 	static double drawR_f (double z, void *p);
 
-	static const Real CUTOFF = 1e-10;
+	// Berekent de kans om het deeltje op plaats x of y te vinden op tijdstip t
+	const Real prob_r (const Real r, const Real t) const;
 
         const Real D;   // The diffusion constant
-        Real a;         // The distance from the internal origin to one of the boundaries
-                        // The total domain is 2*a long
+        Real L;         // The length of your domain (also the l_scale, see below)
+        Real r0;
+	Real l_scale;	// This is the 'length scale' of your system (1e-14 or 1e6).
+                        // We scale everything to 1 with this
+	Real t_scale;	// This is the time scale of the system.
 };
 

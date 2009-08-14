@@ -17,7 +17,7 @@
 
 #include "findRoot.hpp"
 
-#define THRESHOLD 1E-9
+//#define THRESHOLD 1E-9
 
 #include "FirstPassageGreensFunction1DRad.hpp"
 
@@ -44,11 +44,11 @@ const Real FirstPassageGreensFunction1DRad::a_n(const int n) const
 
 	if ( h*L < 1 )
 	{	lower = (n-1)*M_PI + 1E-10;	// 0.001 om ervoor te zorgen dat hij niet precies
-		upper =  n   *M_PI - 1e-10;	// de overgang van -oneindig naar +oneindig meeneemt
+		upper =  n   *M_PI - 1E-10;	// de overgang van -oneindig naar +oneindig meeneemt
 	}
 	else
 	{	lower = (n-1)*M_PI + M_PI_2 + 1E-10;
-		upper = n    *M_PI + M_PI_2 - 1e-10;
+		upper = n    *M_PI + M_PI_2 - 1E-10;
 	}
 
 	gsl_function F;
@@ -61,10 +61,10 @@ const Real FirstPassageGreensFunction1DRad::a_n(const int n) const
 	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
 	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
 									   // incl typecast?
-	const Real a( findRoot( F, solver, lower, upper, 1e-18, 1e-12,
+	const Real a( findRoot( F, solver, lower, upper, 1.0*EPSILON, EPSILON,
 		"FirstPassageGreensFunction1DRad::root_tan" ) );
 	gsl_root_fsolver_free( solver );
-	return a/L;
+	return a;
 }
 
 // r0 is here still in the domain from 0 - L
@@ -121,7 +121,8 @@ const Real FirstPassageGreensFunction1DRad::p_survival (const Real t) const
 		sum += term;
 		n++;
 	}
-	while ( fabs(term/sum) > THRESHOLD || fabs(term_prev/sum) > THRESHOLD || n <= MIN_TERMEN);
+	while ( fabs(term/sum) > EPSILON*1.0 || fabs(term_prev/sum) > EPSILON*1.0 || n <= MIN_TERMEN);
+		// Is 1.0 a good measure or will this fail at some point?
 
 	return 2.0*sum;
 }
@@ -147,7 +148,7 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 		}
 	}
 
-	if ( fabs (r -r0) < EPSILON )
+	if ( fabs (r - L) < EPSILON*L )	// if you're looking on the boundary
 	{	return 0.0;
 	}
 
@@ -162,7 +163,7 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 		sum += term;
 		n++;
 	}
-	while (fabs(term/sum) > THRESHOLD);
+	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL);
 
 	return 2*sum;
 }
@@ -171,7 +172,7 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 // zich nog in het domein bevindt.
 const Real FirstPassageGreensFunction1DRad::calcpcum (const Real r, const Real t) const
 {
-	const Real r_corr(r*factor);		// BEWARE: HERE THERE IS SCALING OF R!
+	const Real r_corr(r/this->l_scale);		// BEWARE: HERE THERE IS SCALING OF R!
 	return prob_r (r_corr, t)/p_survival (t);
 }
 
@@ -189,7 +190,7 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 		n++;
 		sum += term;
 	}
-	while (fabs(term/sum) > THRESHOLD);
+	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL);
 
 	return sum*2*D;
 }
@@ -217,7 +218,7 @@ FirstPassageGreensFunction1DRad::drawEventType( const Real rnd, const Real t ) c
 	THROW_UNLESS( std::invalid_argument, rnd < 1.0 && rnd >= 0.0 );
         THROW_UNLESS( std::invalid_argument, t > 0.0 );		// if t=0 nothing has happened->no event!!
 
-	if ( k == 0 || fabs( r0 - L ) < EPSILON )
+	if ( k == 0 || fabs( r0 - L ) < EPSILON*L )
 	{	return ESCAPE;
 	}
 
@@ -255,13 +256,13 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 
-std::cout << "D: " << D << " L: " << L << " r0: " << r0 << std::endl;
+//std::cout << "D: " << D << " L: " << L << " r0: " << r0 << std::endl;
 
 	if ( D == 0.0 || L == INFINITY )
 	{	return INFINITY;
 	}
 
-	if ( rnd == 0.0 || L < 0.0 || fabs(r0 - L) < EPSILON )
+	if ( rnd == 0.0 || L < 0.0 || fabs(r0 - L) < EPSILON*L )
 	{	return 0.0;
 	}
 
@@ -305,6 +306,10 @@ std::cout << "D: " << D << " L: " << L << " r0: " << r0 << std::endl;
         Real low( t_guess );
         Real high( t_guess );
 
+//std::cout << " t_guess: " << t_guess <<
+//	     " value: " << value <<
+//	     std::endl;
+
         // scale the interval around the guess such that the function straddles
         if( value < 0.0 )               // if the guess was too low
         {
@@ -323,18 +328,21 @@ std::cout << "D: " << D << " L: " << L << " r0: " << r0 << std::endl;
         }
         else                            // if the guess was too high
         {
-                Real value_prev( value );
+                Real value_prev( 2 );	// initialize with 2 so the test below survives the first iteration
                 do
-                {       low *= .1;      // keep decreasing the lower boundary until the function straddles
-                        value = GSL_FN_EVAL( &F, low );     // get the accompanying value
-
-                        if( fabs( low ) <= t_guess * 1e-6 || fabs( value - value_prev ) < CUTOFF )
+                {
+                        if( fabs( low ) <= t_guess * 1e-6 || fabs(value-value_prev) < EPSILON*this->t_scale )
                         {
                                 std::cerr << "Couldn't adjust low. F(" << low <<
-                                        ") = " << value << std::endl;
+                                        ") = " << value <<
+                                        " t_guess: " << t_guess << " diff: " << (value - value_prev) <<
+                                        " value: " << value << " value_prev: " << value_prev <<
+					std::endl;
                                 return low;
                         }
                         value_prev = value;
+		        low *= .1;      // keep decreasing the lower boundary until the function straddles
+                        value = GSL_FN_EVAL( &F, low );     // get the accompanying value
                 }
                 while ( value >= 0.0 );
         }
@@ -344,7 +352,7 @@ std::cout << "D: " << D << " L: " << L << " r0: " << r0 << std::endl;
 	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
 	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
 									   // incl typecast?
-	const Real t( findRoot( F, solver, low, high, 1e-18, 1e-12,
+	const Real t( findRoot( F, solver, low, high, t_scale*EPSILON, EPSILON,
 		"FirstPassageGreensFunction1DRad::drawTime" ) );
 
 	return t;				// return the drawn time
@@ -375,7 +383,7 @@ const Real FirstPassageGreensFunction1DRad::drawR (const Real rnd, const Real t)
         THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 
 	if (t == 0.0 || D == 0)
-	{	return r0/factor;	// the trivial case
+	{	return r0*this->l_scale;	// the trivial case
 	}
 	if ( L < 0.0 )			// if the domain had zero size
 	{	return 0.0;
@@ -415,10 +423,10 @@ const Real FirstPassageGreensFunction1DRad::drawR (const Real rnd, const Real t)
 	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
 	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
 									   // incl typecast?
-	const Real z( findRoot( F, solver, 0.0, L, 1e-18, 1e-12,
+	const Real z( findRoot( F, solver, 0.0, L, EPSILON*L, EPSILON,
 		"FirstPassageGreensFunction1DRad::drawR" ) );
 
-	return z/factor;				// return the drawn place
+	return z*this->l_scale;				// return the drawn place
 }
 
 /*

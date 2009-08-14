@@ -280,12 +280,13 @@ BOOST_PYTHON_MODULE( _gfrd )
     class_<FirstPassageGreensFunction1D>( "FirstPassageGreensFunction1D",
 					init<const Real>() )
 	.def( "getD", &FirstPassageGreensFunction1D::getD )
-	.def( "seta", &FirstPassageGreensFunction1D::seta )
-	.def( "geta", &FirstPassageGreensFunction1D::geta )
+	.def( "setL", &FirstPassageGreensFunction1D::setL )
+	.def( "getL", &FirstPassageGreensFunction1D::getL )
+	.def( "setr0", &FirstPassageGreensFunction1D::setr0 )
+	.def( "getr0", &FirstPassageGreensFunction1D::getr0 )
 	.def( "drawTime", &FirstPassageGreensFunction1D::drawTime )
 	.def( "drawR", &FirstPassageGreensFunction1D::drawR )
 	.def( "p_survival", &FirstPassageGreensFunction1D::p_survival )
-	.def( "prob_r", &FirstPassageGreensFunction1D::prob_r )
 	.def( "calcpcum", &FirstPassageGreensFunction1D::calcpcum )
 	;
 

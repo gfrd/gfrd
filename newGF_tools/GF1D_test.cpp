@@ -20,34 +20,34 @@ int main (void)
 {
 	// initializing
 	const Real D=1E-12;		// all the constants of our system
-	const Real a=5E-7;
+	const Real L=1E-6;
 
-	Real t = 0.03;			// The time to use when drawing positions
-	Real r0 = 0;
+	Real t = 0.003;			// The time to use when drawing positions
+	Real r0 = 1e-7;
 	Real rnd = 0;
 	srand(23947);                   // even de random functie initialiseren
 
 	FirstPassageGreensFunction1D gf(D);
-	gf.seta (a);
+	gf.setL (L);
+	gf.setr0 (r0);
 
-
-
+/*
 	// Producing data by drawing from the distributions
 	for (int i=0; i<1000; i++)
 	{
 		rnd = Real(rand())/RAND_MAX;			// drawing the firstpassage times
 		cout << rnd << " ";
-		Real time2D = gf.drawTime (rnd, r0);
+		Real time2D = gf.drawTime (rnd);
 		cout << time2D << " ";
 
 		rnd = Real(rand())/RAND_MAX;			// drawing the radius for GIVEN TIME
-		Real place2D = gf.drawR (rnd, r0, t);
+		Real place2D = gf.drawR (rnd, t);
 		cout << rnd << " " << place2D << " ";
 
 		cout << endl;
 	}
+*/
 
-/*
 	// Producing time dependent data
 	for (t=0; t < 0.3; t+= 0.001)
 	{
@@ -58,7 +58,7 @@ int main (void)
 
 		cout << endl;
 	}
-*/
+
 /*
 	// producing the place dependent data
 	for (Real x=-a; x<a; x+=1e-8)
