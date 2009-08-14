@@ -48,7 +48,7 @@ def singlerun( T ):
             break
         s.step()
 
-        if s.lastReaction:
+        if s.core.lastReaction:
             print 'reaction'
             return 0.0, s.t
 
