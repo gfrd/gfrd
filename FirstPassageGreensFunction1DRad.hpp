@@ -133,6 +133,7 @@ private:
 	{	double exponent[MAX_TERMEN];	// use 10 terms in the summation for now
 		double Xn[MAX_TERMEN];
 		int    terms;
+		Real   tscale;			// the timescale used for convergence
 		double rnd;			// the random number associated with the time
 	};
 

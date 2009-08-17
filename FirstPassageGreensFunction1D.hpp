@@ -84,7 +84,14 @@ public:
 	// boundary conditions gelden
 	const Real drawR (const Real rnd, const Real t) const;
 
+	// Calculates the amount of flux leaving the left boundary at time t
+	const Real leaves(const Real t) const;
 
+	// Calculates the amount of flux leaving the right boundary at time t
+	const Real leavea(const Real t) const;
+
+	// Determines based on the flux ratios if the particle left the left or right boundary
+	const EventType drawEventType( const Real rnd, const Real t ) const;
 
 	// Berekent de kans dat het deeltje zich nog in het domein bevindt op tijdstip t,
 	// de survival probability
@@ -99,6 +106,7 @@ private:
 	{	double exponent[MAX_TERMEN];	// use 10 terms in the summation for now
 		double Xn[MAX_TERMEN];
 		int    terms;
+		Real tscale;
 		double rnd;			// the random number associated with the time
 	};
 

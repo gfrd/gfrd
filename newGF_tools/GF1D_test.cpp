@@ -23,7 +23,7 @@ int main (void)
 	const Real L=1E-6;
 
 	Real t = 0.003;			// The time to use when drawing positions
-	Real r0 = 1e-7;
+	Real r0 = L/3;
 	Real rnd = 0;
 	srand(23947);                   // even de random functie initialiseren
 
@@ -55,6 +55,12 @@ int main (void)
 
 		Real S_t = gf.p_survival(t);		// The survival probability
 		cout << S_t << " ";
+
+		Real fluxs_t = gf.leaves(t);		// The survival probability
+		cout << fluxs_t << " ";
+
+		Real fluxa_t = gf.leavea(t);		// The survival probability
+		cout << fluxa_t << " ";
 
 		cout << endl;
 	}

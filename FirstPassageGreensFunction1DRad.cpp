@@ -17,8 +17,6 @@
 
 #include "findRoot.hpp"
 
-//#define THRESHOLD 1E-9
-
 #include "FirstPassageGreensFunction1DRad.hpp"
 
 double FirstPassageGreensFunction1DRad::tan_f (double x, void *p)
@@ -121,8 +119,10 @@ const Real FirstPassageGreensFunction1DRad::p_survival (const Real t) const
 		sum += term;
 		n++;
 	}
-	while ( fabs(term/sum) > EPSILON*1.0 || fabs(term_prev/sum) > EPSILON*1.0 || n <= MIN_TERMEN);
-		// Is 1.0 a good measure or will this fail at some point?
+	while ( fabs(term/sum) > EPSILON*1.0 ||
+		fabs(term_prev/sum) > EPSILON*1.0 ||
+		n <= MIN_TERMEN);
+		// Is 1.0 a good measure for the scale of probability or will this fail at some point?
 
 	return 2.0*sum;
 }
@@ -153,19 +153,25 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 	}
 
 	Real root_n, An_r;
-	Real sum = 0, term = 0;
+	Real sum = 0, term = 0, prev_term = 0;
 	int n=1;
 
 	do
 	{	root_n = this->a_n(n);
 		An_r = root_n*r;
+
+		prev_term = term;
 		term = Cn(root_n, t) * An(root_n) * (root_n*cos(An_r) + h*sin(An_r));
 		sum += term;
+
 		n++;
 	}
-	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL);
+	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL || 
+		fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
+		n <= MIN_TERMEN );
+		// PDENS_TYPICAL is now 1e3, is this any good?!
 
-	return 2*sum;
+	return 2.0*sum;
 }
 
 // Berekent de kans om het deeltje op plaats z te vinden op tijdstip t, gegeven dat het deeltje
@@ -179,20 +185,23 @@ const Real FirstPassageGreensFunction1DRad::calcpcum (const Real r, const Real t
 // Berekent de totale kansflux die het systeem verlaat op tijdstip t
 const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 {	Real An;
-	double sum = 0, term = 0;
+	double sum = 0, term = 0, prev_term = 0;
 	const double D(this->getD());
 
 	int n=1;
 
 	do
 	{	An = this->a_n(n);
+		prev_term = term;
 		term = An * An * Cn(An, t) * this->An(An) * Bn(An);
 		n++;
 		sum += term;
 	}
-	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL);
+	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL ||
+		fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
+		n <= MIN_TERMEN );
 
-	return sum*2*D;
+	return sum*2.0*D;
 }
 
 // Berekent de kansflux die het systeem verlaat door de radiating boundary condition op x=0
@@ -234,16 +243,30 @@ FirstPassageGreensFunction1DRad::drawEventType( const Real rnd, const Real t ) c
 
 double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
 {	struct drawT_params *params = (struct drawT_params *)p;// casts p naar type 'struct drawT_params *'
-	double sum = 0;
-	double Xn, exponent;
-	int    terms = params->terms;
+	Real sum = 0, term = 0, prev_term = 0;
+	Real Xn, exponent;
+	int terms = params->terms;
+	Real tscale = params->tscale;
 
-	for (int n=0; n<terms; n++)	// number of terms used
-	{	Xn = params->Xn[n];
+	int n=0;
+	do
+	{	if ( n >= terms )
+		{	std::cerr << "Too many terms needed for DrawTime. N: " << n << std::endl;
+			break;
+		}
+		prev_term = term;
+
+		Xn = params->Xn[n];
 		exponent = params->exponent[n];
-		sum += Xn * exp(exponent * t);
+		term = Xn * exp(exponent * t);
+		sum += term;
+		n++;
 	}
-	return 1 - 2*sum - params->rnd;		// het snijpunt vinden met het random getal
+	while (fabs(term/sum) > EPSILON*tscale ||
+                fabs(prev_term/sum) > EPSILON*tscale ||
+                n <= MIN_TERMEN );	
+
+	return 1.0 - 2.0*sum - params->rnd;		// het snijpunt vinden met het random getal
 }
 
 // Trekt een tijd uit de propensity function, een first passage time.
@@ -292,6 +315,7 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 	}
 	parameters.rnd = rnd;			// store the random number for the probability
 	parameters.terms = MAX_TERMEN;		// store the number of terms used
+	parameters.tscale = this->t_scale;
 
 	// Define the function for the rootfinder
 	gsl_function F;
@@ -360,16 +384,30 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 
 double FirstPassageGreensFunction1DRad::drawR_f (double z, void *p)
 {	struct drawR_params *params = (struct drawR_params *)p;// casts p naar type 'struct drawR_params *'
-	double sum = 0;
-	double An, S_Cn_An, b_An;
+	Real sum = 0, term = 0, prev_term = 0;
+	Real An, S_Cn_An, b_An;
 	int    terms = params->terms;
 
-	for (int n=0; n<terms; n++)	// number of terms used
-	{	S_Cn_An = params->S_Cn_An[n];
+	int n = 0;
+	do
+	{	if ( n >= terms )
+                {       std::cerr << "Too many terms needed for DrawR. N: " << n << std::endl;
+                        break;
+                }
+		prev_term = term;
+
+		S_Cn_An = params->S_Cn_An[n];
 		b_An    = params->b_An[n];
 		An      = params->An[n];
-		sum += S_Cn_An * (sin(An*z) -b_An * cos(An*z) + b_An);
+		term = S_Cn_An * (sin(An*z) -b_An * cos(An*z) + b_An);
+
+		sum += term;
+		n++;
 	}
+	while (fabs(term/sum) > EPSILON ||		// the lengthscale of 1.0 is implied
+                fabs(prev_term/sum) > EPSILON ||
+                n <= MIN_TERMEN );
+
 	return sum - params->rnd;		// het snijpunt vinden met het random getal
 }
 

@@ -100,8 +100,6 @@ class FirstPassageGreensFunction1DTestCase( unittest.TestCase ):
         self.failIf( t < 0.0 or t >= numpy.inf )
 
 
-    """
-    # Not yet supported
     def test_DrawEventType( self ):
         D = 1e-12
         L = 2e-7
@@ -141,7 +139,6 @@ class FirstPassageGreensFunction1DTestCase( unittest.TestCase ):
 
         eventType = gf.drawEventType( 0.9999, t )
         self.assertEqual( eventType, 1 )
-    """
 
     def test_DrawR( self ):
         D = 1e-12

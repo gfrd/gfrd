@@ -33,19 +33,27 @@ const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 	{	return 0.0;	// The survival probability of a zero domain is zero?
 	}
 
-	Real sum = 0, term = 0;
+	Real sum = 0, term = 0, prev_term = 0;
 	Real nPI;
 	const Real expo(-D*t/(L*L));	// exponent -D n^2 PI^2 t / l^2
 	const Real r0_L(r0/L);
 	Real n=1;
 
 	do
-	{	nPI = n*M_PI;
+	{	if (n >= MAX_TERMEN )
+		{	std::cerr << "Too many terms for p_survival. N: " << n << std::endl;
+			break;
+		}
+
+		nPI = n*M_PI;
+		prev_term = term;
 		term = exp(nPI*nPI*expo) * sin(nPI*r0_L) * (1.0 - cos(nPI)) / nPI;
 		sum += term;
 		n++;
 	}
-	while (fabs(term/sum) > EPSILON*1.0 || n < MIN_TERMEN );
+	while (fabs(term/sum) > EPSILON*1.0 ||
+		fabs(prev_term/sum) > EPSILON*1.0 ||
+		n < MIN_TERMEN );
 		// Is 1 a good measure or will this fail at some point?
 
 	return sum*2.0;
@@ -77,15 +85,25 @@ const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) con
 	const Real r0_L(r0/L);
 	int n=1;
 	Real nPI;
-	Real sum = 0, term = 0;
+	Real sum = 0, term = 0, prev_term = 0;
 
 	do
-	{	nPI = n*M_PI;
+	{	if (n >= MAX_TERMEN )
+               {       std::cerr << "Too many terms for prob_r. N: " << n << std::endl;
+                        break;
+                }
+
+		prev_term = term;
+
+		nPI = n*M_PI;
 		term = exp(nPI*nPI*expo) * sin(nPI*r0_L) * sin(nPI*r/L);
 		sum += term;
 		n++;	
 	}
-	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL);	// Is 1E3 a good measure for the probability density?!
+	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL ||
+		fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
+		n <= MIN_TERMEN);
+		// Is 1E3 a good measure for the probability density?!
 
 	return sum*2.0/L;
 }
@@ -98,16 +116,149 @@ const Real FirstPassageGreensFunction1D::calcpcum (const Real r, const Real t) c
 
 double FirstPassageGreensFunction1D::drawT_f (double t, void *p)
 {	struct drawT_params *params = (struct drawT_params *)p;// casts p naar type 'struct drawT_params *'
-	Real sum = 0;
+	Real sum = 0, term = 0, prev_term = 0;
 	Real Xn, exponent;
-	int    terms = params->terms;
+	int    terms = params->terms;		// the maximum number of terms in the params table
+	Real   tscale = params->tscale;		// the timescale used
 
-	for (int n=0; n<terms; n++)	// number of terms used
-	{	Xn = params->Xn[n];
+	int n=0;
+	do
+	{	if ( n >= terms )
+                {       std::cerr << "Too many terms needed for DrawTime. N: " << n << std::endl;
+                        break;
+                }
+		prev_term = term;
+
+		Xn = params->Xn[n];
 		exponent = params->exponent[n];
-		sum += Xn * exp(exponent * t);
+		term = Xn * exp(exponent * t);
+		sum += term;
+		n++;
 	}
+	while (fabs(term/sum) > EPSILON*tscale ||
+                fabs(prev_term/sum) > EPSILON*tscale ||
+                n <= MIN_TERMEN );
+
 	return 1.0 - 2.0*sum - params->rnd;		// het snijpunt vinden met het random getal
+}
+
+const Real FirstPassageGreensFunction1D::leaves(const Real t) const
+{
+        THROW_UNLESS( std::invalid_argument, t >= 0.0 );
+
+        const Real L(this->getL());
+        const Real D(this->getD());
+        const Real r0(this->getr0());
+
+        if ( L < 0 || r0 < EPSILON )
+        {       return INFINITY;	// The flux of a zero domain is zero? Also if the particle started on
+					// the left boundary
+        }
+	else if ( t < EPSILON*this->t_scale )   // if t=0.0
+        {       return 0.0;                     // the flux must be zero
+        }
+
+
+        Real sum = 0, term = 0, prev_term = 0;
+        Real nPI;
+	const Real D_L_sq(D/(L*L));
+        const Real expo(-D_L_sq*t);    // exponent -D n^2 PI^2 t / l^2
+        const Real r0_L(r0/L);
+        Real n=1;
+
+        do
+        {       if (n >= MAX_TERMEN )
+                {       std::cerr << "Too many terms for p_survival. N: " << n << std::endl;
+                        break;
+                }
+
+                nPI = n*M_PI;
+                prev_term = term;
+                term = n * exp(nPI*nPI*expo) * sin(nPI*r0_L);
+                sum += term;
+                n++;
+        }
+        while (fabs(term/sum) > EPSILON*PDENS_TYPICAL ||
+                fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
+                n < MIN_TERMEN );
+                // Is PDENS_TYPICAL a good measure or will this fail at some point?
+
+        return D_L_sq*2.0*M_PI*sum;
+}
+
+const Real FirstPassageGreensFunction1D::leavea(const Real t) const
+{
+        THROW_UNLESS( std::invalid_argument, t >= 0.0 );
+
+        const Real L(this->getL());
+        const Real D(this->getD());
+        const Real r0(this->getr0());
+
+        if ( L < 0 || fabs (L-r0) < EPSILON )
+        {       return INFINITY;	// The flux of a zero domain is zero? Also if the particle started on
+					// the right boundary
+        }
+	else if ( t < EPSILON*this->t_scale )	// if t=0.0
+	{	return 0.0;			// the flux must be zero
+	}
+
+
+        Real sum = 0, term = 0, prev_term = 0;
+        Real nPI;
+	const Real D_L_sq(D/(L*L));
+        const Real expo(-D_L_sq*t);    // exponent -D n^2 PI^2 t / l^2
+        const Real r0_L(r0/L);
+        Real n=1;
+
+        do
+        {       if (n >= MAX_TERMEN )
+                {       std::cerr << "Too many terms for leaves. N: " << n << std::endl;
+                        break;
+                }
+
+                nPI = n*M_PI;
+                prev_term = term;
+                term = n * exp(nPI*nPI*expo) * cos(nPI) * sin(nPI*r0_L);
+                sum += term;
+                n++;
+        }
+        while (fabs(term/sum) > EPSILON*PDENS_TYPICAL ||
+                fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
+                n < MIN_TERMEN );
+                // Is PDENS_TYPICAL a good measure or will this fail at some point?
+
+        return -D_L_sq*2.0*M_PI*sum;
+}
+
+// This draws an eventtype of time t based on the flux through the left (z=0) and right (z=L) boundary
+// Although not completely accurate, it returns an ESCAPE for an escape through the right boundary and
+// a REACTION for an escape through the left boundary
+const EventType FirstPassageGreensFunction1D::drawEventType( const Real rnd, const Real t ) const
+{
+        const Real L(this->getL());
+        const Real r0(this->getr0());
+
+        THROW_UNLESS( std::invalid_argument, rnd < 1.0 && rnd >= 0.0 );
+        THROW_UNLESS( std::invalid_argument, t > 0.0 );         // if t=0 nothing has happened->no event!!
+
+        if ( fabs( r0 - L ) < EPSILON*L )	// if the particle started on the right boundary
+        {       return ESCAPE;
+        }
+	else if ( r0 < EPSILON )		// if the particle started on the left boundary
+	{	return REACTION;
+	}
+
+	const Real leaves_s (this->leaves(t));
+	const Real leaves_a (this->leavea(t));
+	const Real flux_total (leaves_s + leaves_a);
+        const Real fluxratio (leaves_s/flux_total);
+
+        if (rnd > fluxratio )
+        {       return ESCAPE;
+        }
+        else
+        {       return REACTION;
+        }
 }
 
 // Trekt een tijd uit de propensity function, een first passage time.
@@ -149,6 +300,7 @@ const Real FirstPassageGreensFunction1D::drawTime (const Real rnd) const
 
 	parameters.rnd = rnd;			// store the random number for the probability
 	parameters.terms = MAX_TERMEN;		// store the number of terms used
+	parameters.tscale = this->t_scale;
 
 /*
 for (double t=0; t<0.1; t += 0.0001)
@@ -221,15 +373,29 @@ for (double t=0; t<0.1; t += 0.0001)
 
 double FirstPassageGreensFunction1D::drawR_f (double z, void *p)
 {	struct drawR_params *params = (struct drawR_params *)p;
-	double sum = 0;
+	double sum = 0, term = 0, prev_term = 0;
 	double S_Cn_An, n_l;
 	int    terms = params->terms;
 
-	for (int n=0; n<terms; n++)	// number of terms used
-	{	S_Cn_An = params->S_Cn_An[n];
+	int n=0;
+	do
+	{	if (n >= terms )
+                {       std::cerr << "Too many terms for DrawR. N: " << n << std::endl;
+                        break;
+                }
+		prev_term = term;
+
+		S_Cn_An = params->S_Cn_An[n];
 		n_l     = params->n_l[n];
-		sum = sum + S_Cn_An * ( 1.0 - cos(n_l*z) );
+		term = S_Cn_An * ( 1.0 - cos(n_l*z) );
+
+		sum += term;
+		n++;
 	}
+	while (fabs(term/sum) > EPSILON ||		// A lengthscale of 1 if implied here
+                fabs(prev_term/sum) > EPSILON ||
+                n <= MIN_TERMEN );
+
 	return sum - params->rnd;		// het snijpunt vinden met het random getal
 }
 
