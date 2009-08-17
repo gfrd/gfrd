@@ -327,7 +327,7 @@ class SphericalPair( Pair ):
             rotated = rotateVector( newIV,
                                     rotationAxis,
                                     angle )
-        elif angle == 0.0:
+        elif feq( angle, 0.0 ):
             rotated = newIV
         else:
             rotated = numpy.array( [ newIV[0], newIV[1], - newIV[2] ] )

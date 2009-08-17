@@ -142,7 +142,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.dt = nextTime - self.t
 
         # assert if not too many successive dt=0 steps occur.
-        if self.dt == 0:
+        if self.dt == 0.0:
             self.zeroSteps += 1
             if self.zeroSteps >= max( self.scheduler.getSize() * 3, 10 ):
                 raise Stop( 'Too many dt=zero steps.  simulator halted?' )
@@ -156,7 +156,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             self.vtklogger.stop()
         log.info( 'Stop at %g.' % t )
 
-        if self.t == t:
+        if feq( self.t, t ):
             return
         if t >= self.scheduler.getTopEvent().getTime():
             raise RuntimeError, 'Stop time >= next event time.'
@@ -1339,8 +1339,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         '''
         Create interaction.
         '''
-        assert single.dt == 0.0
-        assert single.getMobilityRadius() == 0.0
+        assert single.dt == 0.0 and single.getMobilityRadius() == 0.0
 
         reactionTypes = self.getReactionType1( particle.species )
 	interactionType = self.getInteractionType( particle.species, surface )

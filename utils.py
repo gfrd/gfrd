@@ -17,6 +17,48 @@ NOWHERE = numpy.array( ( INF, INF, INF ) )
 # Should be smaller than SINGLE_SHELL_FACTOR.
 SAFETY = 1.0 + 1e-5 #5e-2 is too big! Todo.
 
+TOLERANCE = 1e-12
+
+
+'''
+Float comparison functions.
+'''
+def feq( a, b, typical=1, tolerance=TOLERANCE ):
+    '''
+    Also see numpy.allclose().
+
+    Returns True if all a and b are equal subject to given tolerances.
+
+    The (relative) tolerance must be positive and << 1.0
+
+    Instead of specifying an absolute tolerance, you can speciy a typical 
+    value for a or b. The absolute tolerance is then the relative tolerance 
+    multipied by this typical value, and will be used when comparing a value 
+    to zero. By default, the typical value is 1.
+    '''
+    return abs(a - b) < tolerance * ( typical + min(abs(a), abs(b)) )
+
+
+def fgreater( a, b, typical=1, tolerance=TOLERANCE ):
+    return a - b > tolerance * ( typical + min(abs(a), abs(b)) )
+
+
+def fless( a, b, typical=1, tolerance=TOLERANCE ):
+    return b - a > tolerance * ( typical + min(abs(a), abs(b)) )
+
+
+def fgeq( a, b, typical=1, tolerance=TOLERANCE ):
+    diff = a - b
+    barrier = tolerance * ( typical + min(abs(a), abs(b)) )
+    return diff > barrier or abs( diff ) < barrier
+
+
+def fleq( a, b, typical=1, tolerance=TOLERANCE ):
+    diff = b - a
+    barrier = tolerance * ( typical + min(abs(a), abs(b)) )
+    return diff > barrier or abs( diff ) < barrier
+
+
 class NeverGetHere( Exception ):
     pass
 
