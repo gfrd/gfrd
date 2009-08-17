@@ -35,6 +35,8 @@ class Surface( object ):
 
 '''
 For example a membrane.
+
+Movement in 2D.
 '''
 class PlanarSurface( Surface, Box ):
     def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, name="PlanarSurface" ):
@@ -49,9 +51,10 @@ class PlanarSurface( Surface, Box ):
         self.defaultInteractionSingle = PlanarSurfaceInteraction
 
 
-    def drawBDdisplacement( self, t, D ):
-        ro = math.sqrt( 2.0 * D * t )
-        x, y = numpy.random.normal( 0.0, ro, 2 )
+    def drawBDdisplacement( self, dt, D ):
+        r = math.sqrt( 2.0 * D * dt )
+        # Draw 2 numbers from normal distribution.
+        x, y = numpy.random.normal( 0.0, r, 2 )
         return x*self.unitX + y*self.unitY
 
 
@@ -74,6 +77,8 @@ class PlanarSurface( Surface, Box ):
 
 '''
 For example the DNA.
+
+Movement in 1D.
 '''
 class CylindricalSurface( Surface, Cylinder ):
     def __init__( self, origin, radius, orientation, size, name="CylindricalSurface" ):
@@ -84,9 +89,10 @@ class CylindricalSurface( Surface, Cylinder ):
         self.defaultInteractionSingle = CylindricalSurfaceInteraction
 
 
-    def drawBDdisplacement( self, t, D ):
-        ro = math.sqrt( 2.0 * D * t )
-        z = numpy.random.normal( 0.0, ro, 1 )
+    def drawBDdisplacement( self, dt, D ):
+        r = math.sqrt( 2.0 * D * dt )
+        # Draw 1 number from normal distribution.
+        z = numpy.random.normal( 0.0, r, 1 )
         return z*self.unitZ
 
 
@@ -152,6 +158,8 @@ class CuboidalSurface( Surface, Box ):
 
 '''
 If no surface is specified, particles are tagged with an instance of this one.
+
+Movement in 3D.
 '''
 class World( Surface ):
     def __init__( self ):
@@ -164,8 +172,9 @@ class World( Surface ):
         return randomVector( length )
 
 
-    def drawBDdisplacement( self, t, D ):
-        ro = math.sqrt( 2.0 * D * t )
-        return numpy.random.normal( 0.0, ro, 3 )
+    def drawBDdisplacement( self, dt, D ):
+        r = math.sqrt( 2.0 * D * dt )
+        # Draw 3 numbers from normal distribution.
+        return numpy.random.normal( 0.0, r, 3 )
 
 

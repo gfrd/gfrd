@@ -175,6 +175,7 @@ class BDSimulatorCoreBase( object ):
             return
 
         displacement = particle.surface.drawBDdisplacement( self.dt, D )
+	log.debug( '\tDebug. Multi. %s, displacement=%s.' % ( particle, displacement) )
 
         newpos = particle.pos + displacement
         newpos %= self.main.worldSize   #self.applyBoundary( newpos )

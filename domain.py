@@ -4,6 +4,7 @@ from _gfrd import EventType
 from log import *
 from utils import *
 
+
 '''
 A domain represents 1 coordinate (2 in case of composite domain) of a position 
 vector.
@@ -230,7 +231,10 @@ class CompositeDomain( Domain ):
         try:
             rnd = numpy.random.uniform()
             log.debug( '\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
+            # Todo. gf.drawTheta() failed; GSL error: endpoints do not 
+            # straddle.
             theta = gf.drawTheta( rnd, r, self.r0, dt )
+            #theta = 0
         except Exception, e:
             raise Stop( 'gf.drawTheta() failed; %s; rnd= %g, r=%g, sigma=%g, r0=%g, a=%g, dt=%g' %\
                 ( str( e ), rnd, r, self.sigma, self.r0, self.a, dt  ) )

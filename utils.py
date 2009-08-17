@@ -1,3 +1,4 @@
+import weakref
 import math
 import numpy
 import scipy
@@ -18,6 +19,15 @@ NOWHERE = numpy.array( ( INF, INF, INF ) )
 SAFETY = 1.0 + 1e-5 #5e-2 is too big! Todo.
 
 TOLERANCE = 1e-12
+
+
+class Delegate( object ):
+    def __init__( self, obj, method ):
+        self.obj = weakref.proxy( obj )
+        self.method = method
+
+    def __call__( self, *arg ):
+        return self.method( self.obj, *arg )
 
 
 '''

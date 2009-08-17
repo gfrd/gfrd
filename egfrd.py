@@ -1,5 +1,4 @@
 #!/usr/env python
-import weakref
 import math
 import numpy
 
@@ -14,14 +13,6 @@ from itertools import izip
 from vtklogger import VTKLogger
 
 from log import *
-
-class Delegate( object ):
-    def __init__( self, obj, method ):
-        self.obj = weakref.proxy( obj )
-        self.method = method
-
-    def __call__( self, *arg ):
-        return self.method( self.obj, *arg )
 
 
 '''
@@ -791,13 +782,19 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
     # Draw new shell + new event time.
     def updateSingle( self, single, closest, distanceToShell ): 
+        # InteractionSingles (cylinders) should never have to be updated.  
         assert not isinstance( single, InteractionSingle )
-	if isinstance( closest, Single ): # and isinstance( closest.shellList[0], Sphere)
+	if isinstance( closest, Single ):
+            # Todo.
+            # and isinstance( closest.shellList[0], Sphere)
+            #
+            # Closest == Single.
 	    distanceToClosest = self.distance( single.pos, closest.pos )
 	    shellSize = self.calculateSingleShellSize( single, closest, 
 						       distanceToClosest,
 						       distanceToShell )
-	else:  # Pair or Multi
+	else:
+            # Closest != Single. Pair or Multi or Surface.
 	    shellSize = distanceToShell / SAFETY
 	    shellSize = max( shellSize, single.getMinRadius() )
 
@@ -812,20 +809,42 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	log.info( 'Updated %s. radius=%g. dt=%g. closest=%s. distanceToShell=%s' % ( single, single.radius, single.dt, closest, distanceToShell ) )
 
 
-    def calculateSingleShellSize( self, single, closest, 
-				  distance, shellDistance ):
+
+    '''
+    Decide on a new shellSize for a single when the closestObj is also a 
+    single. We already know that that single's shell is at least far enough 
+    away to build a shell using SINGLE_SHELL_FACTOR (we checked for that in 
+    fireSingle).
+    
+    Input: 
+    * single to determine the new shellSize of.
+    * closest Single
+    * distance from here to *pos* of that Single, so the distance between the 
+      particles.
+    * distance from here to *shell* of that Single. (which was also used to 
+      actually determine the closest single).
+
+    Action:
+    Basically make the shellSize maximally 1/2 the distance between the 
+    particles (depending on the diffusion constants).
+
+    Possible improvement: Find really the closest particle, not the particle 
+    that is in the closest shell, and compare to that also.
+    '''
+    def calculateSingleShellSize( self, single, closestSingle, 
+				  distanceBetweenParticles, closestShellDistance ):
 	minSize1 = single.getMinRadius()
 	D1 = single.getD()
 	if D1 == 0:
 	    return minSize1
 
-	D2 = closest.getD()
-	minSize2 = closest.getMinRadius()
+	D2 = closestSingle.getD()
+	minSize2 = closestSingle.getMinRadius()
 	minSize12 = minSize1 + minSize2
 	sqrtD1 = math.sqrt( D1 )
 	shellSize = min( sqrtD1 / ( sqrtD1 + math.sqrt( D2 ) )
-			 * ( distance - minSize12 ) + minSize1,
-			 shellDistance )
+                         * ( distanceBetweenParticles - minSize12 ) + minSize1,
+			 closestShellDistance )
 	shellSize /= SAFETY
 	shellSize = max( shellSize, minSize1 ) # not smaller than the radius
 	return shellSize
