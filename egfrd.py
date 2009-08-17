@@ -1343,26 +1343,31 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             # but not more.
             dzl = particleRadius 
 	    radius = dr
+            # sizeOfDomain is really different from size of cylinder!
+            sizeOfDomain = particleDistance + dzr - surface.Lz
 	    size = ( particleDistance + dzl + dzr ) / 2
-            # Only in this case sizeOfDomain is different from size of 
-            # cylinder.
-            sizeOfDomain = ( particleDistance + dzr - surface.Lz ) / 2
 	elif isinstance( surface, Cylinder ):
 	    radius = dr + particleDistance
-	    size = ( dzl + dzr ) / 2
+            # sizeOfDomain is size of cylinder * 2.
+            sizeOfDomain = dzl + dzr
+	    size = ( sizeOfDomain ) / 2
 
-        # Compute new origin.
+        # Compute new origin of cylinder.
         shiftZ = size - dzl
         origin = projectedPoint + shiftZ * orientationVector
 
         if isinstance( surface, Box ):
-            # Compute new particl offset relative to origin of the domain in 
-            # the z-direction (!).
-            particleOffset = [ 0, particleDistance - surface.Lz - sizeOfDomain ]
+            # Compute new particle offset relative to origin of the domain in 
+            # the z-direction (z=0), which is *at* the surface boundary. z=L 
+            # is at the end of the cylinder.
+            # (minRadius correction in the constructor).
+            particleOffset = [ 0, particleDistance - surface.Lz ]
 	elif isinstance( surface, Cylinder ):
             # Compute new particle offset in r and z-direction relative to 
-            # origin of new cylinder.
-            particleOffset = [ particleDistance, - shiftZ ]
+            # origin of new cylinder. In the z-direction, the origin (z=0) is 
+            # at the left boundary. z=L is at the right boundary.
+            # (minRadius correction in the constructor).
+            particleOffset = [ particleDistance, dzl ]
 
 
         '''

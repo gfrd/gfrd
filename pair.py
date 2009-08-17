@@ -502,11 +502,15 @@ class CylindricalSurfacePair( Pair ):
 
 
     def drawNewCoM( self, dt ):
+        # Todo.
+        # Cartesian domain returns displacement, not absolute position.
         r_R = self.domains[0].drawPosition( dt )
         return self.CoM + r_R * self.surface.unitZ
 
 
     def drawNewIV( self, dt ):
+        # Todo.
+        # Cartesian domain returns displacement, not absolute position.
         r_cartesian = self.domains[1].drawPosition( dt )
         # Convert back from cartesian domain (-a_cartesian to a_cartesian) to 
         # something that can be used for the length of the iv vector (sigma to 

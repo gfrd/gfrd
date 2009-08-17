@@ -132,8 +132,10 @@ class NonInteractionSingle( Single ):
 
 
     def getRadius( self ):
+        #raise RuntimeError, 'Todo'
         return self.shellList[0].radius
     def setRadius( self, radius ):
+        #raise RuntimeError, 'Todo'
         # setRadius is called when NonInteractionSingles are updated.
         assert radius - self.getMinRadius() >= 0.0
         self.shellList[0].radius = radius
@@ -260,8 +262,10 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
     '''
     def getRadius( self ):
         # Heads up. Return cylinder's size.
+        #raise RuntimeError, 'Todo'
         return self.shellList[0].size
     def setRadius( self, size ):
+        #raise RuntimeError, 'Todo'
         assert size - self.getMinRadius() >= 0.0 # Still fine.
         # Heads up. A larger shell means a larger CylindricalSurfaceSingle's size.
         self.shellList[0].size = size
@@ -294,6 +298,7 @@ class InteractionSingle( Single ):
 
 
     def getRadius( self ):
+        raise RuntimeError, 'Todo'
         return self.shellList[0].radius
     radius = property( getRadius )
 
@@ -332,13 +337,15 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         cylinder is continuing into the surface.
         '''
         gfz = FirstPassageGreensFunction1DRad( self.getD(), interactionType.k )
-        zDomain = CartesianDomain( particleOffset[1], sizeOfDomain - self.getMinRadius(), gfz )
+        # Cartesian domain of size L. Correction with getMinRadius().
+        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2*self.getMinRadius(), gfz )
 
         self.domains = [ rDomain, zDomain ]
 
 
     def drawNewPosition( self, dt ):
         r = self.domains[0].drawPosition( dt )
+        # Cartesian domain returns displacement, not absolute position.
         z = self.domains[1].drawPosition( dt )
         x, y = randomVector2D( r )
         return self.pos + x * self.interactionSurface.unitX + y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
@@ -357,7 +364,7 @@ class PlanarSurfaceInteraction( InteractionSingle ):
     * Selected randomly when drawing displacement vector: none.
 '''
 class CylindricalSurfaceInteraction( InteractionSingle ):
-    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint ):
+    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint, sizeOfDomain=None ):
         self.unitR = normalize( particle.pos - projectedPoint ) # Only needed for this type of Interaction.
         InteractionSingle.__init__( self, particle, surface, reactionTypes, interactionType )
 
@@ -369,14 +376,15 @@ class CylindricalSurfaceInteraction( InteractionSingle ):
 
         # Free diffusion in z direction.
         gfz = FirstPassageGreensFunction1D( self.getD() )
-        # Note. Particle doesn't have to start at z=0.
-        zDomain = CartesianDomain( particleOffset[1], size - self.getMinRadius(), gfz )
+        # Cartesian domain of size L. Correction with getMinRadius().
+        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2*self.getMinRadius(), gfz )
 
         self.domains = [ rthetaDomain, zDomain ]
 
 
     def drawNewPosition( self, dt ):
         r, theta = self.domains[0].drawPosition( self.pgf, dt )
+        # Cartesian domain returns displacement, not absolute position.
         z = self.domains[1].drawPosition( dt )
         # Calculate new position starting from origin.
         newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, theta )
