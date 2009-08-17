@@ -32,10 +32,25 @@ def calculateBDDt( speciesList, factor ):
 
     return dt
 
+
 '''
-Used by 
-- BDSimulatorCore (for BDSimulator).
-- MultiBDCore (for Multi.core)
+BDSimulatorCoreBase.
+
+Child classes of BDSimulatorCoreBase are:
+* BDSimulatorCore
+    - Instantiated by BDSimulator as BDSimulator.core.
+    - Uses the particleMatrix from the simulator that instantiates it (that 
+      would be a BDSimulator) for particle detection. BDsimulator 
+      derives from ParticleSimulatorBase, which has declared this 
+      particleMatrix.
+* MultiBDCore
+    - Instantiated by Multi as Multi.core.
+    - Uses a self declared particleMatrix for particle detection (which 
+      contains only the particles that are in the Multi, not other particles 
+      that might still be in the EGFRDSimulator.
+
+BDSimulatorCoreBase uses a particle*List* to loop over all particles in each 
+step (and propagate them).
 '''
 class BDSimulatorCoreBase( object ):
     
@@ -103,6 +118,8 @@ class BDSimulatorCoreBase( object ):
             return self.P_acct[ rt ]
 
         except KeyError:
+            # Todo. When self.dt is big (1 instead of 1e-5), I, and thus p, 
+            # becomes way too big. Is this expected behaviour?
             I = _gfrd.I_bd( sigma, self.dt, D )
             p = rt.k * self.dt / ( I * 4.0 * numpy.pi )
             if not 0.0 <= p < 1.0:
@@ -130,6 +147,9 @@ class BDSimulatorCoreBase( object ):
 
         random.shuffle( self.particlesToStep )
         while self.particlesToStep:
+            # Todo. What if particle has been removed after a reaction?
+            # Check if particle still exists in original particleList or
+            # keep exclude list.
             particle = self.particlesToStep.pop() # take the last one
             self.propagateParticle( particle )
 
@@ -138,9 +158,12 @@ class BDSimulatorCoreBase( object ):
 
         species = particle.species
 
+        '''
+        1. Try single reactions first.
+        '''
         rt1 = self.attemptSingleReactions( species )
         if rt1:
-            # Todo. Shouldn't we propagate first???
+            # Todo. Shouldn't we displace the particle first? 
             try:
                 self.fireReaction1( particle, rt1 )
             except NoSpace:
@@ -158,11 +181,11 @@ class BDSimulatorCoreBase( object ):
         
         neighbors = self.getParticlesWithinRadiusNoSort( newpos, species.radius,
                                                          ignore=[particle] )
+
         '''
-        Try reaction of 2 particles first, even if newpos also overlaps with surface. 
+        2. Try reaction of 2 particles, even if newpos also overlaps with surface. 
         '''
         if neighbors:
-
             if len( neighbors ) >= 2:
                 log.info( 'collision two or more particles; move rejected' )
                 return
@@ -194,6 +217,9 @@ class BDSimulatorCoreBase( object ):
             # Neighbor is reflecting us. Don't move.
             return
 
+        '''
+        3. Try binding with surface.
+        '''
         surface, distanceToSurface = self.main.getClosestSurfaceWithinRadius( newpos, species.radius, ignore=[particle] )
         if surface:
             rt = self.main.getInteractionType( species, surface )

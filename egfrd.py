@@ -282,6 +282,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         return self.sphereMatrix.cellSize
 
 
+    '''
+    Add all shells from obj.shellList to one of the shell matrices.
+    '''
     def addToShellMatrix( self, obj ):
         for i, shell in enumerate( obj.shellList ):
             key = (obj, i)
@@ -1138,7 +1141,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                     return obj, neighbors[1:]
 
 	# Then, a Multi.
-	log.debug( '\tDebug. Try to form Multi: %s + %s.' % (single, neighbors) )
+        neighborsString = ''
+        for n in neighbors:
+            neighborsString += str(n) + ', '
+	log.debug( '\tDebug. Try to form Multi: %s + [ %s ].' % (single, neighborsString) )
 	minShell = single.getMinRadius() * ( 1.0 + self.MULTI_SHELL_FACTOR )
 
         # Todo. Add surfaces to multi somehow.
@@ -1158,6 +1164,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	if isinstance( closest, Single ) or isinstance( closest, Surface ):
 
 	    multi = self.createMulti()
+            # Use addToMulti here instead of addToMultiRecursive because we 
+            # already found this single's neighbors (we don't want to do that 
+            # twice).
 	    self.addToMulti( single, multi )
 	    self.removeFromShellMatrix( single )
 	    for neighbor in neighbors:
@@ -1183,6 +1192,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	    multi.initialize( self.t )
 
+            # Add 1 shell for each particle to main simulator's shellMatrix.
 	    self.addToShellMatrix( multi )
 	    self.updateEvent( self.t + multi.dt, multi )
 	    return multi, bursted
@@ -1575,6 +1585,15 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	return singles
 
 
+    '''
+    Add 'obj' to multi using addToMulti().
+    
+    If 'obj' is a Single, also add any neighbors that lie within 'shellSize' 
+    of 'obj', where shellSize is MULTI_SHELL_FACTOR times the radius of the 
+    particle.
+
+    If 'obj' is itself a Multi, merge them.
+    '''
     def addToMultiRecursive( self, obj, multi ):
         if isinstance( obj, Surface ):
             # No need to add other particles recursively, surface doesn't 
@@ -1585,18 +1604,21 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		return
 	    assert obj.isReset()
 	    
+            # Add particle + new shell to multi.
 	    self.addToMulti( obj, multi )
 	    self.removeFromShellMatrix( obj )
 	    self.removeEvent( obj )
 
-	    radius = obj.particle.species.radius *\
+            # Find any neighbouring particles that lie within shellSize and 
+            # also add them (recursively) to the multi.
+	    shellSize = obj.particle.species.radius *\
 		( 1.0 + self.MULTI_SHELL_FACTOR )
-	    neighbors = self.getNeighborsWithinRadiusNoSort( obj.pos, radius,
+	    neighbors = self.getNeighborsWithinRadiusNoSort( obj.pos, shellSize,
 							     ignore=[obj,] )
 	    bursted = self.burstNonMultis( neighbors )
 	    neighborDists = self.objDistanceArray( obj.pos, bursted )
 	    neighbors = [ bursted[i] for i in 
-			  ( neighborDists <= radius ).nonzero()[0] ]
+			  ( neighborDists <= shellSize ).nonzero()[0] ]
 
 	    for obj in neighbors:
 		self.addToMultiRecursive( obj, multi )
@@ -1613,6 +1635,11 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
 
+    '''
+    Add to multi:
+        - the particle
+        - a shell a bit bigger than radius (using MULTI_SHELL_FACTOR)
+    '''   
     def addToMulti( self, single, multi ):
 	log.info( 'Adding %s to %s' % ( single, multi ) )
 

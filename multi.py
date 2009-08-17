@@ -143,7 +143,12 @@ class MultiBDCore( BDSimulatorCoreBase ):
         return [ n for n in neighbors if n not in ignore ]
 
 
-    # Todo. Why don't we borrow this stuff from ParticleSimulatorBase?
+    '''
+    Find closest particle in *this* particleMatrix (not the main simulator's).
+
+    Same method as in ParticleSimulatorBase, but we are not a child of that 
+    class.
+    '''
     def getClosestParticle( self, pos, ignore=[] ):
 
         neighbors, distances =\
