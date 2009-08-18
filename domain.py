@@ -54,6 +54,7 @@ For example the z-domain.
 class CartesianDomain( Domain ):
     def __init__( self, r0, L, gf ):
         Domain.__init__( self, gf )
+        self.gf.setr0( r0 )
         self.r0 = r0         # Initial position
         self.L = L
 
@@ -72,7 +73,7 @@ class CartesianDomain( Domain ):
 	try:
             rnd = numpy.random.uniform()
             log.debug( '\tDebug. Cartesian drawTime. ' + str(self.gf) )
-	    dt = self.gf.drawTime( rnd, self.r0 )
+	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
 	    raise Stop( 'gf.drawTime() failed; %s; rnd=%g; r0=%g; L=%g' %\
 		( str( e ), rnd, self.r0, self.L ) )
@@ -89,7 +90,7 @@ class CartesianDomain( Domain ):
         self.escape = True
         try:
             log.debug( '\tDebug. Cartesian drawEventType. ' + str(self.gf) )
-            eventType = self.gf.drawEventType( numpy.random.uniform(), self.r0, dt )
+            eventType = self.gf.drawEventType( numpy.random.uniform(), dt )
 	except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; r0=%g; dt=%g; L=%g' %\
                 ( str( e ), self.r0, dt, self.L ) )
@@ -115,7 +116,7 @@ class CartesianDomain( Domain ):
         try:
             rnd = numpy.random.uniform()
             log.debug( '\tDebug. Cartesian drawR. ' + str(self.gf) )
-            r = self.gf.drawR( rnd, self.r0, dt  )
+            r = self.gf.drawR( rnd, dt  )
         except Exception, e:
             raise Stop( 'gf.drawR failed; %s; rnd=%g, dt=%g, r0=%g, L=%g' %\
                 ( str( e ), rnd, dt, self.r0, self.L ) )
