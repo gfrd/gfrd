@@ -33,8 +33,8 @@ def run( outfilename, T, N ):
 
 def singlerun1( T ):
 
-    s = BDSimulator()
-    s.setWorldSize( 1e-3 )
+    L = 1e-3
+    s = BDSimulator( L )
 
     #s.setMaxShellSize( 1e-6 )
 
@@ -78,8 +78,8 @@ def singlerun1( T ):
 
 def singlerun2( T ):
 
-    s = EGFRDSimulator()
-    s.setWorldSize( 1e-3 )
+    L =  1e-3
+    s = EGFRDSimulator( L )
 
     #s.setUserMaxShellSize( 1e-7 )
     #s.setUserMaxShellSize( 1e-3 )

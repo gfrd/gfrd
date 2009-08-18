@@ -17,9 +17,9 @@ def run( outfilename, T, N ):
 
 
 def singlerun( T ):
-
-    s = BDSimulator()
-    s.setWorldSize( 1e-3 )
+    
+    L = 1e-3
+    s = BDSimulator( L )
 
     sigma = 5e-9
     r0 = sigma

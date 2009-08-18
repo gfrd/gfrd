@@ -299,16 +299,12 @@ class BDSimulatorCoreBase( object ):
             radius = productSpecies.radius
     
 	    if isinstance( rt, SurfaceUnbindingReactionType ):
-		newSurface = self.main.defaultSurface
 		newpos = currentSurface.randomUnbindingSite( oldpos, radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
-                # Get interaction surface from reactants list.
-                newSurface = rt.reactants[1]
                 # Todo. Does this obey detailed balance?
                 # Select position on surface with z=0.
-                newpos, _ = newSurface.calculateProjection( oldpos )
+                newpos, _ = productSpecies.surface.calculateProjection( oldpos )
             else:
-                newSurface = currentSurface
                 newpos = oldpos
 
             if not self.checkOverlap( newpos, radius,
@@ -319,7 +315,7 @@ class BDSimulatorCoreBase( object ):
             self.clearVolume( newpos, radius, ignore = [ particle ] )
                 
             self.removeParticle( particle )
-            newparticle = self.createParticle( productSpecies, newpos, newSurface )
+            newparticle = self.createParticle( productSpecies, newpos )
 
             self.lastReaction = Reaction( rt, [particle], [newparticle] )
 
@@ -343,10 +339,8 @@ class BDSimulatorCoreBase( object ):
 
                 if isinstance( rt, SurfaceDirectUnbindingReactionType ):
                     # Direct unbinding.
-                    # Particle2 ends up in world (defaultSurface).
-                    newSurface1 = currentSurface
-                    newSurface2 = self.main.defaultSurface
                     newpos1 = oldpos
+                    # Particle2 ends up in world (defaultSurface).
                     # Todo. Does this obey detailed balance?
                     newpos2 = currentSurface.randomUnbindingSite( oldpos, pairDistance )
                 else:
@@ -357,8 +351,6 @@ class BDSimulatorCoreBase( object ):
                     # FIXME: what if D1 == D2 == 0?
                     newpos1 = oldpos + vector * ( D1 / D12 )
                     newpos2 = oldpos - vector * ( D2 / D12 )
-                    newSurface1 = currentSurface
-                    newSurface2 = currentSurface
                     #FIXME: check surfaces here
 
             
@@ -382,8 +374,8 @@ class BDSimulatorCoreBase( object ):
             # move accepted
             self.removeParticle( particle )
 
-            newparticle1 = self.createParticle( productSpecies1, newpos1, newSurface1 )
-            newparticle2 = self.createParticle( productSpecies2, newpos2, newSurface2 )
+            newparticle1 = self.createParticle( productSpecies1, newpos1 )
+            newparticle2 = self.createParticle( productSpecies2, newpos2 )
 
             self.lastReaction = Reaction( rt, [particle], 
                                           [newparticle1, newparticle2] )
@@ -399,7 +391,6 @@ class BDSimulatorCoreBase( object ):
     def fireReaction2( self, particle1, particle2, rt ):
         # Todo. Direct binding.
         assert particle1.surface == particle2.surface
-        newSurface = particle1.surface
 
         pos1 = particle1.pos.copy()
         pos2 = particle2.pos.copy()
@@ -423,7 +414,7 @@ class BDSimulatorCoreBase( object ):
 
             self.removeParticle( particle1 )
             self.removeParticle( particle2 )
-            newparticle = self.createParticle( productSpecies, newPos, newSurface )
+            newparticle = self.createParticle( productSpecies, newPos )
 
             try:
                 self.particlesToStep.remove( particle2 )
@@ -495,8 +486,8 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
         self.main.removeParticle( particle )
         self.removeFromParticleList( particle )
 
-    def createParticle( self, species, pos, surface ):
-        particle = self.main.createParticle( species, pos, surface )
+    def createParticle( self, species, pos ):
+        particle = self.main.createParticle( species, pos )
         self.addToParticleList( particle )
 
 
@@ -513,9 +504,9 @@ Can be used for a Brownian Dynamics simulation.
 '''
 class BDSimulator( ParticleSimulatorBase ):
     
-    def __init__( self ):
+    def __init__( self, worldSize ):
 
-        ParticleSimulatorBase.__init__( self )
+        ParticleSimulatorBase.__init__( self, worldSize )
 
         self.core = BDSimulatorCore( self )
         self.isDirty = True

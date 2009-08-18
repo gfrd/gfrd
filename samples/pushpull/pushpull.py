@@ -50,8 +50,7 @@ else:
 L = ( V * 1e-3 ) ** ( 1.0 / 3.0 )
 
 
-s = EGFRDSimulator()
-s.setWorldSize( L )
+s = EGFRDSimulator( L )
 
 N = N_S_total * 1.1
 matrixSize = min( max( 3, int( (3 * N) ** (1.0/3.0) ) ), 60 )

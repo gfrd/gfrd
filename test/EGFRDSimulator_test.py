@@ -9,7 +9,7 @@ import numpy
 from egfrd import *
 
 
-#log.setLevel( logging.WARNING )
+log.setLevel( logging.WARNING )
 
 class EGFRDSimulatorTestCase( unittest.TestCase ):
 
@@ -25,8 +25,7 @@ class EGFRDSimulatorTestCase( unittest.TestCase ):
 
     
     def test_OneParticle( self ):
-        s = EGFRDSimulator()
-        s.setWorldSize( 1e-5 )
+        s = EGFRDSimulator( 1e-5 )
         S = Species( 'S', 2e-11, 5e-8 )
         s.addSpecies( S )
         s.placeParticle( S, [0.0,0.0,0.0] )
@@ -37,8 +36,7 @@ class EGFRDSimulatorTestCase( unittest.TestCase ):
         self.failIf( t == s.t )
 
     def test_TwoParticles( self ):
-        s = EGFRDSimulator()
-        s.setWorldSize( 1e-5 )
+        s = EGFRDSimulator( 1e-5 )
         S = Species( 'S', 2e-11, 5e-8 )
         s.addSpecies( S )
         s.placeParticle( S, [0.0,0.0,0.0] )
@@ -50,8 +48,7 @@ class EGFRDSimulatorTestCase( unittest.TestCase ):
         self.failIf( t == s.t )
 
     def test_ThreeParticles( self ):
-        s = EGFRDSimulator()
-        s.setWorldSize( 1e-5 )
+        s = EGFRDSimulator( 1e-5 )
         S = Species( 'S', 2e-11, 5e-8 )
         s.addSpecies( S )
         s.placeParticle( S, [0.0,0.0,0.0] )
@@ -65,8 +62,7 @@ class EGFRDSimulatorTestCase( unittest.TestCase ):
 
 
     def test_ThreeParticlesInContact( self ):
-        s = EGFRDSimulator()
-        s.setWorldSize( 1e-5 )
+        s = EGFRDSimulator( 1e-5 )
         S = Species( 'S', 2e-11, 5e-8 )
         s.addSpecies( S )
         s.placeParticle( S, [0.0,0.0,0.0] )
@@ -84,8 +80,7 @@ class EGFRDSimulatorTestCase( unittest.TestCase ):
 
         #log.setLevel( logging.DEBUG )
 
-        s = EGFRDSimulator()
-        s.setWorldSize( 1e-5 )
+        s = EGFRDSimulator( 1e-5 )
         S = Species( 'S', 1e-12, 5e-9 )
         s.addSpecies( S )
 
@@ -105,8 +100,7 @@ class EGFRDSimulatorTestCase( unittest.TestCase ):
 
 
     def test_immobile_is_immobile( self ):
-        s = EGFRDSimulator()
-        s.setWorldSize( 1e-5 )
+        s = EGFRDSimulator( 1e-5 )
         A = Species( 'A', 0, 1e-8 )
         s.addSpecies( A )
         B = Species( 'B', 2e-11, 5e-9 )

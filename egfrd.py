@@ -19,7 +19,7 @@ from log import *
 Returning a dt to the scheduler reschedules the event, -INF removes it.
 '''
 class EGFRDSimulator( ParticleSimulatorBase ):
-    def __init__( self, logdir = None ):
+    def __init__( self, worldSize, logdir = None ):
         if logdir:
             log.info( 'Started vtk logger: ' + logdir )
             self.vtklogger = VTKLogger( self, logdir )
@@ -32,7 +32,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.objectMatrices = [ self.sphereMatrix, self.cylinderMatrix, self.boxMatrix ]
         #self.sm2 = pObjectMatrix()
 
-        ParticleSimulatorBase.__init__( self )
+        ParticleSimulatorBase.__init__( self, worldSize )
 
         self.MULTI_SHELL_FACTOR = 0.5   #0.05 # SHould be smaller than SINGLE_SHELL_FACTOR!
         self.SINGLE_SHELL_FACTOR = 1.0  # 0.1
@@ -45,11 +45,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.reset()
 
 
+    # Called from ParticleSimulatorBase.__init__()
     def setWorldSize( self, size ):
         if isinstance( size, list ) or isinstance( size, tuple ):
             size = numpy.array( size )
 
         ParticleSimulatorBase.setWorldSize( self, size )
+
         self.sphereMatrix.setWorldSize( size )
         self.cylinderMatrix.setWorldSize( size )
         self.boxMatrix.setWorldSize( size )
@@ -880,10 +882,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		raise NoSpace()
 
 	    if isinstance( rt, SurfaceUnbindingReactionType ):
-		newSurface = self.defaultSurface
 		newpos = currentSurface.randomUnbindingSite( oldpos, productSpecies.radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
-                newSurface = single.interactionSurface
                 # Todo. Does this obey detailed balance?
                 newpos, _ = newSurface.projectedPoint( oldpos )
 
@@ -892,11 +892,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    else: 
 		# No change.
 		newpos = oldpos
-		newSurface = currentSurface
 
 	    self.removeParticle( single.particle )
             self.applyBoundary( newpos )
-	    newparticle = self.createParticle( productSpecies, newpos, newSurface )
+	    newparticle = self.createParticle( productSpecies, newpos )
 	    newsingle = self.createSingle( newparticle )
 
             # Todo. Is lastReaction used anywhere, or is it just logging?
@@ -951,8 +950,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		raise NoSpace()
 
 	    self.removeParticle( single.particle )
-	    particle1 = self.createParticle( productSpecies1, newpos1, currentSurface )
-	    particle2 = self.createParticle( productSpecies2, newpos2, currentSurface )
+	    particle1 = self.createParticle( productSpecies1, newpos1 )
+	    particle2 = self.createParticle( productSpecies2, newpos2 )
 	    newsingle1 = self.createSingle( particle1 )
 	    newsingle2 = self.createSingle( particle2 )
 
@@ -1053,13 +1052,12 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		assert self.distance( pair.CoM, newCoM ) + species3.radius <\
 		    pair.shellSize
 
-		currentSurface = particle1.surface
 		self.applyBoundary( newCoM )
 
 		self.removeParticle( particle1 )
 		self.removeParticle( particle2 )
 
-		particle = self.createParticle( species3, newCoM, currentSurface  )
+		particle = self.createParticle( species3, newCoM )
 		newsingle = self.createSingle( particle )
 
 		self.reactionEvents += 1

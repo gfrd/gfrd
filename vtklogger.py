@@ -159,7 +159,7 @@ class VTKLogger:
         posList, typeList, tensorList = [], [], []
 
         try:
-            boxes = self.sim.cuboidalSurfaces
+            boxes = [ self.sim.defaultSurface ]
         except:
             # Add dummy box to stop tensorGlyph from complaining.
             boxes = [ DummyBox() ] 

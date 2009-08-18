@@ -161,8 +161,8 @@ addInteractionType.
 A + Surface -> B_on_Surface
 '''
 class SurfaceBindingInteractionType( ReactionType ):
-    def __init__( self, reactantSpecies, surface, productSpecies,  k ):
-        ReactionType.__init__( self, [ reactantSpecies, surface ], [ productSpecies, ], k )
+    def __init__( self, reactantSpecies, productSpecies,  k ):
+        ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies, ], k )
 
 
 '''
@@ -170,8 +170,8 @@ A + B_on_Surface + Surface -> C_on_Surface
 A + Surface should be repulsive.
 '''
 class SurfaceDirectBindingInteractionType( ReactionType ):
-    def __init__( self, reactantSpecies1, reactantSpecies2, surface, productSpecies,  k ):
-        ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2, surface ], [ productSpecies, ], k )
+    def __init__( self, reactantSpecies1, reactantSpecies2, productSpecies,  k ):
+        ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2 ], [ productSpecies, ], k )
 
 
 '''
@@ -225,7 +225,7 @@ class Particle( object ):
 
     ### Not only constructor, but can also be used to make a copy of a
     ### particle by index or serial.
-    def __init__( self, species, serial=None, index=None, surface=None ):
+    def __init__( self, species, serial=None, index=None ):
 
         self.species = species
 
@@ -238,11 +238,11 @@ class Particle( object ):
 
         self.hash = hash( self.species ) ^ self.serial
 
-        self.surface = surface
+        self.surface = species.surface
 
     def __str__( self ):
 
-        return "( '" + self.species.id + "', " + str( self.serial ) + ' )'
+        return "( '" + self.species.id + "', " + str(self.species.surface) + ", " + str( self.serial ) + ' )'
 
     def __repr__( self ):
 
@@ -381,7 +381,7 @@ class ParticlePool( object ):
 
 class ParticleSimulatorBase( object ):
     
-    def __init__( self ):
+    def __init__( self, worldSize ):
 
         self.speciesList = {}
         ### Per species key a list of reactiontypes.
@@ -405,13 +405,16 @@ class ParticleSimulatorBase( object ):
 
         self.particleMatrix = SphereMatrix() # Stores complete particles (unlike particlePool).
 
-        self.setWorldSize( INF )
+        self.setWorldSize( worldSize )
 
         self.lastReaction = None
 
-        # Needed when creating a shell around a particle whose surface is not 
-        # specified. Backward compatibility.
-        self.defaultSurface = World( )
+        # Particles of a Species whose surface is not specified will be add to 
+        # the world.
+        # The world has to be cubic, because the objectmatrix neeeds it to be.
+        # This line here is also why worldSize has to be specified in the
+        # constructor now, and should not be redefined.
+        self.defaultSurface = CuboidalSurface( [0,0,0], [worldSize, worldSize, worldSize], 'world' )
 
 
     def initialize( self ):
@@ -530,8 +533,18 @@ class ParticleSimulatorBase( object ):
         self.surfaceList.append( surface )
 
 
-    def addSpecies( self, species ):
-        self.speciesList[ species.id ] = species
+    def addSpecies( self, species, surface=None ):
+        if surface == None:
+            # It has to be known on which surface this species can live. If no 
+            # surface specified, it can only live in the cytosol.
+            species.surface = self.defaultSurface
+        else:
+            assert any( surface == s for s in self.surfaceList ), '%s not in surfaceList.'%(surface)
+            species.surface = surface
+            
+        #assert not self.speciesList.has_key( species.id ), 'Species with id=%s has already been added.'%(species.id)
+        self.speciesList[ (species.id, surface) ] = species
+
 
     def addReactionType( self, rt ):
 
@@ -571,8 +584,8 @@ class ParticleSimulatorBase( object ):
 
     def addInteractionType( self, it ):
         species = it.reactants[0]
-        surface = it.reactants[1]
-        self.interactionTypeMap[ (species, surface) ] = it
+        interactionSurface = it.products[0].surface
+        self.interactionTypeMap[ (species, interactionSurface) ] = it
 
 
     def setAllRepulsive( self ):
@@ -593,21 +606,36 @@ class ParticleSimulatorBase( object ):
                             SurfaceRepulsionInteractionType( species,surface )
         
 
-    def throwInParticles( self, species, n, surface ):
-        log.info( 'throwing in %s %s particles' % ( n, species.id ) )
+    def throwInParticles( self, species, n, surface=None ):
+        if not surface:
+            surface = species.surface
 
-        for i in range( int( n ) ):
-            while 1:
-                position = surface.randomPosition()
-                if self.checkOverlap( position, species.radius ):
-                    break
-                else:
-                    log.info( '%d-th particle rejected.' %i )
-            
-            self.createParticle( species, position, surface )
+        log.info( 'throwing in %s %s particles to %s' % ( n, species.id, surface ) )
+
+        i = 0
+        while i < int( n ):
+            position = surface.randomPosition()
+
+            # Check overlap.
+            if self.checkOverlap( position, species.radius ):
+                create = True
+                # Check if not too close to a neighbouring surfaces for 
+                # particles added to the world, or added to a self-defined 
+                # box.
+                if surface == self.defaultSurface or ( surface != self.defaultSurface and isinstance(surface, CuboidalSurface) ):
+                    distance, closestSurface = self.getClosestSurface( position, [] )
+                    if closestSurface and distance < closestSurface.minimalOffset( species.radius ):
+                        log.info( '%d-th particle rejected. To close to surface. I will keep trying.' %i )
+                        create = False
+                if create:
+                    # All checks passed. Create particle.
+                    self.createParticle( species, position )
+                    i += 1
+            else:
+                log.info( '%d-th particle rejected. I will keep trying.' %i )
 
 
-    def placeParticle( self, species, pos, surface=None ):
+    def placeParticle( self, species, pos ):
         log.info( 'place %s particle at %s' % ( species.id, pos ) )
         pos = numpy.array( pos )
         radius = species.radius
@@ -615,25 +643,22 @@ class ParticleSimulatorBase( object ):
         if not self.checkOverlap( pos, radius ):
             raise NoSpace, 'overlap check failed'
 
-        particle = self.createParticle( species, pos, surface )
+        particle = self.createParticle( species, pos )
         return particle
 
 
-    def createParticle( self, species, pos, surface ):
+    def createParticle( self, species, pos ):
         newserial = species.newParticle( pos )
 
-        if isinstance( surface, CuboidalSurface ) or surface == None:
-            # Particle in cytoplasm.
-            # For backward compatibility.
-            surface = self.defaultSurface
-
-        newparticle = Particle( species, serial=newserial, surface=surface )
+        newparticle = Particle( species, serial=newserial )
         self.addToParticleMatrix( newparticle, pos )
         return newparticle
+
 
     def removeParticle( self, particle ):
         particle.species.pool.removeBySerial( particle.serial )
         self.removeFromParticleMatrix( particle )
+
 
     def moveParticle( self, particle, newpos ):
         particle.pos = newpos

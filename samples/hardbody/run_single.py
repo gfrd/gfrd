@@ -13,9 +13,9 @@ def run_single( T, V, N ):
     L = math.pow( V * 1e-3, 1.0 / 3.0 )
 
     
-    s = EGFRDSimulator()
+    s = EGFRDSimulator( L )
     #s = BDSimulator()
-    s.setWorldSize( L )
+    #s.setWorldSize( L )
 
     matrixSize = min( max( 3, int( (3 * N) ** (1.0/3.0) ) ), 130 )
     print 'matrixSize=', matrixSize

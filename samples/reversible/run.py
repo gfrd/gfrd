@@ -32,11 +32,10 @@ def run( outfilename, T, N ):
 
 def singlerun( T ):
 
-    s = EGFRDSimulator()
+    s = EGFRDSimulator( 1e-3 )
     #s.setUserMaxShellSize( 1e-6 )
     #s = BDSimulator()
 
-    s.setWorldSize( 1e-3 )
 
     sigma = 5e-9
     r0 = sigma

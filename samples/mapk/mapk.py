@@ -6,8 +6,8 @@ from logger import *
 import sys
 
 #s = EGFRDSimulator('run')
-s = EGFRDSimulator()
-s.setWorldSize( 1e-5 )
+L = 1e-5
+s = EGFRDSimulator( L )
 
 box1 = CuboidalSurface( [0,0,0],[1e-5,1e-5,1e-5] )
 # not supported yet

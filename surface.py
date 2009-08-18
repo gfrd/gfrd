@@ -70,9 +70,15 @@ class PlanarSurface( Surface, Box ):
         return self.origin + random.uniform(-1,1)*self.vectorX + random.uniform(-1,1)*self.vectorY
 
 
+    # A particle that is not on this surface has to be at least this far away 
+    # from the surface.
+    def minimalOffset( self, radius ):
+        return (self.Lz + radius ) * SAFETY
+
+
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
-        return pos + random.choice( [-1,1] ) * (self.Lz + radius ) * SAFETY * self.unitZ
+        return pos + random.choice( [-1,1] ) * self.minimalOffset( radius )  * self.unitZ
 
 
 '''
@@ -104,9 +110,15 @@ class CylindricalSurface( Surface, Cylinder ):
         return self.origin + random.uniform(-1, 1) * self.vectorZ
 
 
+    # A particle that is not on this surface has to be at least this far away 
+    # from the surface.
+    def minimalOffset( self, radius ):
+        return ( self.radius + radius ) * SAFETY
+
+
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
-        x, y = randomVector2D( ( self.radius + radius ) * SAFETY )
+        x, y = randomVector2D( self.minimalOffset( radius ) )
         return pos + x * self.unitX + y * self.unitY
 
 
@@ -114,6 +126,10 @@ class CylindricalSurface( Surface, Cylinder ):
 Surface that is only used for throwing in particles. Those particles will than 
 later be tagged with surface=defaultSurface, which is an instance of the World 
 class. See gfrdbase.py.
+
+If no surface is specified, particles are tagged with an instance of this one.
+
+Movement in 3D.
 '''
 class CuboidalSurface( Surface, Box ):
     '''
@@ -121,21 +137,33 @@ class CuboidalSurface( Surface, Box ):
     size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
     point.
     '''
-    def __init__( self, origin, size, name='CuboidalSurface' ):
+    def __init__( self, origin, size, name='world' ):
         Surface.__init__( self, name )
         self.size = numpy.array(size)
         Lx = size[0]
         Ly = size[1]
         Lz = size[2]
         Box.__init__( self, origin + self.size/2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx/2, Ly/2, Lz/2 ) 
- 
+        self.defaultSingle = SphericalSingle
+        self.defaultPair = SphericalPair
+
+
+    def drawBDdisplacement( self, dt, D ):
+        r = math.sqrt( 2.0 * D * dt )
+        # Draw 3 numbers from normal distribution.
+        return numpy.random.normal( 0.0, r, 3 )
+
+
+    def randomVector( self, length ):
+        return randomVector( length )
+
 
     '''
     Overrule signedDistanceTo from Box. 
     Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
     '''
     def signedDistanceTo( self, pos ):
-        raise 'You should not add CuboidalSurfaces to the surfacelist using s.addSurface()!'
+        raise 'This method should not be used. Did you accidently add this CuboidalSurface to the surfacelist using s.addSurface()?'
         edge = self.origin - size/2
         dists = numpy.concatenate( ( edge - pos,
                                      edge+self.size-pos ) )
@@ -154,27 +182,5 @@ class CuboidalSurface( Surface, Box ):
         return numpy.array( [ random.uniform( edge[0], self.size[0] ),
                               random.uniform( edge[1], self.size[1] ),
                               random.uniform( edge[2], self.size[2] )])
-
-
-'''
-If no surface is specified, particles are tagged with an instance of this one.
-
-Movement in 3D.
-'''
-class World( Surface ):
-    def __init__( self ):
-        Surface.__init__( self, 'world' )
-        self.defaultSingle = SphericalSingle
-        self.defaultPair = SphericalPair
-
-
-    def randomVector( self, length ):
-        return randomVector( length )
-
-
-    def drawBDdisplacement( self, dt, D ):
-        r = math.sqrt( 2.0 * D * dt )
-        # Draw 3 numbers from normal distribution.
-        return numpy.random.normal( 0.0, r, 3 )
 
 

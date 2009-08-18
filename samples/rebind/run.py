@@ -49,7 +49,6 @@ def run( outfilename, DX_factor, N_X, seq, N ):
 
 def singlerun( T_list, DX_factor, N_X ):
 
-    s = EGFRDSimulator()
     #s.setUserMaxShellSize( 1e-6 )
     #s = BDSimulator()
 
@@ -65,7 +64,7 @@ def singlerun( T_list, DX_factor, N_X ):
     V = 1.66e-21 # m^3
     L = V ** (1.0/3.0) 
 
-    s.setWorldSize( L )
+    s = EGFRDSimulator( L )
 
     matrixSize = min( max( 3, int( (9 * N_X) ** (1.0/3.0) ) ), 60 )
     print 'matrixSize=', matrixSize
