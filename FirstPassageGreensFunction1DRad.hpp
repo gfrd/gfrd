@@ -1,3 +1,6 @@
+#if !defined( __FIRSTPASSAGEGREENSFUNCTION1DRAD_HPP )
+#define __FIRSTPASSAGEGREENSFUNCTION1DRAD_HPP
+
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
@@ -18,16 +21,16 @@
 #include "findRoot.hpp"
 #include "Defs.hpp"
 
-#define MAX_TERMEN 100
-#define MIN_TERMEN 20
-
-#define EPSILON 1E-12		// The measure of 'sameness' when comparing floating points numbers
-#define L_TYPICAL 1E-8		// This is a present typical length scale of the system, may not be true!
-#define T_TYPICAL 1E-6          // The typical timescale of the system, may also not be true!!
-#define PDENS_TYPICAL 1       // Is 1E3 a good measure for the probability density?!
-
 class FirstPassageGreensFunction1DRad
 {
+private:
+        static const Real L_TYPICAL = 1E-8; // measure of 'sameness' when comparing floating points numbers
+        static const Real T_TYPICAL = 1E-6; // This is a typical length scale of the system, may not be true!
+        static const Real EPSILON = 1E-12;  // The typical timescale of the system, may also not be true!!
+        static const Real PDENS_TYPICAL = 1; // Is 1E3 a good measure for the probability density?!
+
+        static const unsigned int MAX_TERMEN = 500;
+        static const unsigned int MIN_TERMEN = 20;
 
 public:
 	FirstPassageGreensFunction1DRad(const Real D, const Real k)
@@ -159,3 +162,4 @@ private:
 			// We scale everything to 1 with this
         Real t_scale;   // This is the time scale of the system.
 };
+#endif // __FIRSTPASSAGEGREENSFUNCTION1DRAD_HPP

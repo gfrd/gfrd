@@ -19,9 +19,9 @@ using namespace std;
 int main (void)
 {
 	// initializing
-	const Real D=1E-12;		// all the constants of our system
-	const Real k=1E-17;	// h=k/D also sometime refered to b
-	const Real sigma=1E-7;	// a
+	const Real D=1e-12;		// all the constants of our system
+	const Real k=1e-17;	// h=k/D also sometime refered to b
+	const Real sigma=1.18E-7;	// a
 	const Real a=5E-7;	// b
 	const Real r0=3E-7;
 

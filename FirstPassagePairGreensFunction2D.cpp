@@ -23,7 +23,6 @@
 
 #include "FirstPassagePairGreensFunction2D.hpp"
 
-const Real FirstPassagePairGreensFunction2D::TOLERANCE;
 const Real FirstPassagePairGreensFunction2D::MIN_T_FACTOR;
 const unsigned int FirstPassagePairGreensFunction2D::MAX_ORDER;
 const unsigned int FirstPassagePairGreensFunction2D::MAX_ALPHA_SEQ;
@@ -38,7 +37,6 @@ FirstPassagePairGreensFunction2D( const Real D,
     PairGreensFunction( D, kf, Sigma ),
     h( kf / D ),
     a( INFINITY )
-//    alpha0_threshold( 0.0 )
 {
     ; // do nothing
 }
@@ -108,26 +106,32 @@ FirstPassagePairGreensFunction2D::f_alpha0_aux_F( const Real alpha,
 						const f_alpha0_aux_params* const params )
 {
     const FirstPassagePairGreensFunction2D* const gf( params->gf ); 	// get the gf from the params?
-//    const Real value( params->value );				// get value from the parameters
-
     return gf->f_alpha0( alpha );
 }
 
 // finding the ith root for the order of Bessel functions zero. Only needed for the survival probability
 // and the flux
 const Real 
-FirstPassagePairGreensFunction2D::alpha0_i( const Integer i ) const
+FirstPassagePairGreensFunction2D::alpha0_i( const Real previous ) const
 {
-    THROW_UNLESS( std::out_of_range, i >= 0 );
+    THROW_UNLESS( std::out_of_range, previous >= 0.0 );
 
-    const Real a( this->geta() );		// get the a (the outer boundary
-    const Real sigma( this->getSigma() );	// and sigma
+    const Real a( this->geta() );			// get the a (the outer boundary
+    const Real sigma( this->getSigma() );		// and sigma
+    const Real interval( M_PI / ( a - sigma ) );
+
+    const Real target( previous + interval );	// The next root is approximately pi/(a-sigma) further
+    Real low ( target - (0.4 * interval ) );	// the range is calculated very easily
+    Real high( target + (0.4 * interval ) );	// We are sure that there is only one root in the interval
+						// THE 0.4 IS VERY TRICKY!! NOT SURE IF THIS WORKS FOR ALL
+						// PARAMETER SETS!!
+    if (low <= 0)
+    {	low = EPSILON/L_TYPICAL;	// NEW to avoid the zero and negative values for the interval
+    }
 
 
-    const Real target( i * M_PI + M_PI_2 );	// i*PI + PI/2
+    // setting up the function
     f_alpha0_aux_params params = { this, target };	// struct with the gf object and the target
-
-
     gsl_function F = 
 	{
 	    reinterpret_cast<typeof(F.function)>( &FirstPassagePairGreensFunction2D::f_alpha0_aux_F ),
@@ -135,51 +139,21 @@ FirstPassagePairGreensFunction2D::alpha0_i( const Integer i ) const
 	};
 
 
-    // We know the range of the solution from - Pi/2 <= atan <= Pi/2.
-    const Real interval( M_PI / ( a - sigma ) );
-    Real low( i * interval + std::numeric_limits<Real>::epsilon() );
-    Real high( (i+1) * interval );
+    // setting the search interval
+//    Real low( i * interval + std::numeric_limits<Real>::epsilon() );
+//    Real high( (i+1) * interval );
 
     //assert( GSL_FN_EVAL( &F, low ) * GSL_FN_EVAL( &F, high ) < 0.0 );
 
+    // finding the root
     const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
     gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
-    gsl_root_fsolver_set( solver, &F, low, high );
 
-    const unsigned int maxIter( 100 );
+    const Real alpha ( findRoot( F, solver, low, high,
+		 EPSILON/L_TYPICAL, EPSILON, "FirstPassagePairGreensFunction2D::alpha0_i" ) );
 
-    unsigned int j( 0 );
-    while( true )
-    {
-	gsl_root_fsolver_iterate( solver );
-
-        low = gsl_root_fsolver_x_lower( solver );
-        high = gsl_root_fsolver_x_upper( solver );
-	const int status( gsl_root_test_interval( low, high, 0.0, 1e-15 ) );
-
-	if( status == GSL_CONTINUE )
-	{
-	    if( j >= maxIter )
-	    {
-		gsl_root_fsolver_free( solver );
-		std::cerr << "alpha0_i: failed to converge." 
-			  << std::endl;
-		throw std::exception();
-	    }
-	}
-	else
-	{
-	    break;
-	}
-
-	++j;
-    }
-
-    const Real alpha( gsl_root_fsolver_root( solver ) );
     gsl_root_fsolver_free( solver );
   
-//    printf("alphavalue %g, alpha %g\n",GSL_FN_EVAL( &F, alpha ), alpha);
-
     return alpha;
 }
 
@@ -195,7 +169,6 @@ const Real FirstPassagePairGreensFunction2D::f_alpha( const Real alpha,
 	const Real s_An( sigma * alpha );
 	const Real a_An( a * alpha );
 	const Real realn( static_cast<Real>( n ) );
-//	const Real hs_n( h*sigma - realn );
 
 	const double Jn_s_An  (gsl_sf_bessel_Jn(n, s_An));
 	const double Jn1_s_An (gsl_sf_bessel_Jn(n+1, s_An));
@@ -205,15 +178,13 @@ const Real FirstPassagePairGreensFunction2D::f_alpha( const Real alpha,
 	const double Yn1_s_An (gsl_sf_bessel_Yn(n+1, s_An));
 	const double Yn_a_An  (gsl_sf_bessel_Yn(n, a_An));
 
-//	const double rho1 ( ( (hs_n * Jn_s_An) + (s_An * Jn1_s_An) ) * Yn_a_An );
-//	const double rho2 ( ( (hs_n * Yn_s_An) + (s_An * Yn1_s_An) ) * Jn_a_An );
 	const double rho1 ( ( (h*sigma * Jn_s_An) + (s_An * Jn1_s_An) - realn*Jn_s_An ) * Yn_a_An );
 	const double rho2 ( ( (h*sigma * Yn_s_An) + (s_An * Yn1_s_An) - realn*Yn_s_An ) * Jn_a_An );
-	return (rho1 - rho2); // /(Yn_a_An*Jn_a_An);
+	return (rho1 - rho2); 
 }
 
 
-// Finding the roots alpha using an approximation for the Bessel functions
+// Finding the roots alpha
 const Real 
 FirstPassagePairGreensFunction2D::f_alpha_aux_F( const Real alpha,
 	       					const f_alpha_aux_params* const params )
@@ -228,21 +199,22 @@ FirstPassagePairGreensFunction2D::f_alpha_aux_F( const Real alpha,
 // This calculates a root based on the previous one (offset) with Bessel functions of order n
 // The roots are calculated based on the previous root which is given as an argument (offset)
 const Real 
-FirstPassagePairGreensFunction2D::alpha_i( const Real offset, const Integer n, 
-					 gsl_root_fsolver* const solver ) const
+FirstPassagePairGreensFunction2D::alpha_i( const Real offset, const Integer n ) const
 {
     const Real sigma( this->getSigma() );
     const Real a( this->geta() );
-    const Real interval( M_PI / ( a - sigma ) );	// interval is the estimated distance to the next
-							// root
+    const Real interval( M_PI / ( a - sigma ) );// interval is the estimated distance to the next
+						// root
 
     const Real target( offset + interval );	// the target root is the previous one plus the interval
 
-    Real low ( target - (0.5 * interval ) );	// the range is calculated very easily
-    Real high( target + (0.5 * interval ) );	// We are sure that there is only one root in the interval
-	if (low <= 0)
-	{	low = 1e-5;			// NEW to avoid the zero and negative values for the interval
-	}
+    Real low ( target - (0.4 * interval ) );	// the range is calculated very easily
+    Real high( target + (0.4 * interval ) );	// We are sure that there is only one root in the interval
+						// THE 0.4 IS VERY TRICKY!! NOT SURE IF THIS WORKS FOR ALL
+						// PARAMETER SETS!!
+    if (low <= 0)
+    {	low = EPSILON/L_TYPICAL;	// NEW to avoid the zero and negative values for the interval
+    }
 
     f_alpha_aux_params params = { this, n, 0 };	// n is the summation index (the order of the Bessel
 						// functions used
@@ -253,32 +225,13 @@ FirstPassagePairGreensFunction2D::alpha_i( const Real offset, const Integer n,
 	    &params 
 	};
 
-    gsl_root_fsolver_set( solver, &F, low, high );
+    const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );  // initialize the solver
+    gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 
-    const unsigned int maxIter( 100 );
-    unsigned int k( 0 );
-    int status;
+    const Real alpha ( findRoot( F, solver, low, high,
+		 EPSILON/L_TYPICAL, EPSILON, "FirstPassagePairGreensFunction2D::alpha_i" ) );
+    gsl_root_fsolver_free( solver );
 
-    do
-    {
-	gsl_root_fsolver_iterate( solver );
-	
-	low = gsl_root_fsolver_x_lower( solver );
-	high = gsl_root_fsolver_x_upper( solver );
-	status = gsl_root_test_interval( low, high, 1e-12, 1e-15 );
-	
-	if( status == GSL_CONTINUE && k >= maxIter )	// iteration should continue but there are too many
-	{						// steps
-		gsl_root_fsolver_free( solver );
-		std::cerr << "alpha_i: failed to converge." 
-			  << std::endl;
-		throw std::exception();
-	}
-	++k;
-    }
-    while (status == GSL_CONTINUE);
-
-    const Real alpha( gsl_root_fsolver_root( solver ) );	// get the root
     return alpha;
 }
 
@@ -311,16 +264,16 @@ FirstPassagePairGreensFunction2D::alphaOffset( const unsigned int n ) const
     Real low ( offset );		// the searching interval for the new offset is between the previous
     Real high( offset + interval );	// one a interval further
 	if (low <= 0)			// NEW to make sure things don't get negative
-	{	low = 1e-5;		// we assume that the high value is never negative
+	{	low = EPSILON/L_TYPICAL;// we assume that the high value is never negative
 	}
 
-    Real f_low ( f_alpha(low,n) );		// get the values of the expression for the roots for these
-    Real f_high( f_alpha(high,n) );		// values of alpha (at the ends of the search range)
+    Real f_low ( f_alpha(low,n) );	// get the values of the expression for the roots for these
+    Real f_high( f_alpha(high,n) );	// values of alpha (at the ends of the search range)
 
-    while( f_low * f_high > 0 ) // if the expression changes sign then there is a root in the range
-    {				// and we should exit the loop
-	low =  high;				// shift everything so we check out the next interval
-	f_low = f_high;				// just pass the value on
+    while( f_low * f_high > 0 )		// if the expression changes sign then there is a root in the range
+    {					// and we should exit the loop
+	low =  high;			// shift everything so we check out the next interval
+	f_low = f_high;			// just pass the value on
 
 	high += interval;
 	f_high = f_alpha( high, n );
@@ -338,8 +291,8 @@ FirstPassagePairGreensFunction2D::alphaOffset( const unsigned int n ) const
     const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );  // initialize the solver
     gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 
-    offset = findRoot( F, solver, low, high, 0.0,          // find the intersection between the random
-                            TOLERANCE, "alphaOffset" );    // number and the cumm probability
+    offset = findRoot( F, solver, low, high, EPSILON/L_TYPICAL,	// find the intersection between the random
+                            EPSILON, "alphaOffset" );		// number and the cumm probability
     gsl_root_fsolver_free( solver );
 
     this->alphaOffsetTable[n] = offset;	// The offset found is now the first root
@@ -375,7 +328,7 @@ FirstPassagePairGreensFunction2D::p_survival_i( const Real alpha,
 	// calculate An,0
         const Real alpha_sq (alpha*alpha);
 
-        const Real rho (h*J0_aAn + alpha*J1_aAn);///J0_bAn);
+        const Real rho (h*J0_aAn + alpha*J1_aAn);
         const Real rho_sq (rho*rho);
 
         const Real B_n_0 (J0_r0An*Y0_bAn - Y0_r0An*J0_bAn);
@@ -415,7 +368,7 @@ FirstPassagePairGreensFunction2D::leavea_i( const Real alpha,
         // calculate An,0
         const Real alpha_sq (alpha*alpha);
 
-        const Real rho (h*J0_aAn + alpha*J1_aAn);///J0_bAn);
+        const Real rho (h*J0_aAn + alpha*J1_aAn);
         const Real rho_sq (rho*rho);
 
         const Real B_n_0 (J0_r0An*Y0_bAn - Y0_r0An*J0_bAn);
@@ -451,12 +404,12 @@ FirstPassagePairGreensFunction2D::leaves_i( const Real alpha,
         // calculate An,0
         const Real alpha_sq (alpha*alpha);
 
-        const Real rho (h*J0_aAn + alpha*J1_aAn);///J0_bAn);
+        const Real rho (h*J0_aAn + alpha*J1_aAn);
         const Real rho_sq (rho*rho);
 
         const Real B_n_0 (J0_r0An*Y0_bAn - Y0_r0An*J0_bAn);
 
-        const Real A_i_0 ((alpha_sq * rho_sq * B_n_0));// /( rho_sq - J0_bAn*J0_bAn*(h*h + alpha_sq)));
+        const Real A_i_0 ((alpha_sq * rho_sq * B_n_0));
 
 	// calculate Bn,0(sigma, alpha)
 	const Real B_n_0_sigma (Y0_bAn * J1_aAn - J0_bAn * Y1_aAn);
@@ -541,7 +494,7 @@ FirstPassagePairGreensFunction2D::Y0J0J1_constants ( const Real alpha,
 
         // calculate An,0
 	const Real alpha_sq (alpha*alpha);
-	const Real rho (h*J0_aAn + alpha*J1_aAn);///J0_bAn);
+	const Real rho (h*J0_aAn + alpha*J1_aAn);
 	const Real rho_sq (rho*rho);
 	const Real B_n_0 (J0_r0An*Y0_bAn - Y0_r0An*J0_bAn);
 	const Real A_i_0 ((alpha_sq * rho_sq * B_n_0)/( rho_sq - J0_bAn*J0_bAn*(h*h + alpha_sq)));
@@ -630,23 +583,16 @@ FirstPassagePairGreensFunction2D::guess_maxi( const Real t ) const
 
     const Real alpha0( getAlpha0( 0 ) );
     const Real Dt( D * t );
-    const Real thr( ( exp( - Dt * alpha0 * alpha0 ) / alpha0 ) * 
-                    this->TOLERANCE * 1e-1 );
+    const Real thr( ( exp( - Dt * alpha0 * alpha0 ) / alpha0 ) * this->EPSILON * 1e-1 );
     const Real thrsq( thr * thr );
-    //printf("w %g %g\n", thr, 2 * Dt / thrsq );
-    //printf("w0 %g\n", gsl_sf_lambert_W0( 2 * Dt / thrsq ) );
 
     if( thrsq <= 0.0 )
     {
         return this->MAX_ALPHA_SEQ;
     }
 
-    const Real max_alpha( 1.0 /
-                          ( sqrt( exp( gsl_sf_lambert_W0( 2 * Dt / thrsq ) ) *
-                                  thrsq ) ) );
-    const unsigned int 
-        maxi( safety + 
-              static_cast<unsigned int>( max_alpha * ( a - sigma ) / M_PI ) );
+    const Real max_alpha( 1.0 / ( sqrt( exp( gsl_sf_lambert_W0( 2 * Dt / thrsq ) ) * thrsq ) ) );
+    const unsigned int maxi( safety + static_cast<unsigned int>( max_alpha * ( a - sigma ) / M_PI ) );
 
     return std::min( maxi, this->MAX_ALPHA_SEQ );
 }
@@ -676,7 +622,6 @@ FirstPassagePairGreensFunction2D::p_survival_table( const Real t,
 {
 	Real p;
 	const unsigned int maxi( guess_maxi( t ) );	// guess the maximum number of iterations required
-        //printf("%d\n",maxi);
             
         if( psurvTable.size() < maxi + 1 )		// if the dimensions are good then this means
         {						// that the table is filled
@@ -850,7 +795,7 @@ const Real FirstPassagePairGreensFunction2D::drawTime( const Real rnd,
                 {       low *= .1;      // keep decreasing the lower boundary until the function straddles
                         value = GSL_FN_EVAL( &F, low );     // get the accompanying value
 
-                        if( fabs( low ) <= minT || fabs( value - value_prev ) < TOLERANCE )
+                        if( fabs( low ) <= minT || fabs( value - value_prev ) < EPSILON*this->T_TYPICAL )
                         {
                                 std::cerr << "Couldn't adjust low. F(" << low <<
                                         ") = " << value << std::endl;
@@ -865,9 +810,9 @@ const Real FirstPassagePairGreensFunction2D::drawTime( const Real rnd,
     const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );	// initialize the solver
     gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 
-    const Real t( findRoot( F, solver, low, high, 0.0, 		// find the intersection between the random
-                            TOLERANCE, "drawTime" ) );		// number and the cumm probability
-
+    const Real t( findRoot( F, solver, low, high,		// find the intersection between the random
+		EPSILON*T_TYPICAL, EPSILON, "FirstPassagePairGreensFunction2D::drawTime" ) );
+								// number and the cumm probability
     gsl_root_fsolver_free( solver );
 
     return t;
@@ -951,15 +896,11 @@ const Real FirstPassagePairGreensFunction2D::drawR( const Real rnd,
 	return r0;
     }
 
-//	std::cout << "calculating the survival probability...\n";
-
     const Real psurv( p_survival( t, r0 ) );	// calculate the survival probability at this time
 						// this is used as the normalization factor
 						// BEWARE!!! This also produces the roots An and therefore
 						// SETS THE HIGHEST INDEX -> side effect
 						// VERY BAD PROGRAMMING PRACTICE!!
-
-//	std::cout << "S = " << psurv << "\n";
 
     RealVector Y0_aAnTable;
     RealVector J0_aAnTable;
@@ -974,32 +915,20 @@ const Real FirstPassagePairGreensFunction2D::drawR( const Real rnd,
 	    &params 
 	};
 
-// TESTING 123
-//	for (Real plaats=sigma; plaats < a; plaats += 1E-8)
-//	{	std::cout << plaats << " " << GSL_FN_EVAL( &F, plaats )/psurv + rnd << "\n";
-//	}
-
-/*	std::cout << "the Y0_aAnTable has size: " << Y0_aAnTable.size() << " and values:\n";
-	for (int index=0; index < Y0_aAnTable.size(); index++)
-	{	std::cout << index << " " << Y0_aAnTable[index] << "\n";
-	}
-*/
     // adjust low and high starting from r0.
     // this is necessary to avoid root finding in the long tails where
     // numerics can be unstable.
-
     Real low( r0 );				// start with the initial position as the first guess
     Real high( r0 );
+    Real value (0);
+    unsigned int H( 3 );
 
-    const Real sqrt6Dt( sqrt( 4.0 * D * t ) );
+    const Real msd( sqrt( 4.0 * D * t ) );
     if( GSL_FN_EVAL( &F, r0 ) < 0.0 )
     {
-        // low = r0
-        unsigned int H( 3 );
-
-        while( true )
+	do
         {
-            high = r0 + H * sqrt6Dt;
+            high = r0 + H * msd;
             if( high > a )
             {
                 if( GSL_FN_EVAL( &F, a ) < 0.0 )	// something is very wrong, this should never happen
@@ -1007,29 +936,20 @@ const Real FirstPassagePairGreensFunction2D::drawR( const Real rnd,
                     printf( "drawR: p_int_r_table( a ) < 0.0. returning a.\n" );
                     return a;
                 }
-
                 high = a;
                 break;
             }
-
-            const Real value( GSL_FN_EVAL( &F, high ) );
-            if( value > 0.0 )
-            {
-                break;
-            }
-
+            value = GSL_FN_EVAL( &F, high );
             ++H;
         }
+	while (value < 0.0);
 
     }
     else
     {
-        // high = r0
-        unsigned int H( 3 );
-
-        while( true )
+	do
         {
-            low = r0 - H * sqrt6Dt;
+            low = r0 - H * msd;
             if( low < sigma )
             {
                 if( GSL_FN_EVAL( &F, sigma ) > 0.0 )
@@ -1043,14 +963,10 @@ const Real FirstPassagePairGreensFunction2D::drawR( const Real rnd,
                 break;
             }
 
-            const Real value( GSL_FN_EVAL( &F, low ) );
-            if( value < 0.0 )
-            {
-                break;
-            }
-
+            value = GSL_FN_EVAL( &F, low );
             ++H;
         }
+	while ( value > 0.0 );
     }
 
 
@@ -1058,10 +974,9 @@ const Real FirstPassagePairGreensFunction2D::drawR( const Real rnd,
 
     const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
     gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
-
-    const Real r( findRoot( F, solver, low, high, 1e-15,     // find the intersection between the random
-                            TOLERANCE, "drawR" ) );          // number and the cumm probability
-
+    const Real r( findRoot( F, solver, low, high,		// find the intersection between the random
+		 L_TYPICAL*EPSILON, EPSILON, "FirstPassagePairGreensFunction2D::drawR" ) );
+								// number and the cumm probability
     gsl_root_fsolver_free( solver );
 
     return r;
@@ -1080,10 +995,8 @@ const Real FirstPassagePairGreensFunction2D::p_m_alpha( const unsigned int n,
 	const Real h( this->geth() );
 	const Real a( this->geta() );
 	const Real D( this->getD() );
-//std::cout << "getting root... ";
 	const Real alpha( this->getAlpha( m, n ) ); // get the n-th root using the besselfunctions of order m
 
-//std::cout << "m n alpha " << m << " " << n << " " << alpha << std::endl;
 
 	const Real alpha_sq( alpha * alpha );
 	const Real realm( static_cast<Real>( m ) );
@@ -1110,7 +1023,7 @@ const Real FirstPassagePairGreensFunction2D::p_m_alpha( const unsigned int n,
 
 	// calculating An,m
 	const Real h_ma (h - realm/sigma);
-	const Real rho (h_ma*Jm_sAnm + alpha*Jmp1_sAnm);///Jm_aAnm);
+	const Real rho (h_ma*Jm_sAnm + alpha*Jmp1_sAnm);
 	const Real rho_sq (rho*rho);
 	// calculating Bn,m(r')
 	const Real B_n_m_r0 (Jm_r0Anm * Ym_aAnm  -  Ym_r0Anm * Jm_aAnm);
@@ -1140,7 +1053,7 @@ FirstPassagePairGreensFunction2D::p_m( const Integer m,
 					p_m_alpha,
 					this,
 					_1, m, r, r0, t ),	// The m-th factor is a summation over n
-			   MAX_ALPHA_SEQ, THETA_TOLERANCE ) );
+			   MAX_ALPHA_SEQ, EPSILON ) );
     return p;
 }
 
@@ -1154,30 +1067,35 @@ FirstPassagePairGreensFunction2D::makep_mTable( RealVector& p_mTable,
 {
 	p_mTable.clear();
 
-	const Real p_0( this->p_m( 0, r, r0, t ) );	// This is the p_m where m is 0, for the denominator
+	const Real p_0 ( this->p_m( 0, r, r0, t ) );	// This is the p_m where m is 0, for the denominator
 	p_mTable.push_back( p_0 );			// put it in the table
 
 
-	const Real p_1( this->p_m( 1, r, r0, t ) / p_0 );
+	const Real p_1 ( this->p_m( 1, r, r0, t ) / p_0 );
 	p_mTable.push_back( p_1 );			// put the first result in the table
 
 
 	if( p_1 == 0 )
 	{
-		return;			// apparantly all the terms are zero? We are finished
+		return;					// apparantly all the terms are zero? We are finished
 	}
 
-	const Real tolerance( THETA_TOLERANCE ); 
-	const Real threshold( fabs( tolerance * p_1  ) );
+	const Real threshold( fabs( EPSILON * p_1  ) );	// get a measure for the allowed error
 
 	Real p_m_abs (fabs (p_1));
-	Real p_m_prev_abs;	// store the previous term
+	Real p_m_prev_abs;	
 	unsigned int m( 1 );
 	do
 	{
-		p_m_prev_abs = p_m_abs;
-
 		m++;
+		if( m >= this->MAX_ORDER )		// If the number of terms is too large
+		{
+			std::cerr << "p_m didn't converge (m=" << m << "), continuing..." << std::endl;
+			break;
+		}
+
+
+		p_m_prev_abs = p_m_abs;					// store the previous term
 		const Real p_m( this->p_m( m, r, r0, t ) / p_0 );	// get the next term
 
 		if( ! std::isfinite( p_m ) )		// if the calculated value is not valid->exit
@@ -1187,16 +1105,9 @@ FirstPassagePairGreensFunction2D::makep_mTable( RealVector& p_mTable,
 			break;
 		}
 
-		p_m_abs = fabs( p_m );					// take the absolute value
 		p_mTable.push_back( p_m );				// put the result in the table
-        
-		if( m >= this->MAX_ORDER )		// If the number of terms is too large
-		{
-			std::cerr << "p_m didn't converge (m=" << m << "), continuing..." << std::endl;
-			break;
-		}
-	
-	}
+		p_m_abs = fabs( p_m );					// take the absolute value
+        }
 	while (p_m_abs >= threshold || p_m_prev_abs >= threshold || p_m_abs >= p_m_prev_abs );
 	// truncate when converged enough.
 	// if the current term is smaller than threshold
@@ -1238,7 +1149,7 @@ FirstPassagePairGreensFunction2D::dp_m_alpha_at_a( const unsigned int n,
 
         // calculating An,m
         const Real h_ma (h - realm/sigma);
-        const Real rho (h_ma*Jm_sAnm + alpha*Jmp1_sAnm);///Jm_aAnm);
+        const Real rho (h_ma*Jm_sAnm + alpha*Jmp1_sAnm);
         const Real rho_sq (rho*rho);
         // calculating Bn,m(r')
         const Real B_n_m_r0 (Jm_r0Anm * Ym_aAnm  -  Ym_r0Anm * Jm_aAnm);
@@ -1260,7 +1171,7 @@ FirstPassagePairGreensFunction2D::dp_m_at_a( const Integer m,
 					dp_m_alpha_at_a,
 					this,
 					_1, m, r0, t ),
-			   MAX_ALPHA_SEQ, THETA_TOLERANCE ) );
+			   MAX_ALPHA_SEQ, EPSILON ) );
 
     return p;
 }
@@ -1273,11 +1184,11 @@ FirstPassagePairGreensFunction2D::makedp_m_at_aTable( RealVector& p_mTable,
 {
         p_mTable.clear();
 
-        const Real p_0( this->dp_m_at_a( 0, r0, t ) );// This is the p_m where m is 0, for the denominator
-        p_mTable.push_back( p_0 );                       // put it in the table
+        const Real p_0 ( this->dp_m_at_a( 0, r0, t ) );	// This is the p_m where m is 0, for the denominator
+        p_mTable.push_back( p_0 );                      // put it in the table
 
 
-        const Real p_1( this->dp_m_at_a( 1, r0, t ) / p_0 );
+        const Real p_1 ( this->dp_m_at_a( 1, r0, t ) / p_0 );
         p_mTable.push_back( p_1 );                      // put the first result in the table
 
 
@@ -1286,35 +1197,33 @@ FirstPassagePairGreensFunction2D::makedp_m_at_aTable( RealVector& p_mTable,
                 return;                 // apparantly all the terms are zero? We are finished
         }
 
-        const Real tolerance( THETA_TOLERANCE );
-        const Real threshold( fabs( tolerance * p_1  ) );
+        const Real threshold( fabs( EPSILON * p_1  ) );	// get a measure for the allowed error
 
 	Real p_m_abs (fabs (p_1));
-        Real p_m_prev_abs;      // store the previous term
+        Real p_m_prev_abs;      
         unsigned int m( 1 );
         do
         {
-                p_m_prev_abs = p_m_abs;
-
                 m++;
-                const Real p_m( this->dp_m_at_a( m, r0, t ) / p_0 );       // get the next term
+                if( m >= this->MAX_ORDER )				// If the number of terms is too large
+                {
+                        std::cerr << "dp_m didn't converge (m=" << m << "), continuing..." << std::endl;
+                        break;
+                }
 
-                if( ! std::isfinite( p_m ) )            // if the calculated value is not valid->exit
+
+                p_m_prev_abs = p_m_abs;					// store the previous term
+                const Real p_m( this->dp_m_at_a( m, r0, t ) / p_0 );	// get the next term
+
+                if( ! std::isfinite( p_m ) )			// if the calculated value is not valid->exit
                 {
                         std::cerr << "makedp_m_at_aTable: invalid value; " <<
                                 p_m << "( m= " << m << ")." << std::endl;
                         break;
                 }
 
-                p_m_abs = fabs( p_m );                                  // take the absolute value
                 p_mTable.push_back( p_m );                              // put the result in the table
-
-                if( m >= this->MAX_ORDER )              // If the number of terms is too large
-                {
-                        std::cerr << "dp_m didn't converge (m=" << m << "), continuing..." << std::endl;
-                        break;
-                }
-
+                p_m_abs = fabs( p_m );                                  // take the absolute value
         }
         while (p_m_abs >= threshold || p_m_prev_abs >= threshold || p_m_abs >= p_m_prev_abs );
         // truncate when converged enough.
@@ -1374,100 +1283,54 @@ FirstPassagePairGreensFunction2D::drawTheta( const Real rnd,
 					   const Real r0, 
 					   const Real t ) const
 {
-    const Real sigma( this->getSigma() );
-    const Real a( this->geta() );
-    const Real D( this->getD() );
+	const Real sigma( this->getSigma() );
+	const Real a( this->geta() );
+	const Real D( this->getD() );
 
-    // input parameter range checks.
-    THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
-    THROW_UNLESS( std::invalid_argument, sigma <= r0 && r0 <= a );
-    THROW_UNLESS( std::invalid_argument, sigma <= r && r <= a);
-    THROW_UNLESS( std::invalid_argument, t >= 0.0 );
+	// input parameter range checks.
+	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
+	THROW_UNLESS( std::invalid_argument, sigma <= r0 && r0 <= a );
+	THROW_UNLESS( std::invalid_argument, sigma <= r && r <= a);
+	THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 
-    // t == 0 means no move.
-    if( t == 0.0 || D == 0 || r0 == a || rnd == 0.0)
-    {
-	return 0.0;
-    }
-
-    if (r == sigma)	// a reaction has occured, the angle is irrelevant
-    {
-	return 0.0;
-    }
-
-    //const Real Dt6_r0( sqrt( 6.0 * getD() * t ) / r0 );
-    //const Real high( 5 * Dt6_r0 < 1.0 ? asin( 5 * Dt6_r0 ) : M_PI );
-    //const Real mean( Dt6_r0 < 1.0 ? asin( Dt6_r0 ) : M_PI );
-    //printf("theta high %g %g %g\n", high,mean, t );
-
-    const Real high( M_PI );	// just find the theta between 0-pi, the distribution is symmetric around 0
-
-
-
-
-    RealVector p_mTable;	// a table with constants to make calculations much faster
-
-//	std::cout << "tabel maken\n";
-    if( r == geta() )		// If the r is at the outer boundary
-    {
-//	std::cout << "deeltje op de rand\n";
-	makedp_m_at_aTable( p_mTable, r0, t );	// making the table if the particle is on the outer boundary
-    }
-    else
-    {
-//	std::cout << "deeltje in het domein\n";
-	makep_mTable( p_mTable, r, r0, t );	// making the table of constants for the regular case
-    }
-//	std::cout << "tabel gemaakt\n";
-
-//    const Real ip_theta_pi( ip_theta_table( high, r, r0, t, p_mTable ) ); // get the normalization factor
-
-
-
-
-    ip_theta_params params = { this, r, r0, t, p_mTable, rnd*0.5 };	// r, r0, t are not required
-
-/*	for (double angle=0; angle < high; angle+= 0.1)
-	{	std::cout << angle << " " << ip_theta_F(angle, &params) << "\n";
+	// t == 0 means no move.
+	if( t <= T_TYPICAL*EPSILON || D == 0 || fabs(r0 - a) <= EPSILON*L_TYPICAL || rnd <= EPSILON)
+	{
+		return 0.0;
 	}
-*/
-								// they are already in p_mTable
-    gsl_function F = 
+	else if (r == sigma)	// a reaction has occured, the angle is irrelevant
+	{
+		return 0.0;
+	}
+
+	// making the tables with constants
+	RealVector p_mTable;			// a table with constants to make calculations much faster
+	if( fabs(r - a) <= EPSILON*L_TYPICAL )	// If the r is at the outer boundary
+	{
+		makedp_m_at_aTable( p_mTable, r0, t );	// making the table if particle on the outer boundary
+	}
+	else
+	{
+		makep_mTable( p_mTable, r, r0, t );	// making the table of constants for the regular case
+	}
+
+
+	// preparing the function
+	ip_theta_params params = { this, r, r0, t, p_mTable, rnd*0.5 };	// r, r0, t are not required
+	gsl_function F = 
 	{
 	    reinterpret_cast<typeof(F.function)>( &ip_theta_F ),
 	    &params 
 	};
 
-    const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
-    gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
-    gsl_root_fsolver_set( solver, &F, 0.0, M_PI );
+	// finding the root
+	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
+	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
+	const Real theta( findRoot( F, solver, 0, M_PI, EPSILON, EPSILON,
+                "FirstPassagePairGreensFunction2D::drawTheta" ) );
+	gsl_root_fsolver_free( solver );
 
-
-    const unsigned int maxIter( 100 );
-    unsigned int i( 0 );
-    int status;
-    do				// find the root
-    {
-	gsl_root_fsolver_iterate( solver );
-	const Real low( gsl_root_fsolver_x_lower( solver ) );
-	const Real high( gsl_root_fsolver_x_upper( solver ) );
-	status = gsl_root_test_interval( low, high, 1e-11, THETA_TOLERANCE );
-
-	if( status == GSL_CONTINUE && i >= maxIter)	// if root finding should continue but the maximum
-	{						// of iterations is exceeded
-		gsl_root_fsolver_free( solver );	// throw an exception
-		std::cerr << "drawTheta: failed to converge." << std::endl;
-		throw std::exception();
-	}
-	++i;
-    }
-    while (status == GSL_CONTINUE);			// continue rootfinding
-  
-    //printf("%d\n", i );
-
-    const Real theta = gsl_root_fsolver_root( solver );	// the root was found
-    gsl_root_fsolver_free( solver );
-    return theta;
+	return theta;
 }
 
 

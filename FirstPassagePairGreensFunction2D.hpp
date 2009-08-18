@@ -1,5 +1,5 @@
-#if !defined( __FIRSTPASSAGEPAIRGREENSFUNCTION2D3_HPP )
-#define __FIRSTPASSAGEPAIRGREENSFUNCTION2D3_HPP 
+#if !defined( __FIRSTPASSAGEPAIRGREENSFUNCTION2D_HPP )
+#define __FIRSTPASSAGEPAIRGREENSFUNCTION2D_HPP 
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/function.hpp>
@@ -20,13 +20,15 @@ class FirstPassagePairGreensFunction2D
 
     // SphericalBesselGenerator's accuracy, used by some
     // theta-related calculations.
-    static const Real THETA_TOLERANCE = 1e-5;
 
     static const Real MIN_T_FACTOR = 1e-8;
 
+    static const Real L_TYPICAL = 1E-7;
+    static const Real T_TYPICAL = 1E-5;
+    static const Real EPSILON = 1E-12;
+
     static const unsigned int MAX_ORDER = 30;		// The maximum number of m terms
     static const unsigned int MAX_ALPHA_SEQ = 2000;	// The maximum number of n terms
-
 
 public:
     
@@ -106,10 +108,9 @@ public:
 
     const Real alphaOffset( const unsigned int n ) const;
 
-    const Real alpha0_i( const Integer i ) const;
+    const Real alpha0_i( const Real previous ) const;
 
-    const Real alpha_i( const Real offset, const Integer n, 
-			gsl_root_fsolver* const solver ) const;
+    const Real alpha_i( const Real offset, const Integer n ) const;
 
     const Real p_survival_i( const Real alpha,
 			     const Real r0 ) const;
@@ -142,16 +143,9 @@ public:
 		}
 		else			// the requested root is dependent on the previous one
 		{
-			const Real offset (getAlpha(n, i-1));	// get the previous root		
-
-			const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
-			gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
-
-			alphaTable[i] = alpha_i( offset , n, solver );	// find the requested root based on
+			const Real previous (getAlpha(n, i-1));		// get the previous root
+			alphaTable[i] = this->alpha_i( previous , n );	// find the requested root based on
 									// the previous one
-
-			gsl_root_fsolver_free( solver );
-								// get the current root (based on prev one)
 		}
 	}
 	return alphaTable[i];
@@ -159,26 +153,31 @@ public:
     }
 
     const Real getAlpha0( const RealVector::size_type i ) const
-    {	return this->getAlpha (0, i);
-    }
-/*    {
+    {
 	RealVector& alphaTable( this->alphaTable[0] );
-	
         const RealVector::size_type oldSize( alphaTable.size() );
 
-	if( oldSize <= i )
+	if( i >= oldSize )
 	{
-	    alphaTable.resize( i+1 );
+	    alphaTable.resize( i+1, 0 );// fill the empty spaces with zeros
+	}
 
-            for( RealVector::size_type m( oldSize ); m <= i; ++m )
-            {
-                alphaTable[m] = alpha0_i( m );
-            }
+	if (alphaTable[i] == 0)         // if the requested root was not calculated yet
+	{
+                if (i==0)               // if the requested root is the first one
+                {       const Real offset (alphaOffset(0));     // The offset is the first root
+                        alphaTable[i]= offset;
+                }
+                else                    // the requested root is dependent on the previous one
+                {
+                        const Real previous (getAlpha0(i-1));		// get the previous root
+                        alphaTable[i] = this->alpha0_i( previous );	// find the requested root based on
+                                                                        // the previous one
+                }
 	}
 
 	return alphaTable[i];
     }
-*/
 
 protected:
 
@@ -314,4 +313,4 @@ private:
 
 
 
-#endif // __FIRSTPASSAGEPAIRGREENSFUNCTION2D3_HPP
+#endif // __FIRSTPASSAGEPAIRGREENSFUNCTION2D_HPP

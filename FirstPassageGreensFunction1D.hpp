@@ -1,3 +1,6 @@
+#if !defined( __FIRSTPASSAGEGREENSFUNCTION1D_HPP )
+#define __FIRSTPASSAGEGREENSFUNCTION1D_HPP
+
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
@@ -16,18 +19,18 @@
 #include <math.h>
 
 #include "findRoot.hpp"
-
-#define MAX_TERMEN 500
-#define MIN_TERMEN 20
-
-#define EPSILON 1E-12		// The measure of 'sameness' when comparing floating points numbers
-#define L_TYPICAL 1E-8		// This is a present typical length scale of the system, may not be true!
-#define T_TYPICAL 1E-6		// The typical timescale of the system, may also not be true!!
-#define PDENS_TYPICAL 1	// Is 1E3 a good measure for the probability density?!
-
+#include "Defs.hpp"
 
 class FirstPassageGreensFunction1D
 {
+private:
+	static const Real L_TYPICAL = 1E-8; // measure of 'sameness' when comparing floating points numbers
+	static const Real T_TYPICAL = 1E-6; // This is a typical length scale of the system, may not be true!
+	static const Real EPSILON = 1E-12;  // The typical timescale of the system, may also not be true!!
+	static const Real PDENS_TYPICAL = 1; // Is 1E3 a good measure for the probability density?!
+
+	static const unsigned int MAX_TERMEN = 500;
+	static const unsigned int MIN_TERMEN = 20;
 
 public:
         FirstPassageGreensFunction1D(const Real D)
@@ -124,6 +127,7 @@ private:
 	// Berekent de kans om het deeltje op plaats x of y te vinden op tijdstip t
 	const Real prob_r (const Real r, const Real t) const;
 
+private:
         const Real D;   // The diffusion constant
         Real L;         // The length of your domain (also the l_scale, see below)
         Real r0;
@@ -131,4 +135,4 @@ private:
                         // We scale everything to 1 with this
 	Real t_scale;	// This is the time scale of the system.
 };
-
+#endif // __FIRSTPASSAGEGREENSFUNCTION1D_HPP
