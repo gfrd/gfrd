@@ -29,7 +29,7 @@ private:
         static const Real EPSILON = 1E-12;  // The typical timescale of the system, may also not be true!!
         static const Real PDENS_TYPICAL = 1; // Is 1E3 a good measure for the probability density?!
 
-        static const int MAX_TERMEN = 500;
+        static const int MAX_TERMEN = 200;
         static const int MIN_TERMEN = 20;
 
 public:
