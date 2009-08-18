@@ -81,19 +81,19 @@ def run( ):
     s.addReactionType( r2 )
     '''
 
-    i1 = SurfaceBindingInteractionType( worldA, dna, dnaA, 1 )
+    i1 = SurfaceBindingInteractionType( worldA, dna, dnaA, 1e-5 )
     s.addInteractionType( i1 )
-    r1 = SurfaceUnbindingReactionType( dnaA, worldA, 1 )
+    r1 = SurfaceUnbindingReactionType( dnaA, worldA, 1e-5 )
     s.addReactionType( r1 )
 
-    i2 = SurfaceBindingInteractionType( worldA, membrane, membraneA, 1 )
+    i2 = SurfaceBindingInteractionType( worldA, membrane, membraneA, 1e-5 )
     s.addInteractionType( i2 )
-    r2 = SurfaceUnbindingReactionType( membraneA, worldA, 1 )
+    r2 = SurfaceUnbindingReactionType( membraneA, worldA, 1e-5 )
     s.addReactionType( r2 )
 
-    i2 = SurfaceBindingInteractionType( worldA, membrane2, membrane2A, 1 )
+    i2 = SurfaceBindingInteractionType( worldA, membrane2, membrane2A, 1e-5 )
     s.addInteractionType( i2 )
-    r2 = SurfaceUnbindingReactionType( membrane2A, worldA, 1 )
+    r2 = SurfaceUnbindingReactionType( membrane2A, worldA, 1e-5 )
     s.addReactionType( r2 )
 
 

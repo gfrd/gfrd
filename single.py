@@ -298,7 +298,7 @@ class InteractionSingle( Single ):
 
 
     def getRadius( self ):
-        raise RuntimeError, 'Todo'
+        #raise RuntimeError, 'Todo'
         return self.shellList[0].radius
     radius = property( getRadius )
 

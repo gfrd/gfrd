@@ -13,8 +13,9 @@ from surface import *
 from gfrdbase import *
 import _gfrd
 
-DEFAULT_DT_FACTOR = 1e-5
+DEFAULT_DT_FACTOR = 1e-3 # 1e-5
 
+# Todo. Should also depend on reaction rates. dt*k << 1.
 def calculateBDDt( speciesList, factor ):
 
     D_list = []
@@ -118,14 +119,12 @@ class BDSimulatorCoreBase( object ):
             return self.P_acct[ rt ]
 
         except KeyError:
-            # Todo. When self.dt is big (1 instead of 1e-5), I, and thus p, 
-            # becomes way too big. Is this expected behaviour?
             I = _gfrd.I_bd( sigma, self.dt, D )
             p = rt.k * self.dt / ( I * 4.0 * numpy.pi )
             if not 0.0 <= p < 1.0:
                 raise RuntimeError,\
-                    'Invalid acceptance ratio (%s) for reaction %s.' \
-                    % ( p, rt )
+                    'Invalid acceptance ratio (%s) for reaction %s. rt.k=%g, I=%g' \
+                    % ( p, rt, rt.k, I )
             self.P_acct[ rt ] = p
             return p
 
