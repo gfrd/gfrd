@@ -72,7 +72,7 @@ class CartesianDomain( Domain ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Cartesian drawTime. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Cartesian drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
 	    raise Stop( 'gf.drawTime() failed; %s; rnd=%g; r0=%g; L=%g' %\
@@ -89,7 +89,7 @@ class CartesianDomain( Domain ):
         # Set escape flag (can still be an interaction).
         self.escape = True
         try:
-            log.debug( '\tDebug. Cartesian drawEventType. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Cartesian drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), dt )
 	except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; r0=%g; dt=%g; L=%g' %\
@@ -115,7 +115,7 @@ class CartesianDomain( Domain ):
 
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Cartesian drawR. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Cartesian drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, dt  )
         except Exception, e:
             raise Stop( 'gf.drawR failed; %s; rnd=%g, dt=%g, r0=%g, L=%g' %\
@@ -139,7 +139,7 @@ class RadialDomain( Domain ):
     def drawTime( self ):
 	try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Radial drawTime. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
 	    raise Stop( 'gf.drawTime() failed; %s; rnd=%g; a=%g' %\
@@ -162,7 +162,7 @@ class RadialDomain( Domain ):
             return self.a
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Radial drawR. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial drawR. ' + str(self.gf) )
             r = self.gf.drawR( rnd, dt  )
         except Exception, e:
             raise Stop( 'gf.drawR failed; %s; rnd=%g, dt=%g, a=%g' %\
@@ -186,7 +186,7 @@ class CompositeDomain( Domain ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Radial2D drawTime. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawTime. ' + str(self.gf) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
 	    raise Stop( 'gf.drawTime() failed; %s; rnd=%g, sigma=%g, r0=%g, a=%g' %\
@@ -200,7 +200,7 @@ class CompositeDomain( Domain ):
     def drawEventType( self, dt ):
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Radial2D drawEventType. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawEventType. ' + str(self.gf) )
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; sigma=%g; r0=%g; a=%g; dt=%g' %\
@@ -226,11 +226,11 @@ class CompositeDomain( Domain ):
     def drawR_pair( self, gf, dt ):
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Radial2D drawR_pair. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawR_pair. ' + str(self.gf) )
             r = gf.drawR( rnd, self.r0, dt )
             # redraw; shouldn't happen often
             while r >= self.a or r <= self.sigma: 
-                #log.info( 'drawR_pair: redraw' )
+                #log.info( '\tdrawR_pair: redraw' )
                 #self.sim.rejectedMoves += 1  #FIXME:
                 rnd = numpy.random.uniform()
                 r = gf.drawR( rnd, self.r0, dt )
@@ -244,7 +244,7 @@ class CompositeDomain( Domain ):
     def drawTheta_pair( self, gf, r, dt ):
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
             # Todo. gf.drawTheta() failed; GSL error: endpoints do not 
             # straddle.
             #theta = gf.drawTheta( rnd, r, self.r0, dt )

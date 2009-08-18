@@ -29,7 +29,7 @@ def calculateBDDt( speciesList, factor ):
     sigma_min = radius_min * 2
 
     dt = factor * sigma_min ** 2 / D_max  
-    log.debug( 'bd dt = %g' % dt )
+    log.debug( '\t\tDebug. bd dt = %g' % dt )
 
     return dt
 
@@ -170,7 +170,7 @@ class BDSimulatorCoreBase( object ):
             try:
                 self.fireReaction1( particle, rt1 )
             except NoSpace:
-                log.info( 'fireReaction1 rejected.' )
+                log.info( '\t\tfireReaction1 rejected.' )
             return
 
         D = species.D
@@ -178,7 +178,7 @@ class BDSimulatorCoreBase( object ):
             return
 
         displacement = particle.surface.drawBDdisplacement( self.dt, D )
-	log.debug( '\tDebug. Multi. %s, displacement=%s.' % ( particle, displacement) )
+	log.debug( '\t\tDebug. Multi. %s, displacement=%s.' % ( particle, displacement) )
 
         newpos = particle.pos + displacement
         newpos %= self.main.worldSize   #self.applyBoundary( newpos )
@@ -191,7 +191,7 @@ class BDSimulatorCoreBase( object ):
         '''
         if neighbors:
             if len( neighbors ) >= 2:
-                log.info( 'collision two or more particles; move rejected' )
+                log.info( '\t\tcollision two or more particles; move rejected' )
                 return
 
             closest = neighbors[0]
@@ -208,15 +208,15 @@ class BDSimulatorCoreBase( object ):
                 rnd = numpy.random.uniform()
 
                 if p > rnd:
-                    log.info( 'fire reaction2' )
+                    log.info( '\t\tfire reaction2' )
                     try:
                         self.fireReaction2( particle, closest, rt )
                     except NoSpace:
-                        log.info( 'fireReaction2 move rejected' )
+                        log.info( '\t\tfireReaction2 move rejected' )
                     return
 
             else:
-                log.info( 'collision move rejected' )
+                log.info( '\tcollision move rejected' )
 
             # Neighbor is reflecting us. Don't move.
             return
@@ -235,15 +235,15 @@ class BDSimulatorCoreBase( object ):
                 rnd = numpy.random.uniform()
 
                 if p > rnd:
-                    log.info( 'fire interaction' )
+                    log.info( '\tfire interaction' )
                     try:
                         self.fireReaction1( particle, rt )
                     except NoSpace:
-                        log.info( 'fireReaction1 move rejected' )
+                        log.info( '\tfireReaction1 move rejected' )
                     return
 
             else:
-                log.info( 'interaction move rejected' )
+                log.info( '\tinteraction move rejected' )
 
             # Surface is reflecting us. Don't move.
             return
@@ -256,7 +256,7 @@ class BDSimulatorCoreBase( object ):
             self.clearVolume( newpos, particle.radius, ignore=[particle] )
             self.moveParticle( particle, newpos )
         except NoSpace:
-            log.info( 'propagation move rejected.' )
+            log.info( '\tpropagation move rejected.' )
 
 
 
@@ -313,7 +313,7 @@ class BDSimulatorCoreBase( object ):
 
             if not self.checkOverlap( newpos, radius,
                                       ignore = [ particle, ] ):
-                log.info( 'no space for product particle.' )
+                log.info( '\tno space for product particle.' )
                 raise NoSpace()
 
             self.clearVolume( newpos, radius, ignore = [ particle ] )
@@ -369,7 +369,7 @@ class BDSimulatorCoreBase( object ):
                                                          [ particle, ]):
                     break
             else:
-                log.info( 'no space for product particles.' )
+                log.info( '\tno space for product particles.' )
                 raise NoSpace()
 
             self.clearVolume( newpos1, radius1, ignore = [ particle ] )
@@ -563,7 +563,7 @@ class BDSimulator( ParticleSimulatorBase ):
 
         self.core.step()
 
-        log.info( '%d: t=%g dt=%g, reactions=%d, rejectedMoves=%d' %
+        log.info( '\t%d: t=%g dt=%g, reactions=%d, rejectedMoves=%d' %
                   ( self.stepCounter, self.t, self.dt, self.reactionEvents,
                     self.rejectedMoves ) )
 

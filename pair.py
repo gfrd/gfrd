@@ -77,7 +77,7 @@ class Pair( object ):
 
 
     def __del__( self ):
-        #log.debug( 'del %s' % str( self ) )
+        #log.debug( '\tdel %s' % str( self ) )
         pass
 
 
@@ -204,9 +204,9 @@ class Pair( object ):
             a_r = a_r_2
             a_R = a_R_2
 
-        #log.debug( 'a %g, r %g, R %g pairDistance %g' % 
+        #log.debug( '\ta %g, r %g, R %g pairDistance %g' % 
         #           ( shellSize, a_r, a_R, pairDistance ) )
-        #log.debug( 'tr %g, tR %g' % 
+        #log.debug( '\ttr %g, tR %g' % 
         #           ( ( ( a_r - pairDistance ) / math.sqrt(6 * self.D_tot))**2,\
         #                 (a_R / math.sqrt( 6*self.D_geom ))**2 ) )
         assert a_r > 0
@@ -366,25 +366,25 @@ class SphericalPair( Pair ):
             if distanceFromShell < thresholdDistance:
                 # near both a and sigma;
                 # use FirstPassagePairGreensFunction
-                #log.debug( 'GF: normal' )
+                #log.debug( '\tGF: normal' )
                 pgf = self.pgf
                 pgf.seta( self.a_r ) # Don't forget.
             else:
                 # near sigma; use BasicPairGreensFunction (has no a).
-                #log.debug( 'GF: only sigma' )
+                #log.debug( '\tGF: only sigma' )
                 pgf = BasicPairGreensFunction( self.D_tot, self.rt.k, 
                                                 self.sigma )
         else:
             if distanceFromShell < thresholdDistance:
                 # near a;
-                #log.debug( 'GF: only a' )
+                #log.debug( '\tGF: only a' )
                 pgf = FirstPassageNoCollisionPairGreensFunction( self.D_tot )
                 pgf.seta( self.a_r ) # Don't forget.
                 
             else:
                 # distant from both a and sigma;
                 # use FreePairGreensFunction (has no a).
-                #log.debug( 'GF: free' )
+                #log.debug( '\tGF: free' )
                 pgf = FreePairGreensFunction( self.D_tot )
 
         return pgf

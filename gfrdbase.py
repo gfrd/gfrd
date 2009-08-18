@@ -481,13 +481,13 @@ class ParticleSimulatorBase( object ):
         # distance_Simple.. -> utils.py -> pyGFRD.cpp -> distance.hpp
         # distance_Cyclic.. -> utils.py -> pyGFRD.cpp -> distance.hpp
         if isinstance( size, float ) and size == INF:
-            log.debug( 'distance_Simple.. is used' )
+            log.debug( '\t\tdistance_Simple.. is used' )
             self._distance = distance_Simple
             #self._distanceArray = distanceArray_Simple
             self._distanceSq = distanceSq_Simple
             self._distanceSqArray = distanceSqArray_Simple
         else:
-            log.debug( 'distance_Cyclic.. is used' )
+            log.debug( '\t\tdistance_Cyclic.. is used' )
             self._distance = distance_Cyclic
             #self._distanceArray = distanceSqArray_Cyclic
             self._distanceSq = distanceSq_Cyclic
@@ -610,7 +610,7 @@ class ParticleSimulatorBase( object ):
         if not surface:
             surface = species.surface
 
-        log.info( 'throwing in %s %s particles to %s' % ( n, species.id, surface ) )
+        log.info( '\tthrowing in %s %s particles to %s' % ( n, species.id, surface ) )
 
         i = 0
         while i < int( n ):
@@ -625,18 +625,18 @@ class ParticleSimulatorBase( object ):
                 if surface == self.defaultSurface or ( surface != self.defaultSurface and isinstance(surface, CuboidalSurface) ):
                     distance, closestSurface = self.getClosestSurface( position, [] )
                     if closestSurface and distance < closestSurface.minimalOffset( species.radius ):
-                        log.info( '%d-th particle rejected. To close to surface. I will keep trying.' %i )
+                        log.info( '\t%d-th particle rejected. To close to surface. I will keep trying.' %i )
                         create = False
                 if create:
                     # All checks passed. Create particle.
                     self.createParticle( species, position )
                     i += 1
             else:
-                log.info( '%d-th particle rejected. I will keep trying.' %i )
+                log.info( '\t%d-th particle rejected. I will keep trying.' %i )
 
 
     def placeParticle( self, species, pos ):
-        log.info( 'place %s particle at %s' % ( species.id, pos ) )
+        log.info( '\tplace %s particle at %s' % ( species.id, pos ) )
         pos = numpy.array( pos )
         radius = species.radius
 

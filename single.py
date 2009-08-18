@@ -33,7 +33,7 @@ class Single( object ):
 
     def posString( self ):
         factor = 1
-        return '(%g %g %g)' % ( self.pos[0]*factor, self.pos[1]*factor, self.pos[2]*factor ) 
+        return '(%.3g %.3g %.3g)' % ( self.pos[0]*factor, self.pos[1]*factor, self.pos[2]*factor ) 
 
 
     def getMinRadius( self ):
