@@ -34,8 +34,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         ParticleSimulatorBase.__init__( self, worldSize )
 
-        self.MULTI_SHELL_FACTOR = 0.5   #0.05 # SHould be smaller than SINGLE_SHELL_FACTOR!
-        self.SINGLE_SHELL_FACTOR = 1.0  # 0.1
+        self.MULTI_SHELL_FACTOR = 0.05 # Should be smaller than SINGLE_SHELL_FACTOR!
+        self.SINGLE_SHELL_FACTOR = 0.1
 
         self.isDirty = True
         self.scheduler = EventScheduler()
@@ -427,6 +427,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         return neighbors, distances, closestSingle, closestDistance
 
 
+    # Possible improvement: get this info from objectMatrix using 
+    # objectMatrix.get().
     def objDistance( self, pos, obj ):
         if isinstance( obj, Surface ):
             posTransposed = cyclicTranspose( pos, obj.origin, self.worldSize )
@@ -746,8 +748,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     def propagateSingle( self, single ):
 	newpos = single.drawNewPosition(self.t - single.lastTime) 
 	self.applyBoundary( newpos )
-	assert self.checkOverlap( newpos, single.getMinRadius(),
-				  ignore = [ single.particle ] )
+	if not self.checkOverlap( newpos, single.getMinRadius(),
+                ignore = [ single.particle ] ):
+            raise Stop( 'propagateSingle: checkOverlap failed.' )
+
 	self.moveParticle( single.particle, newpos )
 
         if single.eventType == EventType.ESCAPE:
@@ -885,7 +889,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		newpos = currentSurface.randomUnbindingSite( oldpos, productSpecies.radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 # Todo. Does this obey detailed balance?
-                newpos, _ = newSurface.projectedPoint( oldpos )
+                newpos, _ = rt.products[0].surface.projectedPoint( oldpos )
 
                 self.reactionEvents -= 1 # Because we do +1 at end of this method.
                 self.interactionEvents += 1

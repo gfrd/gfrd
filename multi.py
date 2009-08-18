@@ -78,13 +78,13 @@ class MultiBDCore( BDSimulatorCoreBase ):
         self.particleMatrix.remove( particle )
 
 
-    def createParticle( self, species, pos, surface ):
+    def createParticle( self, species, pos ):
 
         #if not self.withinShell( pos, species.radius ):
         #    self.escaped = True
         #    self.clearOuterVolume( pos, species.radius )
 
-        particle = self.main.createParticle( species, pos, surface )
+        particle = self.main.createParticle( species, pos )
         self.addParticle( particle )
 
         return particle

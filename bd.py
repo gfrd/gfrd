@@ -122,9 +122,13 @@ class BDSimulatorCoreBase( object ):
             I = _gfrd.I_bd( sigma, self.dt, D )
             p = rt.k * self.dt / ( I * 4.0 * numpy.pi )
             if not 0.0 <= p < 1.0:
+                # Todo.
+                p = 1
+                '''
                 raise RuntimeError,\
                     'Invalid acceptance ratio (%s) for reaction %s. rt.k=%g, I=%g' \
                     % ( p, rt, rt.k, I )
+                '''
             self.P_acct[ rt ] = p
             return p
 
@@ -303,7 +307,7 @@ class BDSimulatorCoreBase( object ):
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 # Todo. Does this obey detailed balance?
                 # Select position on surface with z=0.
-                newpos, _ = productSpecies.surface.calculateProjection( oldpos )
+                newpos, _ = productSpecies.surface.projectedPoint( oldpos )
             else:
                 newpos = oldpos
 
