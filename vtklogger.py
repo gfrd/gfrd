@@ -115,7 +115,7 @@ class VTKLogger:
 
         for speciesIndex,species in enumerate(self.sim.speciesList.values()):
             for particlePos in species.pool.positions:
-                self.appendLists( posList, particlePos, typeList, 2 + speciesIndex, radiusList, species.radius)
+                self.appendLists( posList, particlePos, typeList, speciesIndex, radiusList, species.radius)
 
         return self.vtk_writer.createDoc(posList, radii=radiusList, 
                 colors=typeList )
