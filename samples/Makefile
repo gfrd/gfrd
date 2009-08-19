@@ -36,6 +36,11 @@ mapk:
 	echo
 	cd mapk && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python mapk.py
 
+.PHONY: membrane
+membrane:
+	echo
+	cd membrane && rm -rf $(DATA) && LOGLEVEL=DEBUG PYTHONPATH=${PYTHONPATH}:../../ python run.py
+
 .PHONY: pushpull
 pushpull:
 	echo
