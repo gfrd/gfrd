@@ -240,7 +240,7 @@ class Multi( object ):
         buf = 'Multi( '
         buf += str( self.sim.particleList[0] )
         for particle in self.sim.particleList[1:]:
-            buf += ', ' + str( particle )
+            buf += ',\n\t\t\t' + str( particle )
         buf += ' )'
 
         return buf

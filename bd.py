@@ -29,7 +29,7 @@ def calculateBDDt( speciesList, factor ):
     sigma_min = radius_min * 2
 
     dt = factor * sigma_min ** 2 / D_max  
-    log.debug( '\t\tDebug. bd dt = %g' % dt )
+    log.debug( '\t\tDebug. bd dt = %.3g' % dt )
 
     return dt
 
@@ -126,7 +126,7 @@ class BDSimulatorCoreBase( object ):
                 p = 1
                 '''
                 raise RuntimeError,\
-                    'Invalid acceptance ratio (%s) for reaction %s. rt.k=%g, I=%g' \
+                    'Invalid acceptance ratio (%s) for reaction %s. rt.k=%.3g, I=%.3g' \
                     % ( p, rt, rt.k, I )
                 '''
             self.P_acct[ rt ] = p
@@ -178,7 +178,7 @@ class BDSimulatorCoreBase( object ):
             return
 
         displacement = particle.surface.drawBDdisplacement( self.dt, D )
-	log.debug( '\t\tDebug. Multi. %s, displacement=%s.' % ( particle, displacement) )
+	log.debug( '\t\tDebug. Multi. %s, displacement=[%.3g, %.3g, %.3g].' % ( particle, displacement[0], displacement[1], displacement[2]) )
 
         newpos = particle.pos + displacement
         newpos %= self.main.worldSize   #self.applyBoundary( newpos )
@@ -563,7 +563,7 @@ class BDSimulator( ParticleSimulatorBase ):
 
         self.core.step()
 
-        log.info( '\t%d: t=%g dt=%g, reactions=%d, rejectedMoves=%d' %
+        log.info( '\t%d: t=%.3g dt=%.3g, reactions=%d, rejectedMoves=%d' %
                   ( self.stepCounter, self.t, self.dt, self.reactionEvents,
                     self.rejectedMoves ) )
 

@@ -156,7 +156,7 @@ class Pair( object ):
         pairDistance = self.pairDistance
 
         assert pairDistance >= self.sigma, \
-            '%s;  pairDistance %g < sigma %g' % ( self, pairDistance, self.sigma )
+            '%s;  pairDistance %.3g < sigma %.3g' % ( self, pairDistance, self.sigma )
 
         # equalize expected mean t_r and t_R.
 
@@ -204,13 +204,13 @@ class Pair( object ):
             a_r = a_r_2
             a_R = a_R_2
 
-        #log.debug( '\ta %g, r %g, R %g pairDistance %g' % 
+        #log.debug( '\ta %.3g, r %.3g, R %.3g pairDistance %.3g' % 
         #           ( shellSize, a_r, a_R, pairDistance ) )
-        #log.debug( '\ttr %g, tR %g' % 
+        #log.debug( '\ttr %.3g, tR %.3g' % 
         #           ( ( ( a_r - pairDistance ) / math.sqrt(6 * self.D_tot))**2,\
         #                 (a_R / math.sqrt( 6*self.D_geom ))**2 ) )
         assert a_r > 0
-        assert a_r > pairDistance, '%g %g' % ( a_r, pairDistance )
+        assert a_r > pairDistance, '%.3g %.3g' % ( a_r, pairDistance )
         assert a_R > 0 or ( a_R == 0 and ( D1 == 0 or D2 == 0 ) )
         return a_R, a_r
 
@@ -260,7 +260,7 @@ class Pair( object ):
         d2 = self.distance( oldCoM, pos2 ) + species2.radius
         if d1 > self.shellSize or d2 > self.shellSize:
             raise Stop( 'New particle(s) out of protective sphere. %s' % \
-                'radius = %g, d1 = %g, d2 = %g ' % ( self.shellSize, d1, d2 ) )
+                'radius = %.3g, d1 = %.3g, d2 = %.3g ' % ( self.shellSize, d1, d2 ) )
         return True
 
 
@@ -270,7 +270,7 @@ class Pair( object ):
 
     def __str__( self ):
         buf = '( ' + str(self.single1.particle) +\
-              ', ' + str(self.single2.particle) + ' )'
+              ',\n\t\t\t' + str(self.single2.particle) + ' )'
         return buf
 
 

@@ -240,9 +240,15 @@ class Particle( object ):
 
         self.surface = species.surface
 
+
+    def posString( self ):
+        factor = 1
+        return '(%.3g %.3g %.3g)' % ( self.getPos()[0]*factor, self.getPos()[1]*factor, self.getPos()[2]*factor ) 
+
+
     def __str__( self ):
 
-        return "( '" + self.species.id + "', " + str(self.species.surface) + ", " + str( self.serial ) + ' )'
+        return "( '" + self.species.id + "', " + str(self.species.surface) + ", " + str( self.serial ) + ' ). pos=' + self.posString()
 
     def __repr__( self ):
 

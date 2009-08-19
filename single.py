@@ -31,11 +31,6 @@ class Single( object ):
         return self.particle.species.D
 
 
-    def posString( self ):
-        factor = 1
-        return '(%.3g %.3g %.3g)' % ( self.pos[0]*factor, self.pos[1]*factor, self.pos[2]*factor ) 
-
-
     def getMinRadius( self ):
         return self.particle.species.radius
 
@@ -105,7 +100,7 @@ class Single( object ):
 
 
     def __str__( self ):
-        return str( self.particle ) + '. pos=' + self.posString()
+        return str( self.particle )
 
 
 ##############################################################################

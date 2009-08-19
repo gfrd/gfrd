@@ -125,7 +125,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         event = self.scheduler.getTopEvent()
         self.t, self.lastEvent = event.getTime(), event.getArg()
 
-        log.info( '\n\n\t%d: t=%g dt=%g\n\tevent=%s. reactions=%d interactions=%d rejectedmoves=%d errors=%d.' 
+        log.info( '\n\n\t%d: t=%.3g dt=%.3g\n\tevent=%s.\n\tReactions=%d, interactions=%d, rejectedmoves=%d, errors=%d.' 
                       % ( self.stepCounter, self.t, self.dt, self.lastEvent, 
                           self.reactionEvents, self.interactionEvents, self.rejectedMoves, self.errors ) )
         
@@ -147,7 +147,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     def stop( self, t ):
         if self.vtklogger:
             self.vtklogger.stop()
-        log.info( '\tStop at %g.' % t )
+        log.info( '\tStop at %.3g.' % t )
 
         if feq( self.t, t ):
             return
@@ -166,7 +166,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             if isinstance( obj, Pair ) or isinstance( obj, Multi ):
                 nonSingleList.append( obj )
             elif isinstance( obj, Single ):
-                log.debug( '\t\tDebug. burst %s, lastTime= %g' % 
+                log.debug( '\t\tDebug. burst %s, lastTime= %.3g' % 
                            ( str( obj ), obj.lastTime ) )
                 self.burstSingle( obj )
             else:
@@ -209,7 +209,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def burstObj( self, obj ):
-        log.info( '\tBursting %s ' % ( str( obj ) ) )
+        log.info( '\tBursting %s.' % ( str( obj ) ) )
         if isinstance( obj, Single ):
             obj = self.burstSingle( obj )
             return [obj,]
@@ -451,7 +451,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     consistency checkers
     '''
     def checkObj( self, obj ):
-	#log.debug( '\t\tDebug. checkObj: %s' % (obj) )
+	#log.debug( '\t\tDebug. checkObj: %s.' % (obj) )
         obj.check()
 
         allshells = [ ( obj, i ) for i in range( len( obj.shellList ) ) ]
@@ -465,7 +465,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 '%s shell radius larger than user-set max shell radius' % \
                 str( ( obj, i ) )
             assert radius <= self.getMaxShellSize(),\
-                '%s shell radius larger than simulator cell radius / 2. %g vs %g' % \
+                '%s shell radius larger than simulator cell radius / 2. %.3g vs %.3g' % \
                 (str( ( obj, i ) ), radius, self.getMaxShellSize())
 
             # Todo.
@@ -473,7 +473,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             
             if not ( isinstance( obj, InteractionSingle ) and isinstance( closest, Surface ) ):
                 assert distance - radius >= 0.0,\
-                    '%s overlaps with %s. (shell: %g, dist: %g, diff: %g.' \
+                    '%s overlaps with %s. (shell: %.3g, dist: %.3g, diff: %.3g.' \
                     % ( str( obj ), str( closest ), radius, distance,\
                             distance - radius )
         return True
@@ -513,7 +513,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         matrixPopulation = sum(matrix.size for matrix in self.objectMatrices)
         if shellPopulation != matrixPopulation:
             raise RuntimeError,\
-                'num shells %g != matrixPopulation %g' %(shellPopulation, matrixPopulation)
+                'num shells %.3g != matrixPopulation %.3g' %(shellPopulation, matrixPopulation)
         
         self.sphereMatrix.check()
 
@@ -763,7 +763,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 '''
                 self.removeFromShellMatrix( single )
                 newsingle = self.createSingle( single.particle )
-                log.info( '\tNew %s. radius=%g. dt=%g.' % ( newsingle, newsingle.radius, newsingle.dt ) )
+                log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( newsingle, newsingle.radius, newsingle.dt ) )
                 return newsingle
             else:
                 single.pos = newpos
@@ -782,7 +782,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	    self.updateSingle( single, c, d )
 	    self.updateEvent( self.t + single.dt, single )
-	    #log.debug( '\t\tDebug. restore shell %s %g dt %g closest %s %g' %
+	    #log.debug( '\t\tDebug. restore shell %s %.3g dt=%.3g.\n\t\t\tclosest %s %.3g' %
             #	       ( single, single.radius, single.dt, c, d ) )
 
 
@@ -812,7 +812,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # No need for self.updateEvent(), single.dt is returned from 
         # fireSingle(), or this is done in restoreSingleShells.
 	self.updateShellMatrix( single )
-	log.info( '\tUpdated %s. radius=%g. dt=%g.\n\t\tclosest=%s. distanceToShell=%s' % ( single, single.radius, single.dt, closest, distanceToShell ) )
+	log.info( '\tUpdated %s. radius=%.3g. dt=%.3g.\n\t\tclosest=%s. distanceToShell=%.3g' % ( single, single.radius, single.dt, closest, distanceToShell ) )
 
 
 
@@ -904,7 +904,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
             # Todo. Is lastReaction used anywhere, or is it just logging?
 	    self.lastReaction = Reaction( rt, [single.particle], [newparticle] )
-            log.info( '\tNew %s. radius=%g. dt=%g.' % ( newsingle, newsingle.radius, newsingle.dt ) )
+            log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( newsingle, newsingle.radius, newsingle.dt ) )
 
 	elif len( rt.products ) == 2:
 	    productSpecies1 = rt.products[0]
@@ -962,8 +962,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    self.lastReaction = Reaction( rt, [single.particle], 
 					  [particle1, particle2] )
 
-            log.info( '\tNew %s. radius=%g. dt=%g.' % ( newsingle1, single.radius, single.dt ) )
-            log.info( '\tNew %s. radius=%g. dt=%g.' % ( newsingle2, single.radius, single.dt ) )
+            log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( newsingle1, single.radius, single.dt ) )
+            log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( newsingle2, single.radius, single.dt ) )
 
 	else:
 	    raise RuntimeError, 'num products >= 3 not supported.'
@@ -1009,7 +1009,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	    self.burstPair( pair )
 	    self.addSingleEvent( theothersingle )
-            log.info( '\tNew %s. radius=%g. dt=%g.' % ( theothersingle, theothersingle.radius, theothersingle.dt ) )
+            log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( theothersingle, theothersingle.radius, theothersingle.dt ) )
 
 	    try:
 		self.fireSingleReaction( reactingsingle )
@@ -1068,7 +1068,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		self.lastReaction = Reaction( pair.rt, [particle1, particle2],
 					      [particle] )
 
-                log.info( '\tNew %s. radius=%g. dt=%g.' % ( newsingle, newsingle.radius, newsingle.dt ) )
+                log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( newsingle, newsingle.radius, newsingle.dt ) )
 
 	    else:
 		raise NotImplementedError,\
@@ -1133,8 +1133,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	single2.initialize( self.t )
 	self.addToShellMatrix( single1 ) # Add, not update.
 	self.addToShellMatrix( single2 )
-        log.info( '\tNew %s. radius=%g. dt=%g.' % ( single1, single1.radius, single1.dt ) )
-        log.info( '\tNew %s. radius=%g. dt=%g.' % ( single2, single2.radius, single2.dt ) )
+        log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( single1, single1.radius, single1.dt ) )
+        log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( single2, single2.radius, single2.dt ) )
 
 
     def formInteractionOrPairOrMulti( self, single, neighbors ):
@@ -1164,8 +1164,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	# Then, a Multi.
         neighborsString = ''
         for n in neighbors:
-            neighborsString += str(n) + ', '
-	log.debug( '\t\tDebug. Try to form Multi:%s +\n\t\t\t[ %s ].' % (single, neighborsString) )
+            neighborsString += str(n) + ',\n\t\t\t'
+	log.debug( '\t\tDebug. Try to form Multi: %s +\n\t\t\t[ %s ].' % (single, neighborsString) )
 	minShell = single.getMinRadius() * ( 1.0 + self.MULTI_SHELL_FACTOR )
 
         # Todo. Add surfaces to multi somehow.
@@ -1202,7 +1202,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	elif isinstance( closest, Multi ):
 
 	    multi = closest
-	    log.info( '\tmulti merge %s %s' % ( single, multi ) )
+	    log.info( '\tmulti merge %s,\n\t\t%s' % ( single, multi ) )
 
 	    self.removeFromShellMatrix( multi )
 
@@ -1226,7 +1226,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     is not interfering with other shells. Miedema's algorithm.
     '''
     def formInteraction( self, single, surface, bursted ):
-	log.debug( '\t\tDebug. Try formInteraction: %s + %s.' % (single, surface) )
+	log.debug( '\t\tDebug. Try formInteraction: %s +\n\t\t\t%s.' % (single, surface) )
 
         particle = single.particle
 	projectedPoint, projectionDistance = surface.projectedPoint( single.pos )
@@ -1286,7 +1286,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 # Or a particle that just escaped it's multi!!!
                 # Should account for this also in formPair???
                 objectRadius *= ( 1.0 + self.SINGLE_SHELL_FACTOR )
-                #assert bursted.__contains__( object ), 'bursted=%s does not contain %s. radius=%g.' %(bursted, object, object.radius)
+                #assert bursted.__contains__( object ), 'bursted=%s does not contain %s. radius=%.3g.' %(bursted, object, object.radius)
 
 	    objectVector = shell.origin - projectedPoint
 
@@ -1330,7 +1330,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                         dr = dri
 
         if dr < mindr or dzl < mindzl or dzr < mindzr:
-            log.debug( '\t\tDebug. Interaction not possible: %s + %s. dr=%g. mindr=%g. dzl=%g. mindzl=%g. dzr=%g. mindzr=%g.' % ( single, surface, dr, mindr, dzl, mindzl, dzr, mindzr ) )
+            log.debug( '\t\tDebug. Interaction not possible: %s + %s.\n\t\t\tdr=%.3g. mindr=%.3g. dzl=%.3g. mindzl=%.3g. dzr=%.3g. mindzr=%.3g.' % ( single, surface, dr, mindr, dzl, mindzl, dzr, mindzr ) )
             return None
 
         '''
@@ -1391,7 +1391,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	self.removeFromShellMatrix( single )
 
 	cylinder = interaction.shellList[0]
-	log.info( '\tNew %s. radius=%g. size=%g. dt=%g.' % (interaction, cylinder.radius, cylinder.size, interaction.dt) )
+	log.info( '\tNew %s.\n\t\tradius=%.3g. size=%.3g. dt=%.3g.' % (interaction, cylinder.radius, cylinder.size, interaction.dt) )
 
         assert self.checkObj( interaction )
 
@@ -1403,7 +1403,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     '''
     def formPair( self, single1, single2, bursted ):
 	log.debug( '\t\tDebug. Try formPair %s.' %
-	           'Pair( %s, %s )' % ( single1.particle, 
+	           'Pair( %s,\n\t\t\t%s )' % ( single1.particle, 
 	                                single2.particle ) )
 	assert single1.isReset()
 	assert single2.isReset()
@@ -1420,7 +1420,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	pairDistance = self.distance( single1.pos, single2.pos )
 	distanceFromSigma = pairDistance - sigma
-	assert distanceFromSigma >= 0, '(pair gap) between %s and %s = %g < 0' \
+	assert distanceFromSigma >= 0, '(pair gap) between %s and %s = %.3g < 0' \
 	    % ( single1, single2, distanceFromSigma )
 
 	shellSize1 = pairDistance * D1 / D12 + radius1
@@ -1446,8 +1446,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 	if minShellSizeWithMargin >= maxShellSize:
 	    log.debug( '\t\tDebug. %s not formed: minShellSize >= maxShellSize.' %
-		       ( 'Pair( %s, %s )' % ( single1.particle, 
-					      single2.particle ) ) )
+		       ( 'Pair( %s,\n\t\t\t%s )' % ( single1.particle, single2.particle ) ) )
 	    return None
 
 	'''
@@ -1468,8 +1467,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 		    closest, closestShellDistance = b, d
 
 	if closestShellDistance <= minShellSizeWithMargin:
-	    log.debug( '\t\tDebug. %s not formed: squeezed by bursted neighbor\n\t\t\t%s.' %
-		       ( 'Pair( %s, %s )' % ( single1.particle, 
+	    log.debug( '\t\tDebug. %s\n\t\t\tnot formed: squeezed by bursted neighbor %s.' %
+		       ( 'Pair( %s,\n\t\t\t%s )' % ( single1.particle, 
 					      single2.particle ), closest ) )
 	    return None
 
@@ -1477,7 +1476,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	if d < closestShellDistance:
 	    closest, closestShellDistance = c, d
 
-	log.debug( '\t\tDebug. Try pair. closest neighbor=%s.\n\t\t\tclosestShellDistance=%g. minShellWithMargin=%g.' %
+	log.debug( '\t\tDebug. Try pair. closest neighbor=%s.\n\t\t\tclosestShellDistance=%.3g. minShellSize=%.3g.' %
 		   ( closest, closestShellDistance, minShellSizeWithMargin ) )
 
 	if isinstance( closest, Single ):
@@ -1505,8 +1504,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    shellSize = closestShellDistance / SAFETY
 
 	if shellSize <= minShellSizeWithMargin:
-	    log.debug( '\t\tDebug. %s not formed: squeezed by %s.\n\t\t\tshellSize=%g. minShellSizeWithMargin=%g.' %
-		       ( 'Pair( %s, %s )' % ( single1.particle, 
+	    log.debug( '\t\tDebug. %s\n\t\t\tnot formed: squeezed by %s.\n\t\t\tshellSize=%.3g. minShellSize=%.3g.' %
+		       ( 'Pair( %s,\n\t\t\t%s )' % ( single1.particle, 
 					      single2.particle ), closest, shellSize, minShellSizeWithMargin ) )
 	    return None
 
@@ -1517,8 +1516,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 			    ( 1.0 + self.SINGLE_SHELL_FACTOR ), \
 				d2 + single2.getMinRadius() * \
 				( 1.0 + self.SINGLE_SHELL_FACTOR ) ) * 1.3:
-	    log.debug( '\t\tDebug. %s not formed: singles are better.' %
-		       'Pair( %s, %s )' % ( single1.particle, 
+	    log.debug( '\t\tDebug. %s\n\t\t\tnot formed: singles are better.' %
+		       'Pair( %s,\n\t\t\t%s )' % ( single1.particle, 
 					    single2.particle ) )
 	    return None
 
@@ -1556,7 +1555,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	assert pair.shellSize >= minShellSizeWithMargin
 	assert pair.shellSize <= maxShellSize
 
-	log.info( '\tNew %s. radius=%g. pairDistance=%g. dt=%g.' % ( pair, pair.shellSize, pairDistance, pair.dt ) )
+	log.info( '\tNew %s.\n\t\tradius=%.3g. pairDistance=%.3g. dt=%.3g.' % ( pair, pair.shellSize, pairDistance, pair.dt ) )
 
 	assert self.checkObj( pair )
 	return pair
@@ -1578,7 +1577,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	#sim.sync()
 
 	if sim.lastReaction:
-	    log.info( '\tbd reaction' )
+	    log.info( '\tBd reaction.' )
 
 	    self.breakUpMulti( multi )
 	    self.reactionEvents += 1
@@ -1586,12 +1585,12 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    return -INF
 
 	if sim.escaped:
-	    log.info( '\tmulti particle escaped.' )
+	    log.info( '\tMulti particle escaped.' )
 
 	    self.breakUpMulti( multi )
 	    return -INF
 
-	#log.info( '\tmulti stepped %d steps, duration %g, dt = %g' %
+	#log.info( '\tmulti stepped %d steps, duration %.3g, dt = %.3g' %
 	#          ( additionalSteps + 1, sim.t - startT + sim.dt, dt ) )
 	return multi.dt
 
