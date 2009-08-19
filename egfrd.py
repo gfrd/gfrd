@@ -181,7 +181,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     
     ##########################################################################
     '''
-    Burst methods.
+    Part of the burst methods.
     '''
     def clearVolume( self, pos, radius, ignore=[] ):
         neighbors = self.getNeighborsWithinRadiusNoSort( pos, radius, ignore )
@@ -1579,7 +1579,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	if sim.lastReaction:
 	    log.info( '\tBd reaction.' )
 
-	    self.breakUpMulti( multi )
+	    self.burstMulti( multi )
 	    self.reactionEvents += 1
 	    self.lastReaction = sim.lastReaction
 	    return -INF
@@ -1587,7 +1587,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	if sim.escaped:
 	    log.info( '\tMulti particle escaped.' )
 
-	    self.breakUpMulti( multi )
+	    self.burstMulti( multi )
 	    return -INF
 
 	#log.info( '\tmulti stepped %d steps, duration %.3g, dt = %.3g' %
@@ -1595,18 +1595,12 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	return multi.dt
 
 
-    def breakUpMulti( self, multi ):
+    def burstMulti( self, multi ):
 	self.removeFromShellMatrix( multi )
 	singles = []
 	for particle in multi.sim.particleList:
 	    single = self.createSingle( particle )
 	    singles.append( single )
-	return singles
-
-
-    def burstMulti( self, multi ):
-	#multi.sim.sync()
-	singles = self.breakUpMulti( multi )
 	return singles
 
 
