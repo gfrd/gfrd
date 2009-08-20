@@ -73,34 +73,34 @@ def run( ):
     # signal_mol + membrane -> association
     # association -> signal_mol + membrane
     i1 = SurfaceBindingInteractionType( signal_mol, signal_mol_mem, 1e6)
-    r1 = SurfaceUnbindingReactionType ( signal_mol_mem, signal_mol, 1e6)
+    r1 = SurfaceUnbindingReactionType ( signal_mol_mem, signal_mol, 1e1)
 
     # receptor + signal_mol -> activated receptor
     # activated receptor -> receptor
     # SO WE LOSE SIGNAL MOLECULES!
     r2 = BindingReactionType ( receptor, signal_mol_mem, receptor_a, 1e6)
-    r3 = UnimolecularReactionType ( receptor_a, receptor, 1e6)
+    r3 = UnimolecularReactionType ( receptor_a, receptor, 1e0)
 
     # receptor_a + receptor_a -> receptor dimer
     # receptor dimer -> receptor_a + receptor_a						
-    r4 = BindingReactionType ( receptor_a, receptor_a, receptor_a_2, 1e6)
-    r5 = UnbindingReactionType ( receptor_a_2, receptor_a, receptor_a, 1e6)
+    r4 = BindingReactionType ( receptor_a, receptor_a, receptor_a_2, 1e4)
+    r5 = UnbindingReactionType ( receptor_a_2, receptor_a, receptor_a, 1e1)
 
     # carrier protein + membrane -> membrane associated carrier
     # membrane associated carrier -> carrier protein
     i2 = SurfaceBindingInteractionType( carrier, carrier_mem, 1e6)
-    r6 = SurfaceUnbindingReactionType ( carrier_mem, carrier, 1e6)
+    r6 = SurfaceUnbindingReactionType ( carrier_mem, carrier, 1e1)
 
     # membrane associated carrier + receptor dimer -> receptor-carrier complex
     # receptor-carrier complex -> receptor dimer + active membrane associated carrier
     r7 = BindingReactionType( carrier_mem, receptor_a_2, receptor_carrier_C, 1e6)
-    r8 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_a_mem, 1e6)
-    r8_2 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_mem, 1e6)
+    r8 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_a_mem, 1e2)
+    r8_2 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_mem, 1e1)
 
     # active carrier in membrane -> active carrier protein
     # active carrier protein + membrane -> association
     r9 = SurfaceUnbindingReactionType ( carrier_a_mem, carrier_a, 1e6)
-    i3 = SurfaceBindingInteractionType( carrier_a, carrier_a_mem, 1e6)
+    i3 = SurfaceBindingInteractionType( carrier_a, carrier_a_mem, 1e1)
 
     # decay of activated carrier: active carrier -> carrier
     r10 = UnimolecularReactionType ( carrier_a, carrier, 1e-2)
