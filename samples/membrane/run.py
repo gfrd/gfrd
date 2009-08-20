@@ -78,13 +78,13 @@ def run( ):
     # receptor + signal_mol -> activated receptor
     # activated receptor -> receptor
     # SO WE LOSE SIGNAL MOLECULES!
-    r2 = BindingReactionType ( receptor, signal_mol_mem, receptor_a, 1e9)
-    r3 = UnimolecularReactionType ( receptor_a, receptor, 1e3)
+    r2 = BindingReactionType ( receptor, signal_mol_mem, receptor_a, 1e6)
+    r3 = UnimolecularReactionType ( receptor_a, receptor, 1e6)
 
     # receptor_a + receptor_a -> receptor dimer
     # receptor dimer -> receptor_a + receptor_a						
-    r4 = BindingReactionType ( receptor_a, receptor_a, receptor_a_2, 1e9)
-    r5 = UnbindingReactionType ( receptor_a_2, receptor_a, receptor_a, 1e3)
+    r4 = BindingReactionType ( receptor_a, receptor_a, receptor_a_2, 1e6)
+    r5 = UnbindingReactionType ( receptor_a_2, receptor_a, receptor_a, 1e6)
 
     # carrier protein + membrane -> membrane associated carrier
     # membrane associated carrier -> carrier protein
@@ -93,9 +93,9 @@ def run( ):
 
     # membrane associated carrier + receptor dimer -> receptor-carrier complex
     # receptor-carrier complex -> receptor dimer + active membrane associated carrier
-    r7 = BindingReactionType( carrier_mem, receptor_a_2, receptor_carrier_C, 1e9)
-    r8 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_a_mem, 1e8)
-    r8_2 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_mem, 1e5)
+    r7 = BindingReactionType( carrier_mem, receptor_a_2, receptor_carrier_C, 1e6)
+    r8 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_a_mem, 1e6)
+    r8_2 = UnbindingReactionType ( receptor_carrier_C, receptor_a_2, carrier_mem, 1e6)
 
     # active carrier in membrane -> active carrier protein
     # active carrier protein + membrane -> association
@@ -103,7 +103,7 @@ def run( ):
     i3 = SurfaceBindingInteractionType( carrier_a, carrier_a_mem, 1e6)
 
     # decay of activated carrier: active carrier -> carrier
-    r10 = UnimolecularReactionType ( carrier_a, carrier, 1e2)
+    r10 = UnimolecularReactionType ( carrier_a, carrier, 1e-2)
 
     s.addInteractionType( i1 )
     s.addInteractionType( i2 )
@@ -129,7 +129,7 @@ def run( ):
     #s.addSurface( box_inside )
     
 #    s.throwInParticles( signal_mol, 10, box_outside )
-    s.throwInParticles( carrier, 2, box_inside )	# 2 particle is 1nM in this volume
+    s.throwInParticles( carrier, 12, box_inside )	# 2 particle is 1nM in this volume
     s.throwInParticles( receptor, 6)
 
     #s.placeParticle( O, [L/2,L/2,L/2], dna )
@@ -141,7 +141,7 @@ def run( ):
     s.initialize()
     old = time.time()
     startTime = old
-    for i in range(200000):
+    for i in range(10000):
         new = time.time()
         print '\ttime = ', new - old
         print '\ttotaltime = ', new - startTime

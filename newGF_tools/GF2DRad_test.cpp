@@ -20,20 +20,20 @@ int main (void)
 {
 	// initializing
 	const Real D=1e-12;		// all the constants of our system
-	const Real k=1e-17;	// h=k/D also sometime refered to b
-	const Real sigma=1.18E-7;	// a
+	const Real k=1;	// h=k/D also sometime refered to b
+	const Real sigma=1E-7;	// a
 	const Real a=5E-7;	// b
-	const Real r0=3E-7;
+	const Real r0=1.001e-7;
 
 	const Real r = 4e-7;		// The radius where to draw theta's when just drawing theta;s
-	Real t = 0.03;			// The time to use when drawing positions
+	Real t = 1e-8;			// The time to use when drawing positions
 	Real rnd = 0;
 	srand(23947);                   // even de random functie initialiseren
 
 	FirstPassagePairGreensFunction2D gf(D, k, sigma);
 	gf.seta (a);
 
-/*
+
 	// Producing data by drawing from the distributions
 	for (int i=0; i<10000; i++)
 	{
@@ -63,7 +63,7 @@ int main (void)
 
 		cout << endl;
 	}
-*/
+
 
 	// Producing time dependent data
 	for (t=0.0001; t < 0.03; t+= 0.0001)

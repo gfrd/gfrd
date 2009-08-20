@@ -1255,7 +1255,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         # Todo.
         minimalOffset = surface.minimalOffset( particle.radius ) 
-        if particleDistance < minimalOffset:
+        if fless( particleDistance, minimalOffset, particleRadius ):
             raise Stop( 'particleDistance=%.3g < minimalOffset=%.3g'%( particleDistance, minimalOffset ) )
 
 
