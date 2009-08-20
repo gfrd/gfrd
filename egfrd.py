@@ -654,6 +654,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             return single.dt
 
 
+        ######################################################################
+        # CLEAN UP
+        ######################################################################
+
 	# (2) Clear volume.
         # The single was just propagated and initialized, so it's shell has
         # size getMinSize().
@@ -715,6 +719,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Also don't do stuff like single = self.propagateSingle( single )
 	return single.dt
 
+        ######################################################################
+        # END CLEAN UP
+        ######################################################################
+
 
     def burstSingle( self, single ):
 	assert self.t >= single.lastTime
@@ -728,7 +736,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	newsingle = self.propagateSingle( single )
 
         if isinstance( single, InteractionSingle ):
-            # We can not do this in propagate, but don't forget it.
+            # Removing the event has to be done for *bursting* 
+            # *Interaction*Singles, not for propagating InteractionSingles nor 
+            # for bursting NonInteractionSingles.
             self.removeEvent( single )
         else:
             self.updateEvent( self.t, single )
@@ -737,11 +747,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
     ''' 
     The difference between a burst and a propagate is that a burst always takes 
-    place before the actual scheduled event for the single, while propagate 
-    can be called for an escape event.
+    place before the actual scheduled event for the single, while 
+    propagateSingle can be called for an escape event.
+
     Another subtle difference is that burstSingle always reschedules (updateEvent) 
-    the single, while just calling propagate not. This works if 
-    single.dt is returned to the scheduler after calling propagateSingle.
+    the single, while just calling propagate does not. This works since 
+    single.dt should be returned to the scheduler after calling 
+    propagateSingle.
 
     The return value is only used if called from burstSingle.
     '''
@@ -759,7 +771,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 '''
                 For reactions and interactions we create a new single and get 
                 rid of the old interactionSingle in fireSingleReaction. For 
-                escapes (and bursts) we do it here.
+                escapes (and bursts, because burstSingle sets single.eventType 
+                to ESCAPE) we do it here.
                 '''
                 self.removeFromShellMatrix( single )
                 newsingle = self.createSingle( single.particle )
