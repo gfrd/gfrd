@@ -343,7 +343,8 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         # Cartesian domain returns displacement, not absolute position.
         z = self.domains[1].drawPosition( dt )
         x, y = randomVector2D( r )
-        return self.pos + x * self.interactionSurface.unitX + y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
+        # Add displacement vector to self.particle.pos, not self.pos!
+        return self.particle.pos + x * self.interactionSurface.unitX + y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
 
 
     def __str__( self ):
@@ -385,7 +386,8 @@ class CylindricalSurfaceInteraction( InteractionSingle ):
         newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, theta )
         # Orientation matters (+ or -), so shellList[0].unitZ is used here 
         # instead of surface.unitZ.
-        return self.pos + newVectorR + z * self.shellList[0].unitZ
+        # Add displacement vector to self.particle.pos, not self.pos!
+        return self.particle.pos + newVectorR + z * self.shellList[0].unitZ
 
 
     def __str__( self ):
