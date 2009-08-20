@@ -89,7 +89,7 @@ class CartesianDomain( Domain ):
         # Set escape flag (can still be an interaction).
         self.escape = True
         try:
-            log.debug( '\t\tDebug. Cartesian drawEventType. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Cartesian drawEventType. r0=%.3g. L=%.3g. dt=%.3g. '%(self.r0, self.L, dt) + str(self.gf) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), dt )
 	except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; r0=%g; dt=%g; L=%g' %\

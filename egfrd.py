@@ -597,7 +597,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # 0. Reaction.
 	if single.eventType == EventType.REACTION:
 	    self.propagateSingle( single )
-	    log.info( str( single.eventType ) )
+	    log.info( '\t' + str( single.eventType ) )
 
 	    try:
 		self.fireSingleReaction( single )
@@ -1249,7 +1249,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	orientationVector = cmp(projectionDistance, 0) * surface.unitZ 
         particleDistance = abs( projectionDistance )
 
-	log.debug( '\t\tDebug. Try formInteraction: %s +\n\t\t\t%s. particleDistance=%.3g' % (particle, surface, particleDistance) )
+	log.debug( '\t\tDebug. Try formInteraction: %s +\n\t\t\t%s. particleDistance=%.10g' % (particle, surface, particleDistance) )
 
         particleRadius = particle.species.radius
 
@@ -1281,12 +1281,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	dzl = self.getMaxShellSize() # max.
 	if isinstance( surface, Box ):
             mindr  = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
-            mindzr = particleRadius * SAFETY
+            mindzr = particleRadius * UNBIND_SAFETY # Todo.
 
             dr = self.getMaxShellSize()  # max.
             # Todo. Complicated stuff. After an escape there is just enough 
             # space to make a spherical single.
-            dzr = surface.Lz + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
+            #dzr = surface.Lz + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
+            dzr = particleRadius + ( particleDistance - particleRadius - surface.Lz ) * 20
+
             #dzr -= particleDistance
             #dzr = min( dzr, particleRadius * 10 )
 	elif isinstance( surface, Cylinder ):
