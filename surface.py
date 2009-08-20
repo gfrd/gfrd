@@ -71,9 +71,9 @@ class PlanarSurface( Surface, Box ):
 
 
     # A particle that is not on this surface has to be at least this far away 
-    # from the surface.
+    # from the z=0-plane of the surface.
     def minimalOffset( self, radius ):
-        return (self.Lz + radius ) * SAFETY
+        return (self.Lz + radius ) * UNBIND_SAFETY
 
 
     def randomUnbindingSite( self, pos, radius ):
@@ -111,9 +111,9 @@ class CylindricalSurface( Surface, Cylinder ):
 
 
     # A particle that is not on this surface has to be at least this far away 
-    # from the surface.
+    # from the central axis of the surface.
     def minimalOffset( self, radius ):
-        return ( self.radius + radius ) * SAFETY
+        return ( self.radius + radius ) * UNBIND_SAFETY
 
 
     def randomUnbindingSite( self, pos, radius ):

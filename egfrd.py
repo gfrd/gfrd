@@ -1239,16 +1239,25 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     is not interfering with other shells. Miedema's algorithm.
     '''
     def formInteraction( self, single, surface, bursted ):
-	log.debug( '\t\tDebug. Try formInteraction: %s +\n\t\t\t%s.' % (single, surface) )
 
         particle = single.particle
-	projectedPoint, projectionDistance = surface.projectedPoint( single.pos )
+        # Cyclic transpose needed when calling surface.projectedPoint!
+        posTransposed = cyclicTranspose( single.pos, surface.origin, self.worldSize )
+	projectedPoint, projectionDistance = surface.projectedPoint( posTransposed )
 
         # For interaction with a planar surface, decide orientation.  
 	orientationVector = cmp(projectionDistance, 0) * surface.unitZ 
         particleDistance = abs( projectionDistance )
 
+	log.debug( '\t\tDebug. Try formInteraction: %s +\n\t\t\t%s. particleDistance=%.3g' % (particle, surface, particleDistance) )
+
         particleRadius = particle.species.radius
+
+        # Todo.
+        minimalOffset = surface.minimalOffset( particle.radius ) 
+        if particleDistance < minimalOffset:
+            raise Stop( 'particleDistance=%.3g < minimalOffset=%.3g'%( particleDistance, minimalOffset ) )
+
 
         '''
         Initialize dr, dzl, dzr.
@@ -1268,16 +1277,28 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         * dzr is the distance from the projected point to the right edge 
           of the cylinder.
         '''
-        mindr  = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
         mindzl = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
-        mindzr = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
-        dr = self.getMaxShellSize()
-	dzl = self.getMaxShellSize()
-        dzr = self.getMaxShellSize()
+	dzl = self.getMaxShellSize() # max.
 	if isinstance( surface, Box ):
-            dzr -= particleDistance
+            mindr  = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+            mindzr = particleRadius * SAFETY
+
+            dr = self.getMaxShellSize()  # max.
+            # Todo. Complicated stuff. After an escape there is just enough 
+            # space to make a spherical single.
+            dzr = surface.Lz + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
+            #dzr -= particleDistance
+            #dzr = min( dzr, particleRadius * 10 )
 	elif isinstance( surface, Cylinder ):
-            dr -= particleDistance
+            mindr = particleRadius * SAFETY
+            mindzr = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+
+            # Todo. Complicated stuff. After an escape there is just enough 
+            # space to make a spherical single.
+            dr = surface.radius + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
+            #dr -= particleDistance
+            #dr = min( dr, particleDistance * 10 )
+            dzr = self.getMaxShellSize() # max.
 
 	allNeighbors = self.getNeighborsWithinRadiusNoSort( projectedPoint, dr, ignore=[single,] )
 
@@ -1356,7 +1377,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             # On the other side (left side) than the particle's side, make 
             # sure there is just enough space for the particle to stick out, 
             # but not more.
-            dzl = particleRadius 
+            dzl = mindzl 
 	    radius = dr
             # sizeOfDomain is really different from size of cylinder!
             sizeOfDomain = particleDistance + dzr - surface.Lz
@@ -1377,13 +1398,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             # is at the end of the cylinder.
             # (minRadius correction in the constructor).
             particleOffset = [ 0, particleDistance - surface.Lz ]
-	elif isinstance( surface, Cylinder ):
+	if isinstance( surface, Cylinder ):
             # Compute new particle offset in r and z-direction relative to 
             # origin of new cylinder. In the z-direction, the origin (z=0) is 
             # at the left boundary. z=L is at the right boundary.
             # (minRadius correction in the constructor).
             particleOffset = [ particleDistance, dzl ]
 
+	log.debug( '\t\tDebug. dzl=%.3g. dzr=%.3g. particleOffset=[%.3g, %.3g]. sizeOfDomain=%.3g.' % (dzl, dzr, particleOffset[0], particleOffset[1], sizeOfDomain ) )
 
         '''
         Create interaction.

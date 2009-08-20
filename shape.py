@@ -154,7 +154,6 @@ class Box( Shape ):
                     # Inside box. Pick negative distance closest to 0.
 		    distance = max( max(dx,dy), dz )
 
-        #print '\tBox.signedDistanceTo = ', distance
         return distance
 
 
@@ -174,6 +173,8 @@ class Box( Shape ):
     1. the position of the projected point of 'pos' onto the xy-plane of the 
        box.
     2. the distance (+ or -) between that point and 'pos'.
+
+    Note: cyclicTranspose 'pos' if you are going to use the 'z' value.
     '''
     def projectedPoint( self, pos ):
         x, y, z = self.toInternal( pos )

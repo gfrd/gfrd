@@ -17,6 +17,7 @@ NOWHERE = numpy.array( ( INF, INF, INF ) )
 
 # Should be smaller than SINGLE_SHELL_FACTOR.
 SAFETY = 1.0 + 1e-5 #5e-2 is too big! Todo.
+UNBIND_SAFETY = 1.0 + 1e-7
 
 TOLERANCE = 1e-12
 
