@@ -157,7 +157,12 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 	int n=1;
 
 	do
-	{	root_n = this->a_n(n);
+	{	if ( n >= MAX_TERMEN )
+                {       std::cerr << "Too many terms needed for prob_r. N: " << n << std::endl;
+                        break;
+                }
+
+		root_n = this->a_n(n);
 		An_r = root_n*r;
 
 		prev_term = term;
@@ -191,7 +196,12 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 	int n=1;
 
 	do
-	{	An = this->a_n(n);
+	{	if ( n >= MAX_TERMEN )
+                {       std::cerr << "Too many terms needed for flux_tot. N: " << n << std::endl;
+                        break;
+                }
+
+		An = this->a_n(n);
 		prev_term = term;
 		term = An * An * Cn(An, t) * this->An(An) * Bn(An);
 		n++;
@@ -279,13 +289,13 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 
-//std::cout << "D: " << D << " L: " << L << " r0: " << r0 << std::endl;
+std::cerr << "D: " << D << " L: " << this->l_scale << " r0: " << r0 << " h: " << k/D << std::endl;
 
 	if ( D == 0.0 || L == INFINITY )
 	{	return INFINITY;
 	}
 
-	if ( rnd == 0.0 || L < 0.0 || fabs(r0 - L) < EPSILON*L )
+	if ( rnd <= EPSILON || L < 0.0 || fabs(r0 - L) < EPSILON*L )
 	{	return 0.0;
 	}
 
@@ -361,6 +371,7 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
                                         ") = " << value <<
                                         " t_guess: " << t_guess << " diff: " << (value - value_prev) <<
                                         " value: " << value << " value_prev: " << value_prev <<
+					" rnd: " << rnd <<
 					std::endl;
                                 return low;
                         }

@@ -4,7 +4,7 @@ use POSIX;
 
 $pi = 3.1415;
 
-$filename = "/storage1/bossen/devel/epdp-0.2/GF2DRad_test.distdata";
+$filename = "/storage1/bossen/devel/epdp-0.3/newGF_tools/GF2DRad_test.distdata";
 $sigma = 1e-7;
 $a = 5e-7;
 $num_r_bins = 10;

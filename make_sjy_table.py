@@ -216,7 +216,7 @@ if __name__ == '__main__':
         print 'j', n, len( z )
 
     # y
-    for n in range( minn_j, maxn_y + 1 ):
+    for n in range( minn_y, maxn_y + 1 ):
 
         #zTable, yTable = make_table( special.sph_yn, n, 
         #                             minz_y(n), maxz_y(n), tolerance )

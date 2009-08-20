@@ -26,10 +26,10 @@ class FirstPassageGreensFunction1DRad
 private:
         static const Real L_TYPICAL = 1E-8; // measure of 'sameness' when comparing floating points numbers
         static const Real T_TYPICAL = 1E-6; // This is a typical length scale of the system, may not be true!
-        static const Real EPSILON = 1E-12;  // The typical timescale of the system, may also not be true!!
+        static const Real EPSILON = 1E-10;  // The typical timescale of the system, may also not be true!!
         static const Real PDENS_TYPICAL = 1; // Is 1E3 a good measure for the probability density?!
 
-        static const int MAX_TERMEN = 200;
+        static const int MAX_TERMEN = 500;
         static const int MIN_TERMEN = 20;
 
 public:
@@ -77,7 +77,7 @@ public:
 	}
 
 	const Real getk() const
-	{	return this->k;
+	{	return this->k/l_scale;		// don't forget to scale the k as well!
 	}
 
 	const Real getD() const

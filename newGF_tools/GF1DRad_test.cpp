@@ -20,18 +20,18 @@ int main (void)
 {
 	// initializing
 	const Real D=1e-12;		// all the constants of our system
-	const Real k=1E-17;
-	const Real L=1E-6;
-	const Real r0=6.8e-7;
+	const Real k=1E0;
+	const Real L=1e-7;
+	const Real r0=1e-9;
 
-	Real t = 0.0003;			// The time to use when drawing positions
+	Real t = 1e-8;			// The time to use when drawing positions
 	Real rnd = 0;
 	srand(23947);                   // even de random functie initialiseren
 
 	FirstPassageGreensFunction1DRad gf(D, k);
 	gf.setL (L);
 	gf.setr0(r0);
-/*
+
 	// Producing data by drawing from the distributions
 	for (int i=0; i<1000; i++)
 	{
@@ -51,8 +51,8 @@ int main (void)
 
 		cout << endl;
 	}
-*/
 
+/*
 	// Producing time dependent data
 	for (t=0.001; t < 0.3; t+= 0.001)
 	{
@@ -73,7 +73,7 @@ int main (void)
 
 		cout << endl;
 	}
-
+*/
 /*
 	// producing the place dependent data
 	for (Real x=-a+1E-10; x<a; x+=1e-8)

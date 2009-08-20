@@ -35,8 +35,8 @@ def run( ):
 
     Todo: somehow make sure a species can only be on 1 surface.
     '''
-    signal_mol = Species( 'signal_molecule', 1e-7, 1e-8)	# the signal molecule
-    signal_mol_mem = Species( 'signal_molecule_mem', 1e-9, 1e-8)# the signal molecule on the membrane
+    signal_mol = Species( 'signal_molecule', 1e-11, 1e-8)	# the signal molecule
+    signal_mol_mem = Species( 'signal_molecule_mem', 1e-12, 1e-8)# the signal molecule on the membrane
     receptor = Species( 'Receptor', 1e-13, 1e-8)		# the membrane bound recepter protein
     receptor_a = Species( 'Receptor_a', 1e-13, 1e-8)		# activated receptor protein (by ligand)
     receptor_a_2 = Species( 'Receptor_a_dimer', 1e-13, 2e-8)	# a dimer of the activated receptor proteins
@@ -128,9 +128,9 @@ def run( ):
     #s.addSurface( box_outside )
     #s.addSurface( box_inside )
     
-    s.throwInParticles( signal_mol, 20, box_outside )
-    s.throwInParticles( carrier, 20, box_inside )
-    s.throwInParticles( receptor, 20)
+#    s.throwInParticles( signal_mol, 10, box_outside )
+    s.throwInParticles( carrier, 2, box_inside )	# 2 particle is 1nM in this volume
+    s.throwInParticles( receptor, 6)
 
     #s.placeParticle( O, [L/2,L/2,L/2], dna )
 
@@ -141,7 +141,7 @@ def run( ):
     s.initialize()
     old = time.time()
     startTime = old
-    for i in range(2000000):
+    for i in range(200000):
         new = time.time()
         print '\ttime = ', new - old
         print '\ttotaltime = ', new - startTime
