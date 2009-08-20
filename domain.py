@@ -98,10 +98,11 @@ class CartesianDomain( Domain ):
             # Interaction.
             # Todo. If this is 2xabsorbing greens function, eventType should 
             # always be ESCAPE.
-            self.newPos = 0
+            # Return displacement!
+            self.newPos = 0 - self.r0
         elif eventType == EventType.ESCAPE:
-            # Escape.
-            self.newPos = self.L
+            # Return displacement!
+            self.newPos = self.L - self.r0
         return eventType
 
     
