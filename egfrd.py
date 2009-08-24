@@ -719,6 +719,292 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Also don't do stuff like single = self.propagateSingle( single )
 	return single.dt
 
+
+    def formInteractionOrPairOrMulti( self, single, neighbors ):
+	assert neighbors
+	bursted = []
+
+        # Todo.
+        # 1. Would be better to return surfaces seperately from getNeighbors.
+        # 2. If multi within neighbors, return multi.
+        # 3. Elif surface in surfacelist, try and return interaction.
+        # 4. Else or if no interaction possible and single in surfacelist, try 
+        # and return pair.
+        # 5. Else. Multi.
+
+        # Try interaction
+	if isinstance( neighbors[0], Surface ):
+	    obj = self.formInteraction( single, neighbors[0], neighbors[1:] )
+	    if obj:
+		return obj, neighbors[1:]
+        elif isinstance( neighbors[0], Single ):
+            # Try forming a Pair only if singles are on same surface.
+            if single.surface == neighbors[0].surface:
+                obj = self.formPair( single, neighbors[0], neighbors[1:] )
+                if obj:
+                    return obj, neighbors[1:]
+
+	# Then, a Multi.
+        neighborsString = ''
+        for n in neighbors:
+            neighborsString += str(n) + ',\n\t\t\t'
+	log.debug( '\t\tDebug. Try to form Multi: %s +\n\t\t\t[ %s ].' % (single, neighborsString) )
+	minShell = single.getMinRadius() * ( 1.0 + self.MULTI_SHELL_FACTOR )
+
+        # Todo. Add surfaces to multi somehow.
+        #neighbors = [ n for n in neighbors if not isinstance( n, Surface ) ]
+	#if not neighbors:
+        #    return None, bursted
+
+	neighborDists = self.objDistanceArray( single.pos, neighbors )
+	neighbors = [ neighbors[i] for i in 
+		      ( neighborDists <= minShell ).nonzero()[0] ]
+
+	if not neighbors:
+            log.debug( '\t\tDebug. Multi not needed.' )
+	    return None, bursted
+
+	closest = neighbors[0]
+	if isinstance( closest, Single ) or isinstance( closest, Surface ):
+
+	    multi = self.createMulti()
+            # Use addToMulti here instead of addToMultiRecursive because we 
+            # already found this single's neighbors (we don't want to do that 
+            # twice).
+	    self.addToMulti( single, multi )
+	    self.removeFromShellMatrix( single )
+	    for neighbor in neighbors:
+		self.addToMultiRecursive( neighbor, multi )
+
+	    multi.initialize( self.t )
+	    
+	    self.addToShellMatrix( multi )
+	    self.addMultiEvent( multi )
+	    return multi, bursted
+
+	elif isinstance( closest, Multi ):
+
+	    multi = closest
+	    log.info( '\tmulti merge %s,\n\t\t%s' % ( single, multi ) )
+
+	    self.removeFromShellMatrix( multi )
+
+	    self.addToMulti( single, multi )
+	    self.removeFromShellMatrix( single )
+	    for neighbor in neighbors[1:]:
+		self.addToMultiRecursive( neighbor, multi )
+
+	    multi.initialize( self.t )
+
+            # Add 1 shell for each particle to main simulator's shellMatrix.
+	    self.addToShellMatrix( multi )
+	    self.updateEvent( self.t + multi.dt, multi )
+	    return multi, bursted
+
+	assert False, 'do not reach here'
+
+
+    '''
+    Find largest possible cylinder around particle and surface, such that it 
+    is not interfering with other shells. Miedema's algorithm.
+    '''
+    def formInteraction( self, single, surface, bursted ):
+
+        particle = single.particle
+        # Cyclic transpose needed when calling surface.projectedPoint!
+        posTransposed = cyclicTranspose( single.pos, surface.origin, self.worldSize )
+	projectedPoint, projectionDistance = surface.projectedPoint( posTransposed )
+
+        # For interaction with a planar surface, decide orientation.  
+	orientationVector = cmp(projectionDistance, 0) * surface.unitZ 
+        particleDistance = abs( projectionDistance )
+
+	log.debug( '\t\tDebug. Try formInteraction: %s +\n\t\t\t%s. particleDistance=%.10g' % (particle, surface, particleDistance) )
+
+        particleRadius = particle.species.radius
+
+        # Todo.
+        minimalOffset = surface.minimalOffset( particle.radius ) 
+        if fless( particleDistance, minimalOffset, particleRadius ):
+            raise Stop( 'particleDistance=%.3g < minimalOffset=%.3g'%( particleDistance, minimalOffset ) )
+
+
+        '''
+        Initialize dr, dzl, dzr.
+
+        For an interaction with a PlanarSurface:
+        * dr is the radius of the cylinder.
+        * dzl determines how much the cylinder is sticking out on the 
+        other side of the surface, measured from the projected point.
+        * dzr is the distance between the particle and the edge of the 
+        cylinder in the z direction.
+
+        For interaction with a CylindricalSurface:
+        * dr is the distance between the particle and the edge of the 
+        cylinder in the r direction.
+        * dzl is the distance from the projected point to the left edge of 
+          the cylinder.
+        * dzr is the distance from the projected point to the right edge 
+          of the cylinder.
+        '''
+        mindzl = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+	dzl = self.getMaxShellSize() # max.
+	if isinstance( surface, Box ):
+            mindr  = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+            mindzr = particleRadius * UNBIND_SAFETY # Todo.
+
+            dr = self.getMaxShellSize()  # max.
+            # Todo. Complicated stuff. After an escape there is just enough 
+            # space to make a spherical single.
+            #dzr = surface.Lz + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
+            dzr = particleRadius + ( particleDistance - particleRadius - surface.Lz ) * 20
+
+            #dzr -= particleDistance
+            #dzr = min( dzr, particleRadius * 10 )
+	elif isinstance( surface, Cylinder ):
+            mindr = particleRadius * SAFETY
+            mindzr = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+
+            # Todo. Complicated stuff. After an escape there is just enough 
+            # space to make a spherical single.
+            dr = surface.radius + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
+            #dr -= particleDistance
+            #dr = min( dr, particleDistance * 10 )
+            dzr = self.getMaxShellSize() # max.
+
+	allNeighbors = self.getNeighborsWithinRadiusNoSort( projectedPoint, dr, ignore=[single,] )
+
+	for object in allNeighbors:
+	    shell = object.shellList[0]
+            # Also works if shell is a cylinder parallel to the same 
+            # CylindricalSurface, because getRadius magically returns the size 
+            # of the cylinder then.
+	    objectRadius = shell.radius
+
+            '''
+            Make bursted singles look bigger, like in formPair, because the 
+            size of their shell is only particle.radius (not yet multiplied by 
+            SINGLE_SHELL_FACTOR) (and no we can not do that immediately after 
+            they are bursted, singles might start overlapping).
+            '''
+            if object.dt == 0.0 and object.getD() > 0:
+                # This is one of the bursted singles.
+                # Or a particle that just escaped it's multi!!!
+                # Should account for this also in formPair???
+                objectRadius *= ( 1.0 + self.SINGLE_SHELL_FACTOR )
+                #assert bursted.__contains__( object ), 'bursted=%s does not contain %s. radius=%.3g.' %(bursted, object, object.radius)
+
+	    objectVector = shell.origin - projectedPoint
+
+            # Calculate zi and ri for this object.
+	    zi = numpy.dot( objectVector, orientationVector )
+	    vectorZ = zi*numpy.array(orientationVector)
+	    vectorR = numpy.array(objectVector) - numpy.array(vectorZ)
+	    ri = numpy.linalg.norm( vectorR )
+
+            # Calculate dri for this object.
+	    dri = ri - objectRadius
+	    if isinstance( surface, Cylinder ):
+		dri -= particleDistance
+
+            # Calculate dzli or dzri (both are usually positive values).
+            if zi < 0:
+                # Calculate dzli for this object.
+                dzli = - zi - objectRadius
+
+                # Miedema's algorithm left side.
+                if dzli < dzl and dri < dr:
+                    if dzli > dri:
+                        dzli = dzli
+                    else:
+                        dr = dri
+            else:
+                # Calculate dzri for this object.
+                dzri = zi - objectRadius
+
+                if isinstance( surface, Box ):
+                    # On the particle side (right side), do Miedema's 
+                    # algorithm relative to the particle's position in the z 
+                    # direction. 
+                    dzri -= particleDistance
+
+                # Miedema's algorithm right side.
+                if dzri < dzr and dri < dr:
+                    if dzri > dri:
+                        dzi = dzri
+                    else:
+                        dr = dri
+
+        if dr < mindr or dzl < mindzl or dzr < mindzr:
+            log.debug( '\t\tDebug. Interaction not possible: %s + %s.\n\t\t\tdr=%.3g. mindr=%.3g. dzl=%.3g. mindzl=%.3g. dzr=%.3g. mindzr=%.3g.' % ( single, surface, dr, mindr, dzl, mindzl, dzr, mindzr ) )
+            return None
+
+        '''
+        Compute radius and size of new cylinder.
+
+        Todo. Should we make it even smaller? Like updateSingle: depending on 
+        diffusion constant etc.
+        '''
+	if isinstance( surface, Box ):
+            # On the other side (left side) than the particle's side, make 
+            # sure there is just enough space for the particle to stick out, 
+            # but not more.
+            dzl = mindzl 
+	    radius = dr
+            # sizeOfDomain is really different from size of cylinder!
+            sizeOfDomain = particleDistance + dzr - surface.Lz
+	    size = ( particleDistance + dzl + dzr ) / 2
+	elif isinstance( surface, Cylinder ):
+	    radius = dr + particleDistance
+            # sizeOfDomain is size of cylinder * 2.
+            sizeOfDomain = dzl + dzr
+	    size = ( sizeOfDomain ) / 2
+
+        # Compute new origin of cylinder.
+        shiftZ = size - dzl
+        origin = projectedPoint + shiftZ * orientationVector
+
+        if isinstance( surface, Box ):
+            # Compute new particle offset relative to origin of the domain in 
+            # the z-direction (z=0), which is *at* the surface boundary. z=L 
+            # is at the end of the cylinder.
+            # (minRadius correction in the constructor).
+            particleOffset = [ 0, particleDistance - surface.Lz ]
+	if isinstance( surface, Cylinder ):
+            # Compute new particle offset in r and z-direction relative to 
+            # origin of new cylinder. In the z-direction, the origin (z=0) is 
+            # at the left boundary. z=L is at the right boundary.
+            # (minRadius correction in the constructor).
+            particleOffset = [ particleDistance, dzl ]
+
+	log.debug( '\t\tDebug. dzl=%.3g. dzr=%.3g. particleOffset=[%.3g, %.3g]. sizeOfDomain=%.3g.' % (dzl, dzr, particleOffset[0], particleOffset[1], sizeOfDomain ) )
+
+        '''
+        Create interaction.
+        '''
+        assert single.dt == 0.0 and single.getMobilityRadius() == 0.0
+
+        reactionTypes = self.getReactionType1( particle.species )
+	interactionType = self.getInteractionType( particle.species, surface )
+
+
+        interaction = surface.defaultInteractionSingle( particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint, sizeOfDomain )
+        interaction.initialize( self.t )
+
+	self.addToShellMatrix( interaction )
+	interaction.dt, interaction.eventType, interaction.activeDomain = interaction.determineNextEvent( )
+	self.addSingleEvent( interaction )
+
+	self.removeFromShellMatrix( single )
+
+	cylinder = interaction.shellList[0]
+	log.info( '\tNew %s.\n\t\tradius=%.3g. size=%.3g. dt=%.3g.' % (interaction, cylinder.radius, cylinder.size, interaction.dt) )
+
+        assert self.checkObj( interaction )
+
+	return interaction
+
+
         ######################################################################
         # END CLEAN UP
         ######################################################################
@@ -1149,290 +1435,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( single1, single1.radius, single1.dt ) )
         log.info( '\tNew %s.\n\t\tradius=%.3g. dt=%.3g.' % ( single2, single2.radius, single2.dt ) )
 
-
-    def formInteractionOrPairOrMulti( self, single, neighbors ):
-	assert neighbors
-	bursted = []
-
-        # Todo.
-        # 1. Would be better to return surfaces seperately from getNeighbors.
-        # 2. If multi within neighbors, return multi.
-        # 3. Elif surface in surfacelist, try and return interaction.
-        # 4. Else or if no interaction possible and single in surfacelist, try 
-        # and return pair.
-        # 5. Else. Multi.
-
-        # Try interaction
-	if isinstance( neighbors[0], Surface ):
-	    obj = self.formInteraction( single, neighbors[0], neighbors[1:] )
-	    if obj:
-		return obj, neighbors[1:]
-        elif isinstance( neighbors[0], Single ):
-            # Try forming a Pair only if singles are on same surface.
-            if single.surface == neighbors[0].surface:
-                obj = self.formPair( single, neighbors[0], neighbors[1:] )
-                if obj:
-                    return obj, neighbors[1:]
-
-	# Then, a Multi.
-        neighborsString = ''
-        for n in neighbors:
-            neighborsString += str(n) + ',\n\t\t\t'
-	log.debug( '\t\tDebug. Try to form Multi: %s +\n\t\t\t[ %s ].' % (single, neighborsString) )
-	minShell = single.getMinRadius() * ( 1.0 + self.MULTI_SHELL_FACTOR )
-
-        # Todo. Add surfaces to multi somehow.
-        #neighbors = [ n for n in neighbors if not isinstance( n, Surface ) ]
-	#if not neighbors:
-        #    return None, bursted
-
-	neighborDists = self.objDistanceArray( single.pos, neighbors )
-	neighbors = [ neighbors[i] for i in 
-		      ( neighborDists <= minShell ).nonzero()[0] ]
-
-	if not neighbors:
-            log.debug( '\t\tDebug. Multi not needed.' )
-	    return None, bursted
-
-	closest = neighbors[0]
-	if isinstance( closest, Single ) or isinstance( closest, Surface ):
-
-	    multi = self.createMulti()
-            # Use addToMulti here instead of addToMultiRecursive because we 
-            # already found this single's neighbors (we don't want to do that 
-            # twice).
-	    self.addToMulti( single, multi )
-	    self.removeFromShellMatrix( single )
-	    for neighbor in neighbors:
-		self.addToMultiRecursive( neighbor, multi )
-
-	    multi.initialize( self.t )
-	    
-	    self.addToShellMatrix( multi )
-	    self.addMultiEvent( multi )
-	    return multi, bursted
-
-	elif isinstance( closest, Multi ):
-
-	    multi = closest
-	    log.info( '\tmulti merge %s,\n\t\t%s' % ( single, multi ) )
-
-	    self.removeFromShellMatrix( multi )
-
-	    self.addToMulti( single, multi )
-	    self.removeFromShellMatrix( single )
-	    for neighbor in neighbors[1:]:
-		self.addToMultiRecursive( neighbor, multi )
-
-	    multi.initialize( self.t )
-
-            # Add 1 shell for each particle to main simulator's shellMatrix.
-	    self.addToShellMatrix( multi )
-	    self.updateEvent( self.t + multi.dt, multi )
-	    return multi, bursted
-
-	assert False, 'do not reach here'
-
-
-    '''
-    Find largest possible cylinder around particle and surface, such that it 
-    is not interfering with other shells. Miedema's algorithm.
-    '''
-    def formInteraction( self, single, surface, bursted ):
-
-        particle = single.particle
-        # Cyclic transpose needed when calling surface.projectedPoint!
-        posTransposed = cyclicTranspose( single.pos, surface.origin, self.worldSize )
-	projectedPoint, projectionDistance = surface.projectedPoint( posTransposed )
-
-        # For interaction with a planar surface, decide orientation.  
-	orientationVector = cmp(projectionDistance, 0) * surface.unitZ 
-        particleDistance = abs( projectionDistance )
-
-	log.debug( '\t\tDebug. Try formInteraction: %s +\n\t\t\t%s. particleDistance=%.10g' % (particle, surface, particleDistance) )
-
-        particleRadius = particle.species.radius
-
-        # Todo.
-        minimalOffset = surface.minimalOffset( particle.radius ) 
-        if fless( particleDistance, minimalOffset, particleRadius ):
-            raise Stop( 'particleDistance=%.3g < minimalOffset=%.3g'%( particleDistance, minimalOffset ) )
-
-
-        '''
-        Initialize dr, dzl, dzr.
-
-        For an interaction with a PlanarSurface:
-        * dr is the radius of the cylinder.
-        * dzl determines how much the cylinder is sticking out on the 
-        other side of the surface, measured from the projected point.
-        * dzr is the distance between the particle and the edge of the 
-        cylinder in the z direction.
-
-        For interaction with a CylindricalSurface:
-        * dr is the distance between the particle and the edge of the 
-        cylinder in the r direction.
-        * dzl is the distance from the projected point to the left edge of 
-          the cylinder.
-        * dzr is the distance from the projected point to the right edge 
-          of the cylinder.
-        '''
-        mindzl = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
-	dzl = self.getMaxShellSize() # max.
-	if isinstance( surface, Box ):
-            mindr  = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
-            mindzr = particleRadius * UNBIND_SAFETY # Todo.
-
-            dr = self.getMaxShellSize()  # max.
-            # Todo. Complicated stuff. After an escape there is just enough 
-            # space to make a spherical single.
-            #dzr = surface.Lz + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
-            dzr = particleRadius + ( particleDistance - particleRadius - surface.Lz ) * 20
-
-            #dzr -= particleDistance
-            #dzr = min( dzr, particleRadius * 10 )
-	elif isinstance( surface, Cylinder ):
-            mindr = particleRadius * SAFETY
-            mindzr = particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR )
-
-            # Todo. Complicated stuff. After an escape there is just enough 
-            # space to make a spherical single.
-            dr = surface.radius + particleRadius * ( 1.0 + self.SINGLE_SHELL_FACTOR ) + particleRadius * SAFETY - particleDistance # max.
-            #dr -= particleDistance
-            #dr = min( dr, particleDistance * 10 )
-            dzr = self.getMaxShellSize() # max.
-
-	allNeighbors = self.getNeighborsWithinRadiusNoSort( projectedPoint, dr, ignore=[single,] )
-
-	for object in allNeighbors:
-	    shell = object.shellList[0]
-            # Also works if shell is a cylinder parallel to the same 
-            # CylindricalSurface, because getRadius magically returns the size 
-            # of the cylinder then.
-	    objectRadius = shell.radius
-
-            '''
-            Make bursted singles look bigger, like in formPair, because the 
-            size of their shell is only particle.radius (not yet multiplied by 
-            SINGLE_SHELL_FACTOR) (and no we can not do that immediately after 
-            they are bursted, singles might start overlapping).
-            '''
-            if object.dt == 0.0 and object.getD() > 0:
-                # This is one of the bursted singles.
-                # Or a particle that just escaped it's multi!!!
-                # Should account for this also in formPair???
-                objectRadius *= ( 1.0 + self.SINGLE_SHELL_FACTOR )
-                #assert bursted.__contains__( object ), 'bursted=%s does not contain %s. radius=%.3g.' %(bursted, object, object.radius)
-
-	    objectVector = shell.origin - projectedPoint
-
-            # Calculate zi and ri for this object.
-	    zi = numpy.dot( objectVector, orientationVector )
-	    vectorZ = zi*numpy.array(orientationVector)
-	    vectorR = numpy.array(objectVector) - numpy.array(vectorZ)
-	    ri = numpy.linalg.norm( vectorR )
-
-            # Calculate dri for this object.
-	    dri = ri - objectRadius
-	    if isinstance( surface, Cylinder ):
-		dri -= particleDistance
-
-            # Calculate dzli or dzri (both are usually positive values).
-            if zi < 0:
-                # Calculate dzli for this object.
-                dzli = - zi - objectRadius
-
-                # Miedema's algorithm left side.
-                if dzli < dzl and dri < dr:
-                    if dzli > dri:
-                        dzli = dzli
-                    else:
-                        dr = dri
-            else:
-                # Calculate dzri for this object.
-                dzri = zi - objectRadius
-
-                if isinstance( surface, Box ):
-                    # On the particle side (right side), do Miedema's 
-                    # algorithm relative to the particle's position in the z 
-                    # direction. 
-                    dzri -= particleDistance
-
-                # Miedema's algorithm right side.
-                if dzri < dzr and dri < dr:
-                    if dzri > dri:
-                        dzi = dzri
-                    else:
-                        dr = dri
-
-        if dr < mindr or dzl < mindzl or dzr < mindzr:
-            log.debug( '\t\tDebug. Interaction not possible: %s + %s.\n\t\t\tdr=%.3g. mindr=%.3g. dzl=%.3g. mindzl=%.3g. dzr=%.3g. mindzr=%.3g.' % ( single, surface, dr, mindr, dzl, mindzl, dzr, mindzr ) )
-            return None
-
-        '''
-        Compute radius and size of new cylinder.
-
-        Todo. Should we make it even smaller? Like updateSingle: depending on 
-        diffusion constant etc.
-        '''
-	if isinstance( surface, Box ):
-            # On the other side (left side) than the particle's side, make 
-            # sure there is just enough space for the particle to stick out, 
-            # but not more.
-            dzl = mindzl 
-	    radius = dr
-            # sizeOfDomain is really different from size of cylinder!
-            sizeOfDomain = particleDistance + dzr - surface.Lz
-	    size = ( particleDistance + dzl + dzr ) / 2
-	elif isinstance( surface, Cylinder ):
-	    radius = dr + particleDistance
-            # sizeOfDomain is size of cylinder * 2.
-            sizeOfDomain = dzl + dzr
-	    size = ( sizeOfDomain ) / 2
-
-        # Compute new origin of cylinder.
-        shiftZ = size - dzl
-        origin = projectedPoint + shiftZ * orientationVector
-
-        if isinstance( surface, Box ):
-            # Compute new particle offset relative to origin of the domain in 
-            # the z-direction (z=0), which is *at* the surface boundary. z=L 
-            # is at the end of the cylinder.
-            # (minRadius correction in the constructor).
-            particleOffset = [ 0, particleDistance - surface.Lz ]
-	if isinstance( surface, Cylinder ):
-            # Compute new particle offset in r and z-direction relative to 
-            # origin of new cylinder. In the z-direction, the origin (z=0) is 
-            # at the left boundary. z=L is at the right boundary.
-            # (minRadius correction in the constructor).
-            particleOffset = [ particleDistance, dzl ]
-
-	log.debug( '\t\tDebug. dzl=%.3g. dzr=%.3g. particleOffset=[%.3g, %.3g]. sizeOfDomain=%.3g.' % (dzl, dzr, particleOffset[0], particleOffset[1], sizeOfDomain ) )
-
-        '''
-        Create interaction.
-        '''
-        assert single.dt == 0.0 and single.getMobilityRadius() == 0.0
-
-        reactionTypes = self.getReactionType1( particle.species )
-	interactionType = self.getInteractionType( particle.species, surface )
-
-
-        interaction = surface.defaultInteractionSingle( particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint, sizeOfDomain )
-        interaction.initialize( self.t )
-
-	self.addToShellMatrix( interaction )
-	interaction.dt, interaction.eventType, interaction.activeDomain = interaction.determineNextEvent( )
-	self.addSingleEvent( interaction )
-
-	self.removeFromShellMatrix( single )
-
-	cylinder = interaction.shellList[0]
-	log.info( '\tNew %s.\n\t\tradius=%.3g. size=%.3g. dt=%.3g.' % (interaction, cylinder.radius, cylinder.size, interaction.dt) )
-
-        assert self.checkObj( interaction )
-
-	return interaction
 
 
     '''
