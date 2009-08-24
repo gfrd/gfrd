@@ -111,9 +111,10 @@ public:
 
 	const Real drawR (const Real rnd, const Real t) const;
 
-private:
+//private:
 	// Berekent de wortels van tan(aL)=-ak/h
 	const Real a_n(int n) const;
+private:
 
 	const Real An (const Real a_n) const;
 

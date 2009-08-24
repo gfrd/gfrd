@@ -30,7 +30,7 @@ class Logger:
         self.particleOutInterval = INF
 
         self.lastTime = 0.0
-        self.nextTime = INF
+        self.nextTime = INF			## time for the next log event
 
         self.particleOutPattern = re.compile( '' )
         self.prepareTimecourseFile( comment )
@@ -59,7 +59,7 @@ class Logger:
         self.writeTimecourseComment( comment )
 
         speciesNameList = '\'' +\
-            "\', \'".join( str(self.sim.speciesList.keys())  ) + '\''
+            "\', \'".join( [key[0] for key in self.sim.speciesList.keys()]  ) + '\''
         columns = '[ \'t\', ' + speciesNameList + ']'
         self.writeTimecourseComment( '@ columns= ' + columns )
 
@@ -67,10 +67,11 @@ class Logger:
     def writeTimecourseComment( self, s ):
         self.timecourseFile.write( '#' + s + '\n' )
 
-    def writeTimecourse( self ):
 
-        data = [ str( i.pool.size )\
-                 for i in self.sim.speciesList.values() ]
+    def writeTimecourse( self ):	## writes the number for all species for the current time
+
+	print "writeTimecourse"
+        data = [ str( i.pool.size ) for i in self.sim.speciesList.values() ]
             
         self.timecourseFile.write( '%g' % self.sim.t + '\t' )
         self.timecourseFile.write( '\t'.join( data ) + '\n' )
@@ -93,7 +94,7 @@ class Logger:
             species = self.sim.speciesList[ speciesName ]
             for i in species.pool.positions:
                 file.write( '%s\t%20.14g %20.14g %20.14g %.15g\n' % 
-                            ( speciesName, i[0], i[1], i[2], species.radius ) )
+                            ( speciesName[0], i[0], i[1], i[2], species.radius ) )
 
             file.write( '#\n' )
 
@@ -115,10 +116,10 @@ class Logger:
 
     def logParticles( self ):
         sim = self.sim
-        if self.nextTime <= sim.t + sim.dt:
-            #log.info( 'log %g' % self.nextTime )
-
-            sim.stop( self.nextTime )
+        if self.nextTime <= sim.t + sim.dt:		## only log if the next logging event occurs before
+            #log.info( 'log %g' % self.nextTime )	## the simulation event. So when logging and sim
+							## events don't coincide, you log the state in be
+            sim.stop( self.nextTime )			## tween the simulation events (before the event)
             self.writeParticles()
 
             self.nextTime += self.particleOutInterval

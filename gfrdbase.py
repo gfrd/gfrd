@@ -613,14 +613,16 @@ class ParticleSimulatorBase( object ):
         
 
     def throwInParticles( self, species, n, surface=None ):
-        if not surface:
-            surface = species.surface
+        if not surface:					## if no surface is supplied it uses the surface
+            surface = species.surface			## associated with the species->default
+							## so you can put particles on surfaces which they
+							## don't belong
 
         log.info( '\tthrowing in %s %s particles to %s' % ( n, species.id, surface ) )
 
         i = 0
-        while i < int( n ):
-            position = surface.randomPosition()
+        while i < int( n ):					## place n particles
+            position = surface.randomPosition()			## pick a random position on the surface
 
             # Check overlap.
             if self.checkOverlap( position, species.radius ):
@@ -636,7 +638,7 @@ class ParticleSimulatorBase( object ):
                 if create:
                     # All checks passed. Create particle.
                     self.createParticle( species, position )
-                    i += 1
+                    i +=1					## creation succeded
             else:
                 log.info( '\t%d-th particle rejected. I will keep trying.' %i )
 

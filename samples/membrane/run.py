@@ -2,6 +2,7 @@
 
 from egfrd import *
 from vtklogger import VTKLogger
+from logger import *
 import time
 
 def run( ):
@@ -134,6 +135,11 @@ def run( ):
 
     #s.placeParticle( O, [L/2,L/2,L/2], dna )
 
+    l = Logger( s, 'membrane_stuff' , 'data', 'eerste test')
+#l.setParticleOutput( ('Ea','X','EaX','Xp','Xpp','EaI') ) ## functie bestaat helemaal niet!
+    l.setInterval( 1e-4 )
+    l.log()
+
 
     '''
     Simulation.
@@ -141,16 +147,18 @@ def run( ):
     s.initialize()
     old = time.time()
     startTime = old
-    for i in range(10000):
+    for i in range(1000000):
         new = time.time()
-        print '\ttime = ', new - old
-        print '\ttotaltime = ', new - startTime
+#        print '\ttime = ', new - old
+#        print '\ttotaltime = ', new - startTime
         old = new
         try:
             s.step()
+#	    print s.dumpPopulation()
         except Stop, message:
             print message
             break
+	l.log()		## print the number of particle for certain times
     s.dumpPopulation()
     s.stop( s.t )
     
