@@ -26,6 +26,7 @@ aclocal.m4
 config.h.in
 configure
 Makefile.in
+m4
 
 SphericalBesselTable.hpp
 DynamicPriorityQueue_test
@@ -36,6 +37,12 @@ temp
 scratch
 tags
 tags.python
+tags.c++
 lib
 *_test
 *.*data
+*.pvsm
+*.dat
+*.png
+*.jpg
+*.jpeg
