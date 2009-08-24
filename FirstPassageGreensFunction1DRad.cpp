@@ -289,8 +289,6 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 
-std::cerr << "D: " << D << " L: " << this->l_scale << " r0: " << r0 << " h: " << k/D << std::endl;
-
 	if ( D == 0.0 || L == INFINITY )
 	{	return INFINITY;
 	}
