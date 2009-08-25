@@ -915,7 +915,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 # Miedema's algorithm left side.
                 if dzli < dzl and dri < dr:
                     if dzli > dri:
-                        dzli = dzli
+                        dzl = dzli
                     else:
                         dr = dri
             else:
@@ -931,7 +931,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 # Miedema's algorithm right side.
                 if dzri < dzr and dri < dr:
                     if dzri > dri:
-                        dzi = dzri
+                        dzr = dzri
                     else:
                         dr = dri
 

@@ -158,7 +158,7 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 
 	do
 	{	if ( n >= MAX_TERMEN )
-                {       std::cerr << "Too many terms needed for prob_r. N: " << n << std::endl;
+                {       std::cerr << "Too many terms needed for GF1DRad::prob_r. N: " << n << std::endl;
                         break;
                 }
 
@@ -197,7 +197,7 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 
 	do
 	{	if ( n >= MAX_TERMEN )
-                {       std::cerr << "Too many terms needed for flux_tot. N: " << n << std::endl;
+                {       std::cerr << "Too many terms needed for GF1DRad::flux_tot. N: " << n << std::endl;
                         break;
                 }
 
@@ -261,7 +261,7 @@ double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
 	int n=0;
 	do
 	{	if ( n >= terms )
-		{	std::cerr << "Too many terms needed for DrawTime. N: " << n << std::endl;
+		{	std::cerr << "Too many terms needed for GF1DRad::DrawTime. N: " << n << std::endl;
 			break;
 		}
 		prev_term = term;
@@ -272,8 +272,8 @@ double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
 		sum += term;
 		n++;
 	}
-	while (fabs(term/sum) > EPSILON*tscale ||
-                fabs(prev_term/sum) > EPSILON*tscale ||
+	while (fabs(term/sum) > EPSILON*1.0 ||
+                fabs(prev_term/sum) > EPSILON*1.0 ||
                 n <= MIN_TERMEN );	
 
 	return 1.0 - 2.0*sum - params->rnd;		// het snijpunt vinden met het random getal
@@ -353,7 +353,7 @@ std::cerr << "D: " << D << " L: " << this->l_scale << " r0: " << r0 << " h: " <<
 
                         if( fabs( high ) >= t_guess * 1e6 )
                         {
-                                std::cerr << "Couldn't adjust high. F(" << high <<
+                                std::cerr << "GF1DRad: Couldn't adjust high. F(" << high <<
                                     ") = " << value << std::endl;
                                 throw std::exception();
                         }
@@ -365,9 +365,9 @@ std::cerr << "D: " << D << " L: " << this->l_scale << " r0: " << r0 << " h: " <<
                 Real value_prev( 2 );	// initialize with 2 so the test below survives the first iteration
                 do
                 {
-                        if( fabs( low ) <= t_guess * 1e-6 || fabs(value-value_prev) < EPSILON*this->t_scale )
+                        if( fabs( low ) <= t_guess * 1e-6 || fabs(value-value_prev) < EPSILON*1.0 )
                         {
-                                std::cerr << "Couldn't adjust low. F(" << low <<
+                                std::cerr << "GF1DRad: Couldn't adjust low. F(" << low <<
                                         ") = " << value <<
                                         " t_guess: " << t_guess << " diff: " << (value - value_prev) <<
                                         " value: " << value << " value_prev: " << value_prev <<
@@ -402,7 +402,7 @@ double FirstPassageGreensFunction1DRad::drawR_f (double z, void *p)
 	int n = 0;
 	do
 	{	if ( n >= terms )
-                {       std::cerr << "Too many terms needed for DrawR. N: " << n << std::endl;
+                {       std::cerr << "GF1DRad: Too many terms needed for DrawR. N: " << n << std::endl;
                         break;
                 }
 		prev_term = term;
@@ -415,8 +415,8 @@ double FirstPassageGreensFunction1DRad::drawR_f (double z, void *p)
 		sum += term;
 		n++;
 	}
-	while (fabs(term/sum) > EPSILON ||		// the lengthscale of 1.0 is implied
-                fabs(prev_term/sum) > EPSILON ||
+	while (fabs(term/sum) > EPSILON*1.0 ||		// the function returns a probability (scale is 1)
+                fabs(prev_term/sum) > EPSILON*1.0 ||
                 n <= MIN_TERMEN );
 
 	return sum - params->rnd;		// het snijpunt vinden met het random getal

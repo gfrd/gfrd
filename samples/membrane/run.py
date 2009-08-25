@@ -36,8 +36,8 @@ def run( ):
 
     Todo: somehow make sure a species can only be on 1 surface.
     '''
-    signal_mol = Species( 'signal_molecule', 1e-11, 1e-8)	# the signal molecule
-    signal_mol_mem = Species( 'signal_molecule_mem', 1e-12, 1e-8)# the signal molecule on the membrane
+#    signal_mol = Species( 'signal_molecule', 1e-11, 1e-8)	# the signal molecule
+#    signal_mol_mem = Species( 'signal_molecule_mem', 1e-12, 1e-8)# the signal molecule on the membrane
     receptor = Species( 'Receptor', 1e-13, 1e-8)		# the membrane bound recepter protein
     receptor_a = Species( 'Receptor_a', 1e-13, 1e-8)		# activated receptor protein (by ligand)
     receptor_a_2 = Species( 'Receptor_a_dimer', 1e-13, 2e-8)	# a dimer of the activated receptor proteins
@@ -47,8 +47,8 @@ def run( ):
     carrier_a_mem = Species( 'Carrier_a_mem', 2e-13, 1e-8)	# active cytosolic carrier protein on membrane
     receptor_carrier_C = Species( 'receptor_carrier_C', 1e-13, 3e-8)	# receptor-carrier complex
 
-    s.addSpecies( signal_mol )
-    s.addSpecies( signal_mol_mem , membrane1)
+#    s.addSpecies( signal_mol )
+#    s.addSpecies( signal_mol_mem , membrane1)
     s.addSpecies( receptor , membrane1)
     s.addSpecies( receptor_a , membrane1)
     s.addSpecies( receptor_a_2 , membrane1)
@@ -73,13 +73,14 @@ def run( ):
 
     # signal_mol + membrane -> association
     # association -> signal_mol + membrane
-    i1 = SurfaceBindingInteractionType( signal_mol, signal_mol_mem, 1e6)
-    r1 = SurfaceUnbindingReactionType ( signal_mol_mem, signal_mol, 1e1)
+#    i1 = SurfaceBindingInteractionType( signal_mol, signal_mol_mem, 1e6)
+#    r1 = SurfaceUnbindingReactionType ( signal_mol_mem, signal_mol, 1e1)
 
     # receptor + signal_mol -> activated receptor
     # activated receptor -> receptor
     # SO WE LOSE SIGNAL MOLECULES!
-    r2 = BindingReactionType ( receptor, signal_mol_mem, receptor_a, 1e6)
+#    r2 = BindingReactionType ( receptor, signal_mol_mem, receptor_a, 1e6)
+    r2 = UnimolecularReactionType ( receptor, receptor_a, 1e4)
     r3 = UnimolecularReactionType ( receptor_a, receptor, 1e0)
 
     # receptor_a + receptor_a -> receptor dimer
@@ -106,10 +107,10 @@ def run( ):
     # decay of activated carrier: active carrier -> carrier
     r10 = UnimolecularReactionType ( carrier_a, carrier, 1e-2)
 
-    s.addInteractionType( i1 )
+#    s.addInteractionType( i1 )
     s.addInteractionType( i2 )
     s.addInteractionType( i3 )
-    s.addReactionType( r1 )
+#    s.addReactionType( r1 )
     s.addReactionType( r2 )
     s.addReactionType( r3 )
     s.addReactionType( r4 )
@@ -157,9 +158,10 @@ def run( ):
 #	    print s.dumpPopulation()
         except Stop, message:
             print message
+	    s.vtklogger = VTKLogger(s, 'run_20090824')
+            s.vtklogger.log()
             break
 	l.log()		## print the number of particle for certain times
-    s.dumpPopulation()
     s.stop( s.t )
     
 if __name__ == '__main__':
