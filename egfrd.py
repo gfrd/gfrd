@@ -77,7 +77,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.zeroSteps = 0
         self.rejectedMoves = 0
         self.reactionEvents = 0
-	self.interactionEvents = 0
+	self.unbindingEvents = 0
+	self.bindingEvents = 0
         self.lastEvent = None
         self.lastReaction = None
         self.isDirty = True
@@ -116,9 +117,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         event = self.scheduler.getTopEvent()
         self.t, self.lastEvent = event.getTime(), event.getArg()
 
-        log.info( '\n\n\t%d: t=%.3g dt=%.3g\n\tevent=%s.\n\tReactions=%d, interactions=%d, rejectedmoves=%d, errors=%d.' 
+        log.info( '\n\n\t%d: t=%.3g dt=%.3g\n\tevent=%s.\n\tReactions=%d, unbindings=%d, bindings=%d, rejectedmoves=%d, errors=%d.' 
                       % ( self.stepCounter, self.t, self.dt, self.lastEvent, 
-                          self.reactionEvents, self.interactionEvents, self.rejectedMoves, self.errors ) )
+                          self.reactionEvents, self.unbindingEvents, self.bindingEvents, self.rejectedMoves, self.errors ) )
         
         self.scheduler.step()
 
@@ -567,7 +568,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	rt = self.getReactionType1( particle.species )
 	'''
 	The type of defaultSingle depends on the surface this particle is on.  
-	Either SphericalSingle3D, CylindricalSingle2D, or CylindricalSingle1D.
+	Either SphericalSingle, PlanarSurfaceSingle, or CylindricalSurfaceSingle.
 	'''
 	single = particle.surface.defaultSingle( particle, rt )
 	single.initialize( self.t )
@@ -651,6 +652,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # The single was just propagated and initialized, so it's shell has
         # size getMinSize().
 	minShell = single.getMinRadius() * ( 1.0 + self.SINGLE_SHELL_FACTOR )
+        if isinstance(single.shellList[0], Cylinder ):
+            # Quick fix to not get a minimal cylinder to overlap with nearby 
+            # sphere.
+            minShell *= math.sqrt(2)
         # We already know there are no other objects within getMinSize()
         # (particle radius), because propagateSingle checked it. Now check if
         # there are any within minShell, and also get closest outside of
@@ -1163,27 +1168,36 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 	    self.lastReaction = Reaction( rt, [single.particle], [] )
 
 	elif len( rt.products ) == 1:
-
 	    productSpecies = rt.products[0]
-	    if reactantSpecies.radius < productSpecies.radius:
-		self.clearVolume( oldpos, productSpecies.radius )
-
-	    if not self.checkOverlap( oldpos, productSpecies.radius,
-				      ignore = [ single.particle, ] ):
-		log.info( '\tno space for product particle.' )
-		raise NoSpace()
 
 	    if isinstance( rt, SurfaceUnbindingReactionType ):
 		newpos = currentSurface.randomUnbindingSite( oldpos, productSpecies.radius )
-            elif isinstance( rt, SurfaceBindingInteractionType ):
-                # Todo. Does this obey detailed balance?
-                newpos, _ = rt.products[0].surface.projectedPoint( oldpos )
 
                 self.reactionEvents -= 1 # Because we do +1 at end of this method.
-                self.interactionEvents += 1
-	    else: 
-		# No change.
-		newpos = oldpos
+                self.unbindingEvents += 1
+
+                # After unbinding, always clear target volume. 
+		self.clearVolume( newpos, productSpecies.radius )
+            else:
+                if isinstance( rt, SurfaceBindingInteractionType ):
+                    # Todo. Does this obey detailed balance?
+                    newpos, _ = rt.products[0].surface.projectedPoint( oldpos )
+
+                    self.reactionEvents -= 1 # Because we do +1 at end of this method.
+                    self.bindingEvents += 1
+                else: 
+                    # No change.
+                    newpos = oldpos
+
+                # After binding or normal reaction, only clear volume if new 
+                # radius is bigger.
+                if reactantSpecies.radius < productSpecies.radius:
+                    self.clearVolume( newpos, productSpecies.radius )
+
+	    if not self.checkOverlap( newpos, productSpecies.radius,
+				      ignore = [ single.particle, ] ):
+		log.info( '\tno space for product particle.' )
+		raise NoSpace()
 
 	    self.removeParticle( single.particle )
             self.applyBoundary( newpos )

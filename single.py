@@ -203,12 +203,12 @@ class PlanarSurfaceSingle( NonInteractionSingle ):
         NonInteractionSingle.__init__( self, particle, reactionTypes )
 
         '''
-        Hockey pucks stick a bit out of the surface, so that if the 
-        biggest particle would undergo an unbinding reaction, it can still be 
-        placed within the hockey puck (and thus it won't interfere with other 
-        shells.
+        Hockey pucks do not stick out of the surface any more than they have 
+        to (getMinRadius()), so if the particle undergoes an unbinding 
+        reaction we still have to clear the target volume and the move may be 
+        rejected (NoSpace error).
         '''
-        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.surface.Lz * SAFETY + 2 * particle.radius ) ]
+        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.getMinRadius() ) ]
 
         # Create a radial domain of size mobilityRadius=0.
         gf = FirstPassageGreensFunction2D( self.getD() )
@@ -237,9 +237,16 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
     def __init__( self, particle, reactionTypes ):
         NonInteractionSingle.__init__( self, particle, reactionTypes )
 
-        # Heads up. The cylinder's *size*, not radius, is determined by 
-        # getMinRadius(), because of redefinition of getRadius.
-        self.shellList = [ Cylinder( particle.pos, self.surface.radius * SAFETY + 2 * particle.radius, self.surface.unitZ, self.getMinRadius() ) ]
+        '''
+        The radius of a rod is not more than it has to be (namely 
+        getMinRadius()), so if the particle undergoes an unbinding 
+        reaction we still have to clear the target volume and the move may be 
+        rejected (NoSpace error).
+
+        Heads up. The cylinder's *size*, not radius, is changed when you 
+        make the cylinder bigger, because of the redefinition of setRadius.
+        '''
+        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.getMinRadius() ) ]
 
         # Create a cartesian domain of size mobilityRadius=0.
         gf = FirstPassageGreensFunction1D( self.getD() )

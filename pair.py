@@ -402,15 +402,15 @@ class PlanarSurfacePair( Pair ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
         '''
-        Hockey pucks stick a bit out of the surface, so that if the 
-        biggest particle would undergo an unbinding reaction, it can still be 
-        placed within the hockey puck (and thus it won't interfere with other 
-        shells.
+        Hockey pucks do not stick out of the surface any more than they have 
+        to (getMinRadius()), so if one of the particles undergoes an unbinding 
+        reaction we still have to clear the target volume and the move may be 
+        rejected (NoSpace error).
 
         Set radius=shellSize directly, without getMinRadius() step. Don't set 
         radius again from initialize(). Pairs don't move.
         '''
-        self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, self.surface.Lz * SAFETY + 2*self.biggestParticleRadius ) ]
+        self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, self.biggestParticleRadius ) ]
 
         a_R, self.a_r = self.determineRadii()
 
@@ -469,9 +469,16 @@ class CylindricalSurfacePair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
 
-        # Set shellSize directly, without getMinRadius() step. Don't set 
-        # radius again from initialize(). Pairs don't move.
-        self.shellList = [ Cylinder( self.CoM, self.surface.radius * SAFETY + 2*self.biggestParticleRadius, self.surface.unitZ, shellSize ) ]
+        '''
+        The radius of a rod is not more than it has to be (namely 
+        getMinRadius()), so if the particle undergoes an unbinding 
+        reaction we still have to clear the target volume and the move may be 
+        rejected (NoSpace error).
+
+        Set shellSize directly, without getMinRadius() step. Don't set 
+        radius again from initialize(). Pairs don't move.
+        '''
+        self.shellList = [ Cylinder( self.CoM, self.biggestParticleRadius, self.surface.unitZ, shellSize ) ]
 
         a_R, self.a_r = self.determineRadii()
 
