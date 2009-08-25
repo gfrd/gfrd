@@ -20,7 +20,7 @@ class EGFRDSimulatorTestCase( unittest.TestCase ):
         pass
     
     def test_instantiation( self ):
-        s = EGFRDSimulator()
+        s = EGFRDSimulator( 1e-5 )
         self.failIf( s == None )
 
     
