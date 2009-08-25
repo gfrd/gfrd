@@ -5,49 +5,62 @@ import os
 import numpy
 from vtk_xml_serial_unstructured import *
 from shape import *
+from bd import BDSimulator
 
 INF = numpy.inf
-BROWNIAN = False
-
-class DummyCylinder( Cylinder ):
-    def __init__( self ):
-        Cylinder.__init__( self, [0,0,0], 1e-20, [0,0,1], 1e-20 ) 
 
 
-class DummyBox( Box ):
-    def __init__( self ):
-        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 1e-20, 1e-20, 1e-20 ) 
+'''
+Logger that can be used to visualize data with Kitware ParaView.
 
 
-# Logger that can be used to visualize data with Kitware ParaView.
-# log():
-#   (get.......Data = createDoc() + addPiece()) + writeDoc()
-#
-# stop():
-#   writePvd(name.pvd)
+* Setup. Specify bufferSize to only write last 'bufferSize' simulation steps 
+  to file:
+    vtklogger = VTKLogger( sim=s, name='run' )
+    or
+    vtklogger = VTKLogger( sim=s, name='run', bufferSize=100 )
+
+* Each step, to write .vtk files:
+    vtklogger.log()
+
+* Finalize, to write .pvd file:
+    vtklogger.stop()
+
+
+Inner workings:
+    log():
+        (get.......Data = createDoc() + addPiece()) + writeDoc()
+    stop():
+        writePvd(name.pvd)
+'''
 class VTKLogger:
-    def __init__(self, sim, name):
+    def __init__(self, sim, name, bufferSize=None, brownian=False):
         self.sim = sim
+        self.brownian = brownian
+
         self.vtk_writer = VTK_XML_Serial_Unstructured()
+        self.bufferSize = bufferSize
+        self.buffer = []
 
         # Filename stuff.
         self.name = name
         if not os.path.exists('data/' + self.name + '/files'):
             os.makedirs('data/' + self.name + '/files')
 
-        self.fileList = {'particles':[], 'spheres':[], 'cylinders':[], 
-                'cuboidalSurfaces':[], 'cylindricalSurfaces':[], 
-                'planarSurfaces':[]}  # For .pvd file.
+        self.fileList = [] #{'particles':[], 'spheres':[], 'cylinders':[]}
+        self.staticList = [] #{'cuboidalSurfaces':[], 'cylindricalSurfaces':[], 
+                #'planarSurfaces':[]}  # For .pvd file.
 
-        self.i = 0          # Counter.
+        self.i = 0          # Step counter.
         self.deltaT = 1e-11 # Needed for hack. Note: don't make too small, 
                             # should be relative to max time.
         self.lastTime = 0   # Needed for hack.
 
 
+
     def log( self ):
         time = self.sim.t
-        if (abs(time - self.lastTime) < 1e-9):
+        if (abs(time - self.lastTime) < 1e-9) and not self.brownian:
             # Hack to make Paraview understand this is a different simulator 
             # step but with the same time.
             # 1. During multi global time is not updated.
@@ -55,59 +68,72 @@ class VTKLogger:
             # 3. Sometimes shells have mobilityRadius = 0 --> dt=0.
             # And I want every step recorded, so I can find out what happened 
             # in which step (divide by 2 actually).
-            if BROWNIAN != True:
-                # Now Paraview should perceive a state change.
-                time = self.lastTime + self.deltaT
+            #
+            # Now Paraview should perceive a state change.
+            # When doing Brownian Dynamics, this is not needed.
+            time = self.lastTime + self.deltaT
 
-        # Get and process data.
-        particlesDoc = self.getParticleData()
-        cuboidalSurfacesDoc = self.getCuboidalSurfaceData()
-        cylindricalSurfacesDoc = self.getCylindricalSurfaceData()
-        planarSurfacesDoc = self.getPlanarSurfaceData()
-        if BROWNIAN != True:
-            spheresDoc   = self.getSphericalShellDataFromScheduler( )
-            cylindersDoc = self.getCylindricalShellData( )
+        # Get data.
+        particles = self.getParticleData()
+        if not self.brownian:
+            spheres   = self.getSphericalShellDataFromScheduler( )
+            cylinders = self.getCylindricalShellData( )
 
             if self.i == 0:
-                self.previousShellsDoc = spheresDoc
-                self.previousCylindersDoc = cylindersDoc
+                self.previousShells = spheres
+                self.previousCylinders = cylinders
+        else:
+            spheres, cylinders = [], []
 
-            # First a snapshot with only the particles updated. Don't use new 
-            # docs, but previousShellsDoc and previousCylindersDoc.
-            self.makeSnapshot( 'particles', self.i, time, particlesDoc )
-            self.makeSnapshot( 'spheres', self.i, time, self.previousShellsDoc )
-            self.makeSnapshot( 'cylinders', self.i, time, self.previousCylindersDoc )
-            self.makeSnapshot( 'cuboidalSurfaces', self.i, time, cuboidalSurfacesDoc )
-            self.makeSnapshot( 'cylindricalSurfaces', self.i, time, cylindricalSurfacesDoc )
-            self.makeSnapshot( 'planarSurfaces', self.i, time, planarSurfacesDoc )
-            self.i += 1
-            time += self.deltaT  # Hack.
-            self.previousShellsDoc = spheresDoc
-            self.previousCylindersDoc = cylindersDoc
+        # Write to buffer or file.
+        if self.bufferSize:
+            # Store in buffer, instead of writing to file directly.
+            self.buffer.append( (time, self.i, particles, spheres, cylinders) )
 
+            if self.i >= self.bufferSize:
+                # FIFO.
+                del self.buffer[0]
+        else:
+            # Write normal log.
+            self.writelog( time, self.i, (particles, spheres, cylinders) )
 
-        # Then a normal snapshot.
-        self.makeSnapshot( 'particles', self.i, time, particlesDoc )
-        self.makeSnapshot( 'cuboidalSurfaces', self.i, time, cuboidalSurfacesDoc )
-        self.makeSnapshot( 'cylindricalSurfaces', self.i, time, cylindricalSurfacesDoc )
-        self.makeSnapshot( 'planarSurfaces', self.i, time, planarSurfacesDoc )
-        if BROWNIAN != True:
-            self.makeSnapshot( 'spheres', self.i, time, self.previousShellsDoc )
-            self.makeSnapshot( 'cylinders', self.i, time, self.previousCylindersDoc )
         self.i += 1
         self.lastTime = time
 
 
+    def writelog( self, time, index, (particles, spheres, cylinders) ):
+        self.makeSnapshot( 'particles', particles, index, time )
+        if not self.brownian:
+            self.makeSnapshot( 'spheres', spheres, index, time )
+            self.makeSnapshot( 'cylinders', cylinders, index, time )
+
+
     # Write data to file.
-    # Store filename and time in fileList.
-    def makeSnapshot( self, type, index, time, doc ):
+    def makeSnapshot( self, type, data, index='', time=None ):
+        doc = self.vtk_writer.createDoc( data )
         fileName = 'files/' + type + str(index) + '.vtu'
         self.vtk_writer.writeDoc(doc, 'data/' + self.name + '/' + fileName)
-        self.fileList[type].append( (fileName, time) )
+
+        # Store filename and time in fileList, used by vtk_wrtie.writePVD().
+        if time:
+            self.fileList.append( (type, fileName, index, time) )
+        else:
+            self.staticList.append( (type, fileName, None, None) )
 
 
     def stop( self ):
+        self.log()
+        for newIndex, entry in enumerate(self.buffer):
+            self.writelog( entry[0], newIndex, entry[2:] )
         self.vtk_writer.writePVD('data/' + self.name + '/' + 'files.pvd', self.fileList)
+
+        # Surfaces don't move.
+        self.makeSnapshot( 'cuboidalSurfaces', self.getCuboidalSurfaceData() )
+        self.makeSnapshot( 'cylindricalSurfaces', self.getCylindricalSurfaceData() )
+        self.makeSnapshot( 'planarSurfaces', self.getPlanarSurfaceData() )
+
+        self.vtk_writer.writePVD('data/' + self.name + '/' + 'static.pvd', self.staticList)
+
 
 
     def getParticleData( self ):
@@ -117,8 +143,7 @@ class VTKLogger:
             for particlePos in species.pool.positions:
                 self.appendLists( posList, particlePos, typeList, speciesIndex, radiusList, species.radius)
 
-        return self.vtk_writer.createDoc(posList, radii=radiusList, 
-                colors=typeList )
+        return (posList, radiusList, typeList, [])
 
 
     def getSphericalShellDataFromScheduler( self ):
@@ -144,8 +169,7 @@ class VTKLogger:
                 for single in object.shellList:
                     self.appendLists( posList, single.origin, typeList, type, radiusList, single.radius )
 
-        return self.vtk_writer.createDoc(posList, radii=radiusList, 
-                colors=typeList )
+        return (posList, radiusList, typeList, [])
 
 
     def getCylindricalShellData( self ):
@@ -170,7 +194,7 @@ class VTKLogger:
             self.appendLists(posList, box.origin, typeList, type, 
                     tensorList=tensorList, tensor=tensor) 
 
-        return self.vtk_writer.createDoc(posList, colors=typeList, tensors=tensorList )
+        return (posList, [], typeList, tensorList)
 
 
     def getCylindricalSurfaceData( self ):
@@ -192,7 +216,7 @@ class VTKLogger:
             self.appendLists(posList, box.origin, typeList, type, tensorList=tensorList, 
                     tensor=tensor) 
 
-        return self.vtk_writer.createDoc(posList, colors=typeList, tensors=tensorList )
+        return (posList, [], typeList, tensorList)
 
 
     def processCylinders( self, cylinders=[] ):
@@ -225,7 +249,7 @@ class VTKLogger:
 
             self.appendLists( posList, cylinder.origin, typeList, type, tensorList=tensorList, tensor=tensor ) 
 
-        return self.vtk_writer.createDoc(posList, colors=typeList, tensors=tensorList )
+        return (posList, [], typeList, tensorList)
 
 
     # Helper.
@@ -240,10 +264,20 @@ class VTKLogger:
         # Multiply radii and tensors by 2 because Paraview sets radius to 0.5 
         # by default, and it wants full lengths for cylinders and we are 
         # storing half lengths.
-        if radius != None:
+        if radius:
             radiusList.append( radius * 2 * factor )
 
         if tensor != None:
             tensor = tensor * 2 * factor
             tensorList.append( tensor )
+
+
+class DummyCylinder( Cylinder ):
+    def __init__( self ):
+        Cylinder.__init__( self, [0,0,0], 1e-20, [0,0,1], 1e-20 ) 
+
+
+class DummyBox( Box ):
+    def __init__( self ):
+        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 1e-20, 1e-20, 1e-20 ) 
 

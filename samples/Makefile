@@ -3,7 +3,7 @@
 .PHONY: all
 all : bd gfrd hardbody irreversible mapk pushpull rebind reversible tf
 
-DATA=data/run/files.pvd data/run/files/*
+DATA=data/run/files.pvd data/run/static.pvd data/run/files/
 
 .PHONY: bd
 bd:

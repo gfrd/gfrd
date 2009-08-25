@@ -19,13 +19,7 @@ from log import *
 Returning a dt to the scheduler reschedules the event, -INF removes it.
 '''
 class EGFRDSimulator( ParticleSimulatorBase ):
-    def __init__( self, worldSize, logdir = None ):
-        if logdir:
-            log.info( '\tStarted vtk logger: ' + logdir )
-            self.vtklogger = VTKLogger( self, logdir )
-        else:
-            self.vtklogger = None
-
+    def __init__( self, worldSize ):
         self.sphereMatrix = SphereMatrix()
         self.cylinderMatrix = CylinderMatrix()
         self.boxMatrix = BoxMatrix() # Not used.
@@ -113,9 +107,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     def step( self ):
         if self.isDirty:
             self.initialize(1)
-        if self.vtklogger:
-            self.vtklogger.log()
-
         self.lastReaction = None
             
         #if self.stepCounter % 100 == 0:
@@ -145,8 +136,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def stop( self, t ):
-        if self.vtklogger:
-            self.vtklogger.stop()
         log.info( '\tStop at %.3g.' % t )
 
         if feq( self.t, t ):

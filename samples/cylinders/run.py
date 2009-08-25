@@ -10,7 +10,7 @@ def run( ):
     factor = 1 #1e9
     L = factor * 1e-6
 
-    s = EGFRDSimulator( worldSize=L, logdir='run' )
+    s = EGFRDSimulator( worldSize=L )
 
     D = factor * factor * 1e-12
     sigma = factor * 2.5e-8
@@ -20,7 +20,7 @@ def run( ):
     Surfaces.
     '''
     dna = CylindricalSurface( [L/2,L/2,L/2], 2*sigma, [0,1,0], L/2, 'dna')
-    s.addSurface( dna )
+    #s.addSurface( dna )
 
     membrane = PlanarSurface( [L/2,L/2,2*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
     s.addSurface( membrane )
@@ -51,12 +51,14 @@ def run( ):
     Cm2 = Species( 'C', D, sigma )
     s.addSpecies( Cm2, membrane2 )
 
+    '''
     Ad = Species( 'A', D, sigma )
     s.addSpecies( Ad, dna )
     Bd = Species( 'B', D, sigma )
     s.addSpecies( Bd, dna )
     Cd = Species( 'C', D, sigma )
     s.addSpecies( Cd, dna )
+    '''
 
     Aw = Species( 'A', D, sigma )
     s.addSpecies( Aw )
@@ -97,15 +99,15 @@ def run( ):
     '''
     Particles.
     '''
-    s.throwInParticles( Aw, 4 )
+    s.throwInParticles( Aw, 5 )
     #s.throwInParticles( Bw, 1 )
     #s.throwInParticles( Cw, 1 )
 
-    s.throwInParticles( Ad, 2 )
+    #s.throwInParticles( Ad, 2 )
     #s.throwInParticles( Bd, 1 )
     #s.throwInParticles( Cd, 1 )
 
-    #s.throwInParticles( Am, 5 )
+    s.throwInParticles( Am, 5 )
     #s.throwInParticles( Bm, 1 )
     #s.throwInParticles( Cm, 1 )
 
@@ -120,12 +122,15 @@ def run( ):
     Simulation.
     '''
     s.initialize()
-    for i in range(100):
+    vtklogger = VTKLogger( s, 'run', 10 )
+    for i in range(200):
         try:
+            vtklogger.log()
             s.step()
         except Stop, message:
             print message
             break
+    vtklogger.stop()
     s.stop( s.t )
     
 if __name__ == '__main__':
