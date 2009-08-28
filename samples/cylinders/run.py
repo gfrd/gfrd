@@ -20,7 +20,7 @@ def run( ):
     Surfaces.
     '''
     dna = CylindricalSurface( [L/2,L/2,L/2], 2*sigma, [0,1,0], L/2, 'dna')
-    #s.addSurface( dna )
+    s.addSurface( dna )
 
     membrane = PlanarSurface( [L/2,L/2,2*L/10], [1,0,0], [0,1,0], L/2, L/2, sigma, 'membrane', )
     s.addSurface( membrane )
@@ -122,8 +122,8 @@ def run( ):
     Simulation.
     '''
     s.initialize()
-    vtklogger = VTKLogger( s, 'run', 10 )
-    for i in range(200):
+    vtklogger = VTKLogger( s, 'run' )
+    for i in range(100):
         try:
             vtklogger.log()
             s.step()

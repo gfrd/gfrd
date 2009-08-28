@@ -32,6 +32,26 @@ Inner workings:
         (get.......Data = createDoc() + addPiece()) + writeDoc()
     stop():
         writePvd(name.pvd)
+
+
+=== Cylinders
+To visualize the cylinders a workaround using tensors is used, as explained here:
+http://www.paraview.org/pipermail/paraview/2009-March/011256.html. The 
+mentioned tensorGlyph.xml should be supplied with this package.
+
+As explainded in the above link, to give cylinders the right color, there are 
+2 options.
+
+1. Build Paraview from source, after adding in file
+Paraview3/VTK/Graphics/vtkTensorGlyph.cxx after
+    newScalars = vtkFloatArray::New();
+a new line:
+    newScalars->SetName("colors");
+2. Do that Python script thing.
+
+Another hack was needed to get the coloring to work. This makes VTKLogger 
+write a vector instead of a scalar value for each color to the .vtu files. But 
+you shouldn't have to worry about that, just select 'colors' to color the Glyph.
 '''
 class VTKLogger:
     def __init__(self, sim, name, bufferSize=None, brownian=False):
@@ -47,9 +67,8 @@ class VTKLogger:
         if not os.path.exists('data/' + self.name + '/files'):
             os.makedirs('data/' + self.name + '/files')
 
-        self.fileList = [] #{'particles':[], 'spheres':[], 'cylinders':[]}
-        self.staticList = [] #{'cuboidalSurfaces':[], 'cylindricalSurfaces':[], 
-                #'planarSurfaces':[]}  # For .pvd file.
+        self.fileList = []
+        self.staticList = []
 
         self.i = 0          # Step counter.
         self.deltaT = 1e-11 # Needed for hack. Note: don't make too small, 
@@ -76,8 +95,8 @@ class VTKLogger:
         # Get data.
         particles = self.getParticleData()
         if not self.brownian:
-            spheres   = self.getSphericalShellDataFromScheduler( )
-            cylinders = self.getCylindricalShellData( )
+            spheres, cylinders = self.getShellDataFromScheduler( )
+            #cylinders = self.getCylindricalShellData( )
 
             if self.i == 0:
                 self.previousShells = spheres
@@ -128,9 +147,9 @@ class VTKLogger:
         self.vtk_writer.writePVD('data/' + self.name + '/' + 'files.pvd', self.fileList)
 
         # Surfaces don't move.
-        self.makeSnapshot( 'cuboidalSurfaces', self.getCuboidalSurfaceData() )
         self.makeSnapshot( 'cylindricalSurfaces', self.getCylindricalSurfaceData() )
         self.makeSnapshot( 'planarSurfaces', self.getPlanarSurfaceData() )
+        self.makeSnapshot( 'cuboidalSurfaces', self.getCuboidalSurfaceData() )
 
         self.vtk_writer.writePVD('data/' + self.name + '/' + 'static.pvd', self.staticList)
 
@@ -146,8 +165,9 @@ class VTKLogger:
         return (posList, radiusList, typeList, [])
 
 
-    def getSphericalShellDataFromScheduler( self ):
+    def getShellDataFromScheduler( self ):
         posList, radiusList, typeList = [], [], []
+        cylinders, cylinderTypeList = [], []
 
         topTime = self.sim.scheduler.getTopTime()
         for eventIndex in range( self.sim.scheduler.getSize() ):
@@ -164,12 +184,14 @@ class VTKLogger:
             try:
                 # Don't show sphere for cylinder.
                 object.shellList[0].size  # Only cylinders have a 'size'.
+                cylinders.append( object.shellList[0] )
+                cylinderTypeList.append( type )
             except:
                 # Single or Pair or Multi.
-                for single in object.shellList:
-                    self.appendLists( posList, single.origin, typeList, type, radiusList, single.radius )
+                for shell in object.shellList:
+                    self.appendLists( posList, shell.origin, typeList, type, radiusList, shell.radius )
 
-        return (posList, radiusList, typeList, [])
+        return (posList, radiusList, typeList, []), self.processCylinders( cylinders, cylinderTypeList )
 
 
     def getCylindricalShellData( self ):
@@ -188,16 +210,15 @@ class VTKLogger:
             # Add dummy box to stop tensorGlyph from complaining.
             boxes = [ DummyBox() ] 
 
-        type = 1
         for box in boxes:
             tensor = numpy.concatenate((box.vectorX, box.vectorY, box.vectorZ))
-            self.appendLists(posList, box.origin, typeList, type, 
-                    tensorList=tensorList, tensor=tensor) 
+            self.appendLists(posList, box.origin, tensorList=tensorList, tensor=tensor) 
 
-        return (posList, [], typeList, tensorList)
+        return (posList, [], [], tensorList)
 
 
     def getCylindricalSurfaceData( self ):
+        # Todo. Make DNA blink when reaction takes place.
         cylinders = [ surface for surface in self.sim.surfaceList if isinstance(surface, Cylinder) ]
         return self.processCylinders( cylinders )
 
@@ -210,17 +231,16 @@ class VTKLogger:
             # Add dummy box to stop tensorGlyph from complaining.
             boxes = [ DummyBox() ] 
 
-        type = 1
         for box in boxes:
             tensor = numpy.concatenate((box.vectorX, box.vectorY, box.vectorZ))
-            self.appendLists(posList, box.origin, typeList, type, tensorList=tensorList, 
+            self.appendLists(posList, box.origin, tensorList=tensorList, 
                     tensor=tensor) 
 
-        return (posList, [], typeList, tensorList)
+        return (posList, [], [], tensorList)
 
 
-    def processCylinders( self, cylinders=[] ):
-        posList, typeList, tensorList = [], [], []
+    def processCylinders( self, cylinders=[], typeList=[] ):
+        posList, tensorList = [], []
 
         if len(cylinders) == 0:
             # Add dummy cylinder to stop tensorGlyph from complaining.
@@ -228,13 +248,14 @@ class VTKLogger:
 
         for cylinder in cylinders:
             radius = cylinder.radius
-            type = 1
             orientation = cylinder.unitZ
             size = cylinder.size
 
-            # Construct tensor. Use tensor glyph plugin from:
-            # http://www.paraview.org/pipermail/paraview/2009-March/011256.html
-            # Unset Extract eigenvalues.
+            '''
+            Construct tensor. Use tensor glyph plugin from:
+            http://www.paraview.org/pipermail/paraview/2009-March/011256.html
+            Unset Extract eigenvalues.
+            '''
 
             # Select basis vector in which orientation is smallest.
             _, basisVector = min( zip(abs(orientation), [[1,0,0], [0,1,0], [0,0,1]]) )
@@ -247,19 +268,20 @@ class VTKLogger:
             tensor = numpy.concatenate((perpendicular1*radius, 
                 orientation*size, perpendicular2*radius))
 
-            self.appendLists( posList, cylinder.origin, typeList, type, tensorList=tensorList, tensor=tensor ) 
+            self.appendLists( posList, cylinder.origin, tensorList=tensorList, tensor=tensor ) 
 
         return (posList, [], typeList, tensorList)
 
 
     # Helper.
-    def appendLists(self, posList, pos, typeList, type, radiusList=[], radius=None, 
+    def appendLists(self, posList, pos, typeList=[], type=None, radiusList=[], radius=None, 
             tensorList=[], tensor=None):
         factor = 1
         # Convert all lengths to nanometers.
         #factor = 1e8
         posList.append( pos * factor )
-        typeList.append( type )
+        if type != None:
+            typeList.append( type )
 
         # Multiply radii and tensors by 2 because Paraview sets radius to 0.5 
         # by default, and it wants full lengths for cylinders and we are 
