@@ -243,12 +243,12 @@ class Particle( object ):
 
     def posString( self ):
         factor = 1
-        return '(%.3g %.3g %.3g)' % ( self.getPos()[0]*factor, self.getPos()[1]*factor, self.getPos()[2]*factor ) 
+        return '(%.3g %.3g %.3g)' % ( self.getPos()[0] * factor, self.getPos()[1] * factor, self.getPos()[2] * factor ) 
 
 
     def __str__( self ):
 
-        return "( '" + self.species.id + "', " + str(self.species.surface) + ", " + str( self.serial ) + ' ). pos=' + self.posString()
+        return "( '" + self.species.id + "', " + str(self.species.surface) + ", " + str( self.serial ) + ' ). pos = ' + self.posString()
 
     def __repr__( self ):
 
@@ -545,10 +545,10 @@ class ParticleSimulatorBase( object ):
             # surface specified, it can only live in the cytosol.
             species.surface = self.defaultSurface
         else:
-            assert any( surface == s for s in self.surfaceList ), '%s not in surfaceList.'%(surface)
+            assert any( surface == s for s in self.surfaceList ), '%s not in surfaceList.' % (surface)
             species.surface = surface
             
-        #assert not self.speciesList.has_key( species.id ), 'Species with id=%s has already been added.'%(species.id)
+        #assert not self.speciesList.has_key( species.id ), 'Species with id = %s has already been added.' % (species.id)
         self.speciesList[ (species.id, surface) ] = species
 
 
@@ -600,15 +600,15 @@ class ParticleSimulatorBase( object ):
                 try:
                     _ = self.reactionTypeMap2[ ( species1, species2 ) ]
                 except:
-                    self.reactionTypeMap2[ ( species1, species2 ) ] =\
-                                            RepulsionReactionType( species1,\
+                    self.reactionTypeMap2[ ( species1, species2 ) ] =
+                                            RepulsionReactionType( species1,
                                                                    species2 )
         for species in self.speciesList.values():
             for surface in self.surfaceList:
                 try:
                     _ = self.interactionTypeMap[ ( species, surface ) ]
                 except:
-                    self.interactionTypeMap[ ( species, surface ) ] =\
+                    self.interactionTypeMap[ ( species, surface ) ] =
                             SurfaceRepulsionInteractionType( species,surface )
         
 
@@ -633,14 +633,14 @@ class ParticleSimulatorBase( object ):
                 if surface == self.defaultSurface or ( surface != self.defaultSurface and isinstance(surface, CuboidalSurface) ):
                     distance, closestSurface = self.getClosestSurface( position, [] )
                     if closestSurface and distance < closestSurface.minimalOffset( species.radius ):
-                        log.info( '\t%d-th particle rejected. To close to surface. I will keep trying.' %i )
+                        log.info( '\t%d-th particle rejected. To close to surface. I will keep trying.' % i )
                         create = False
                 if create:
                     # All checks passed. Create particle.
                     self.createParticle( species, position )
-                    i +=1					## creation succeded
+                    i += 1					## creation succeded
             else:
-                log.info( '\t%d-th particle rejected. I will keep trying.' %i )
+                log.info( '\t%d-th particle rejected. I will keep trying.' % i )
 
 
     def placeParticle( self, species, pos ):
@@ -705,14 +705,14 @@ class ParticleSimulatorBase( object ):
 
         
     def getParticlesWithinRadius( self, pos, radius, ignore=[] ):
-        particles, _ =\
+        particles, _ = \
             self.particleMatrix.getNeighborsWithinRadius( pos, radius )
 
         return [ p for p in particles if p not in ignore ]
 
 
     def getParticlesWithinRadiusNoSort( self, pos, radius, ignore=[] ): 
-        particles, _ =\
+        particles, _ = \
             self.particleMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
 
         return [ p for p in particles if p not in ignore ]
@@ -758,7 +758,7 @@ class ParticleSimulatorBase( object ):
 
     def getClosestParticle( self, pos, ignore=[] ):
 
-        neighbors, distances =\
+        neighbors, distances = \
             self.getNeighborParticles( pos, len( ignore ) + 1 )
 
         for i in range( len( neighbors ) ): 

@@ -84,7 +84,7 @@ class VTKLogger:
             # step but with the same time.
             # 1. During multi global time is not updated.
             # 2. During initialization time is 0.
-            # 3. Sometimes shells have mobilityRadius = 0 --> dt=0.
+            # 3. Sometimes shells have mobilityRadius = 0 --> dt = 0.
             # And I want every step recorded, so I can find out what happened 
             # in which step (divide by 2 actually).
             #
@@ -265,8 +265,8 @@ class VTKLogger:
             # A 'tensor' is represented as an array of 9 values.
             # Stupid Paraview wants  a normal vector to the cylinder to orient  
             # it. So orientation and perpendicular1 swapped.
-            tensor = numpy.concatenate((perpendicular1*radius, 
-                orientation*size, perpendicular2*radius))
+            tensor = numpy.concatenate((perpendicular1 * radius, 
+                orientation * size, perpendicular2 * radius))
 
             self.appendLists( posList, cylinder.origin, tensorList=tensorList, tensor=tensor ) 
 

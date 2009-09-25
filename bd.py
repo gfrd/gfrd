@@ -15,7 +15,7 @@ import _gfrd
 
 DEFAULT_DT_FACTOR = 1e-3 # 1e-5
 
-# Todo. Should also depend on reaction rates. dt*k << 1.
+# Todo. Should also depend on reaction rates. dt * k << 1.
 def calculateBDDt( speciesList, factor ):
 
     D_list = []
@@ -125,9 +125,8 @@ class BDSimulatorCoreBase( object ):
                 # Todo.
                 p = 1
                 '''
-                raise RuntimeError,\
-                    'Invalid acceptance ratio (%s) for reaction %s. rt.k=%.3g, I=%.3g' \
-                    % ( p, rt, rt.k, I )
+                raise ( RuntimeError,
+                    'Invalid acceptance ratio (%s) for reaction %s. rt.k = %.3g, I = %.3g' % ( p, rt, rt.k, I ) )
                 '''
             self.P_acct[ rt ] = p
             return p
@@ -178,7 +177,7 @@ class BDSimulatorCoreBase( object ):
             return
 
         displacement = particle.surface.drawBDdisplacement( self.dt, D )
-	log.debug( '\t\tDebug. Multi. %s, displacement=[%.3g, %.3g, %.3g].' % ( particle, displacement[0], displacement[1], displacement[2]) )
+	log.debug( '\t\tDebug. Multi. %s, displacement = [%.3g, %.3g, %.3g].' % ( particle, displacement[0], displacement[1], displacement[2] ) )
 
         newpos = particle.pos + displacement
         newpos %= self.main.worldSize   #self.applyBoundary( newpos )
@@ -306,7 +305,7 @@ class BDSimulatorCoreBase( object ):
 		newpos = currentSurface.randomUnbindingSite( oldpos, radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 # Todo. Does this obey detailed balance?
-                # Select position on surface with z=0.
+                # Select position on surface with z = 0.
                 newpos, _ = productSpecies.surface.projectedPoint( oldpos )
             else:
                 newpos = oldpos
@@ -351,7 +350,7 @@ class BDSimulatorCoreBase( object ):
                     vector = surface.randomVector( pairDistance ) # (1.0 + 1e-10) # safety
                 
                     # place particles according to the ratio D1:D2
-                    # this way, species with D=0 doesn't move.
+                    # this way, species with D == 0 doesn't move.
                     # FIXME: what if D1 == D2 == 0?
                     newpos1 = oldpos + vector * ( D1 / D12 )
                     newpos2 = oldpos - vector * ( D2 / D12 )
@@ -545,7 +544,7 @@ class BDSimulator( ParticleSimulatorBase ):
 
     def reset( self ):
         # DUMMY
-        self.core.t=0
+        self.core.t = 0
 
     def stop( self, t ):
         # dummy
@@ -563,7 +562,7 @@ class BDSimulator( ParticleSimulatorBase ):
 
         self.core.step()
 
-        log.info( '\t%d: t=%.3g dt=%.3g, reactions=%d, rejectedMoves=%d' %
+        log.info( '\t%d: t = %.3g dt = %.3g, reactions = %d, rejectedMoves = %d' %
                   ( self.stepCounter, self.t, self.dt, self.reactionEvents,
                     self.rejectedMoves ) )
 

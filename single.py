@@ -168,7 +168,7 @@ class NonInteractionSingle( Single ):
 
     * Particle coordinate inside shell: r,theta,phi.
     * Domain: radial r.
-    * Initial position: r=0.
+    * Initial position: r = 0.
     * Selected randomly when drawing displacement vector: theta, phi.
 '''
 class SphericalSingle( NonInteractionSingle ):
@@ -177,7 +177,7 @@ class SphericalSingle( NonInteractionSingle ):
 
         self.shellList = [ Sphere( particle.pos, self.getMinRadius() ) ]
 
-        # Create a radial domain of size mobilityRadius=0.
+        # Create a radial domain of size mobilityRadius = 0.
         gf = FirstPassageGreensFunction( self.getD() )
         self.domains = [ RadialDomain( self.getMobilityRadius(), gf ) ]
 
@@ -195,7 +195,7 @@ class SphericalSingle( NonInteractionSingle ):
 
     * Particle coordinates on surface: x,y.
     * Domain: radial r. (determines x and y together with theta).
-    * Initial position: r=0.
+    * Initial position: r = 0.
     * Selected randomly when drawing displacement vector: theta.
 '''
 class PlanarSurfaceSingle( NonInteractionSingle ):
@@ -210,7 +210,7 @@ class PlanarSurfaceSingle( NonInteractionSingle ):
         '''
         self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.getMinRadius() ) ]
 
-        # Create a radial domain of size mobilityRadius=0.
+        # Create a radial domain of size mobilityRadius = 0.
         gf = FirstPassageGreensFunction2D( self.getD() )
         self.domains = [ RadialDomain( self.getMobilityRadius(), gf ) ]
 
@@ -230,7 +230,7 @@ class PlanarSurfaceSingle( NonInteractionSingle ):
 
     * Particle coordinates on surface: z.
     * Domain: cartesian z.
-    * Initial position: z=0.
+    * Initial position: z = 0.
     * Selected randomly when drawing displacement vector: none.
 '''
 class CylindricalSurfaceSingle( NonInteractionSingle ):
@@ -248,7 +248,7 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         '''
         self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.getMinRadius() ) ]
 
-        # Create a cartesian domain of size mobilityRadius=0.
+        # Create a cartesian domain of size mobilityRadius = 0.
         gf = FirstPassageGreensFunction1D( self.getD() )
         self.domains = [ CartesianDomain( 0, self.getMobilityRadius(), gf ) ]
 
@@ -318,7 +318,7 @@ class InteractionSingle( Single ):
 
     * Particle coordinates inside shell: r, theta, z.
     * Domains: radial r, cartesian z.
-    * Initial position: r=0, z=z.
+    * Initial position: r = 0, z = z.
     * Selected randomly when drawing displacement vector: theta.
 '''
 class PlanarSurfaceInteraction( InteractionSingle ):
@@ -340,7 +340,7 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         '''
         gfz = FirstPassageGreensFunction1DRad( self.getD(), interactionType.k )
         # Cartesian domain of size L. Correction with getMinRadius().
-        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2*self.getMinRadius(), gfz )
+        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2 * self.getMinRadius(), gfz )
 
         self.domains = [ rDomain, zDomain ]
 
@@ -363,7 +363,7 @@ class PlanarSurfaceInteraction( InteractionSingle ):
 
     * Particle coordinates inside shell: r, theta, z.
     * Domains: composite r-theta, cartesian z.
-    * Initial position: r=r, theta=0, z=z.
+    * Initial position: r = r, theta = 0, z = z.
     * Selected randomly when drawing displacement vector: none.
 '''
 class CylindricalSurfaceInteraction( InteractionSingle ):
@@ -380,7 +380,7 @@ class CylindricalSurfaceInteraction( InteractionSingle ):
         # Free diffusion in z direction.
         gfz = FirstPassageGreensFunction1D( self.getD() )
         # Cartesian domain of size L. Correction with getMinRadius().
-        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2*self.getMinRadius(), gfz )
+        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2 * self.getMinRadius(), gfz )
 
         self.domains = [ rthetaDomain, zDomain ]
 
@@ -391,8 +391,8 @@ class CylindricalSurfaceInteraction( InteractionSingle ):
         z = self.domains[1].drawPosition( dt )
         # Calculate new position starting from origin.
         newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, theta )
-        # Orientation matters (+ or -), so shellList[0].unitZ is used here 
-        # instead of surface.unitZ.
+        # Orientation matters (plus or minus), so shellList[0].unitZ is used 
+        # here instead of surface.unitZ.
         # Add displacement vector to self.particle.pos, not self.pos!
         return self.particle.pos + newVectorR + z * self.shellList[0].unitZ
 

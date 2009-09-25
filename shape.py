@@ -60,7 +60,7 @@ class Cylinder( Shape ):
             # pos is (either) to the right or to the left of the cylinder.
             if dr > 0:
                 # Compute distance to edge.
-                distance = math.sqrt( dz*dz + dr*dr )
+                distance = math.sqrt( dz * dz + dr * dr )
             else:
                 distance = dz
         else:
@@ -80,7 +80,7 @@ class Cylinder( Shape ):
         posVector = pos - self.origin
 
         z = numpy.dot( posVector, self.unitZ ) # Can be <0.
-        posVectorZ = z*self.unitZ
+        posVectorZ = z * self.unitZ
 
         posVectorR = posVector - posVectorZ
         r = length( posVectorR )       # Always >= 0.
@@ -92,11 +92,11 @@ class Cylinder( Shape ):
     Returns:
     1. the position of the projected point of 'pos' onto the main axis of the 
        cylinder.
-    2. the distance (always +) between that point and 'pos'.
+    2. the distance (always positive) between that point and 'pos'.
     '''
     def projectedPoint( self, pos ):
         r, z = self.toInternal( pos )
-        return self.origin + z*self.unitZ, r
+        return self.origin + z * self.unitZ, r
 
 
     def __str__( self ):
@@ -133,18 +133,18 @@ class Box( Shape ):
         if dx > 0:
             if dy > 0:
 		if dz > 0:
-		    distance = sqrt( dx*dx + dy*dy + dz*dz )
+		    distance = sqrt( dx * dx + dy * dy + dz * dz )
 		else:
-		    distance = sqrt( dx*dx + dy*dy )
+		    distance = sqrt( dx * dx + dy * dy )
 	    else:
 		if dz > 0:
-		    distance = sqrt( dx*dx + dz*dz )
+		    distance = sqrt( dx * dx + dz * dz )
 		else:
 		    distance = dx
 	else:
             if dy > 0:
 		if dz > 0:
-		    distance = sqrt( dy*dy + dz*dz )
+		    distance = sqrt( dy * dy + dz * dz )
 		else:
 		    distance = dy
 	    else:
@@ -172,7 +172,7 @@ class Box( Shape ):
     Returns:
     1. the position of the projected point of 'pos' onto the xy-plane of the 
        box.
-    2. the distance (+ or -) between that point and 'pos'.
+    2. the distance (positive or negative) between that point and 'pos'.
 
     Note: cyclicTranspose 'pos' if you are going to use the 'z' value.
     '''

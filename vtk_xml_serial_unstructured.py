@@ -105,7 +105,7 @@ class VTK_XML_Serial_Unstructured:
 
         # Colors.
         if len(colors) > 0:
-            colorNode= doc.createElementNS("VTK", "DataArray")
+            colorNode = doc.createElementNS("VTK", "DataArray")
             colorNode.setAttribute("Name", "colors")
             colorNode.setAttribute("NumberOfComponents", "1")
             colorNode.setAttribute("type", "Float32")
@@ -128,7 +128,7 @@ class VTK_XML_Serial_Unstructured:
             tensorGlyph.xml to make a vtkTensorGlyph object with both a Tensor 
             array and a Scalar array. When you select a Tensor or a Scalar 
             array from the dropdown menu and click 'apply', 
-            SetInputArrayToProcess is called with idx=0 both times. This is 
+            SetInputArrayToProcess is called with idx = 0 both times. This is 
             wrong.
             1. First element Tensor array gets overwritten.
             2. Scalar value is never written (which is accessed using 
@@ -137,7 +137,7 @@ class VTK_XML_Serial_Unstructured:
             The workaround here uses an additional Vector array 
             (vtkTensorGlyph doesn't have a vector array), which when it gets 
             updated actually results in SetInputArrayToProcess to be called 
-            with idx=1. So by also supplying Paraview with a vector for each 
+            with idx = 1. So by also supplying Paraview with a vector for each 
             color (just 3 times the color int), the Tensor array doesn't get 
             overwritten and GetInputArrayToProcess with idx is also happy and 
             updates Scalars (!).

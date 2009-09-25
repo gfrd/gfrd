@@ -55,7 +55,7 @@ class PlanarSurface( Surface, Box ):
         r = math.sqrt( 2.0 * D * dt )
         # Draw 2 numbers from normal distribution.
         x, y = numpy.random.normal( 0.0, r, 2 )
-        return x*self.unitX + y*self.unitY
+        return x * self.unitX + y * self.unitY
 
 
     def randomVector( self, r ):
@@ -67,11 +67,11 @@ class PlanarSurface( Surface, Box ):
     Only uniform if vectorX and vectorY have same length.
     '''
     def randomPosition( self ):
-        return self.origin + random.uniform(-1,1)*self.vectorX + random.uniform(-1,1)*self.vectorY
+        return self.origin + random.uniform(-1,1) * self.vectorX + random.uniform(-1,1) * self.vectorY
 
 
     # A particle that is not on this surface has to be at least this far away 
-    # from the z=0-plane of the surface.
+    # from the z = 0-plane of the surface.
     def minimalOffset( self, radius ):
         return (self.Lz + radius ) * UNBIND_SAFETY
 
@@ -99,7 +99,7 @@ class CylindricalSurface( Surface, Cylinder ):
         r = math.sqrt( 2.0 * D * dt )
         # Draw 1 number from normal distribution.
         z = numpy.random.normal( 0.0, r, 1 )
-        return z*self.unitZ
+        return z * self.unitZ
 
 
     def randomVector( self, r ):
@@ -124,7 +124,7 @@ class CylindricalSurface( Surface, Cylinder ):
 
 '''
 Surface that is only used for throwing in particles. Those particles will than 
-later be tagged with surface=defaultSurface, which is an instance of the World 
+later be tagged with surface = defaultSurface, which is an instance of the World 
 class. See gfrdbase.py.
 
 If no surface is specified, particles are tagged with an instance of this one.
@@ -143,7 +143,7 @@ class CuboidalSurface( Surface, Box ):
         Lx = size[0]
         Ly = size[1]
         Lz = size[2]
-        Box.__init__( self, origin + self.size/2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx/2, Ly/2, Lz/2 ) 
+        Box.__init__( self, origin + self.size / 2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx / 2, Ly / 2, Lz / 2 ) 
         self.defaultSingle = SphericalSingle
         self.defaultPair = SphericalPair
 
@@ -164,9 +164,9 @@ class CuboidalSurface( Surface, Box ):
     '''
     def signedDistanceTo( self, pos ):
         raise 'This method should not be used. Did you accidently add this CuboidalSurface to the surfacelist using s.addSurface()?'
-        edge = self.origin - size/2
+        edge = self.origin - size / 2
         dists = numpy.concatenate( ( edge - pos,
-                                     edge+self.size-pos ) )
+                                     edge + self.size - pos ) )
         absdists = numpy.abs( dists )
         i = numpy.argmin( absdists )
         return dists[i]
@@ -178,7 +178,7 @@ class CuboidalSurface( Surface, Box ):
     See also signedDistanceTo().
     '''
     def randomPosition( self ):
-        edge = self.origin - self.size/2
+        edge = self.origin - self.size / 2
         return numpy.array( [ random.uniform( edge[0], self.size[0] ),
                               random.uniform( edge[1], self.size[1] ),
                               random.uniform( edge[2], self.size[2] )])

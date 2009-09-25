@@ -54,11 +54,11 @@ class Logger:
     def prepareTimecourseFile( self, comment ):
 
         self.timecourseFilename = self.logname + '_tc' + '.dat'
-        self.timecourseFile = open( self.directory + os.sep +\
+        self.timecourseFile = open( self.directory + os.sep + 
                                     self.timecourseFilename, 'w' )
         self.writeTimecourseComment( comment )
 
-        speciesNameList = '\'' +\
+        speciesNameList = '\'' + \
             "\', \'".join( [key[0] for key in self.sim.speciesList.keys()]  ) + '\''
         columns = '[ \'t\', ' + speciesNameList + ']'
         self.writeTimecourseComment( '@ columns= ' + columns )

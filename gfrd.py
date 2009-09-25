@@ -271,7 +271,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
             vector = unitVector * ( distance * ( 1.0 + 1e-2 ) ) # safety
 
             ### So particles placed next to eachother.
-            ### If D1=D2, newpos = pos +/- vector/2.
+            ### If D1 == D2, newpos = pos +/- vector/2.
             newpos1 = pos + vector * ( D1 / (D1 + D2) )
             newpos2 = pos - vector * ( D2 / (D1 + D2) )
 
@@ -282,7 +282,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
             # debug
             d = self.distance( newpos1, newpos2 )
             if d < distance:
-                raise "d = %s, %s" %( d, distance)
+                raise "d = %s, %s" % ( d, distance )
 
             productSpecies1.newParticle( newpos1 )
             productSpecies2.newParticle( newpos2 )
@@ -444,7 +444,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
             while True:
 
-                r =pair.rt.pairGreensFunction.drawR( random.random(), r0, self.dt )
+                r = pair.rt.pairGreensFunction.drawR( random.random(), r0, self.dt )
                 
                 theta = pair.rt.pairGreensFunction.drawTheta( random.random(),\
                                                               r, r0, self.dt )

@@ -151,7 +151,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
     '''
     def getClosestParticle( self, pos, ignore=[] ):
 
-        neighbors, distances =\
+        neighbors, distances = \
             self.particleMatrix.getNeighbors( pos, len( ignore ) + 1 )
 
         for i, neighbor in enumerate( neighbors ):
@@ -217,7 +217,7 @@ class Multi( object ):
 
     multiplicity = property( getMultiplicity )
 
-    # A multi contains particles+their shells, but not singles.
+    # A multi contains particles and their shells, but not singles.
     def addParticle( self, particle ):
         self.sim.addParticle( particle )
 

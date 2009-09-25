@@ -207,7 +207,7 @@ class Pair( object ):
         #log.debug( '\ta %.3g, r %.3g, R %.3g pairDistance %.3g' % 
         #           ( shellSize, a_r, a_R, pairDistance ) )
         #log.debug( '\ttr %.3g, tR %.3g' % 
-        #           ( ( ( a_r - pairDistance ) / math.sqrt(6 * self.D_tot))**2,\
+        #           ( ( ( a_r - pairDistance ) / math.sqrt(6 * 
         #                 (a_R / math.sqrt( 6*self.D_geom ))**2 ) )
         assert a_r > 0
         assert a_r > pairDistance, '%.3g %.3g' % ( a_r, pairDistance )
@@ -269,7 +269,7 @@ class Pair( object ):
 
 
     def __str__( self ):
-        buf = '( ' + str(self.single1.particle) +\
+        buf = '( ' + str(self.single1.particle) + \
               ',\n\t\t\t' + str(self.single2.particle) + ' )'
         return buf
 
@@ -346,7 +346,7 @@ class SphericalPair( Pair ):
     def drawNewIV( self, dt ):  
         gf = self.choosePairGreensFunction( dt )
         r, theta = self.domains[1].drawPosition( gf, dt )
-        newInterParticleS = numpy.array([r, theta, numpy.random.random()*2*Pi])
+        newInterParticleS = numpy.array([r, theta, numpy.random.random() * 2 * Pi])
         return sphericalToCartesian( newInterParticleS )
 
 
@@ -407,7 +407,7 @@ class PlanarSurfacePair( Pair ):
         reaction we still have to clear the target volume and the move may be 
         rejected (NoSpace error).
 
-        Set radius=shellSize directly, without getMinRadius() step. Don't set 
+        Set radius = shellSize directly, without getMinRadius() step. Don't set 
         radius again from initialize(). Pairs don't move.
         '''
         self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, self.biggestParticleRadius ) ]
@@ -436,7 +436,7 @@ class PlanarSurfacePair( Pair ):
         unitX = self.surface.unitX
         unitY = self.surface.unitY
         angle = vectorAngle( unitX, self.IV )
-        # Todo. Test if nothing changes when theta=0.
+        # Todo. Test if nothing changes when theta == 0.
         newAngle = angle + theta
         
         rotated = r * math.cos(newAngle) * unitX + r * math.sin(newAngle) * unitY
@@ -492,8 +492,8 @@ class CylindricalSurfacePair( Pair ):
         # Calculate a and r0 for a cartesian domain. A bit tricky. Needed 
         # because normally iv is used with an r-theta domain, and then r goes 
         # from sigma (radiating boundary) to a_r (absorbing boundary). Now, 
-        # cartesian domain goes from -a_cartesian (radiating boundary) to 
-        # a_cartesian (absorbing boundary).
+        # cartesian domain goes from minus a_cartesian (radiating boundary) to 
+        # plus a_cartesian (absorbing boundary).
         a_cartesian = (self.a_r - self.sigma ) / 2
         r0_cartesian = self.pairDistance - self.sigma - a_cartesian
         ivDomain = CartesianDomain( r0_cartesian, a_cartesian, self.pgf )
@@ -519,9 +519,9 @@ class CylindricalSurfacePair( Pair ):
         # Todo.
         # Cartesian domain returns displacement, not absolute position.
         r_cartesian = self.domains[1].drawPosition( dt )
-        # Convert back from cartesian domain (-a_cartesian to a_cartesian) to 
-        # something that can be used for the length of the iv vector (sigma to 
-        # a_r.
+        # Convert back from cartesian domain (minus a_cartesian to plus 
+        # a_cartesian) to something that can be used for the length of the iv 
+        # vector (sigma to a_r.
         a_cartesian = self.domains[1].a
         r = r_cartesian + self.sigma + a_cartesian
         assert r > self.sigma and r <= self.a_r
