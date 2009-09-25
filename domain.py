@@ -12,8 +12,8 @@ vector.
 The position of a particle inside a shell can be specified by a vector. Which 
 coordinates are used for this vector depends on the surface the particle is 
 on (if any). For example for a particle inside a sphere, not on a surface, 
-this is (r,theta,phi). But for a particle on a CylindricalSurface, moving in 1 
-dimension, just (z) is sufficient.
+this is ( r, theta, phi ). But for a particle on a CylindricalSurface, moving in 1 
+dimension, just ( z ) is sufficient.
 
 In the files single.py and pair.py it is defined which coordinates are needed 
 to define the position of the particle inside its shell for each Single and 
@@ -45,7 +45,7 @@ class Domain( object ):
         self._a = a
         # Set a of Greens' function here.
         self.gf.seta( a )
-    a = property(geta, seta)
+    a = property( geta, seta )
 
 
 '''
@@ -65,14 +65,14 @@ class CartesianDomain( Domain ):
         self._L = L
         # Set L of Greens' function here.
         self.gf.setL( L )
-    L = property(getL, setL)
+    L = property( getL, setL )
 
 
     def drawTime( self ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Cartesian drawTime. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Cartesian drawTime. ' + str( self.gf ) )
 	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
 	    raise Stop( 'gf.drawTime() failed; %s; rnd = %g; r0 = %g; L = %g' %
@@ -89,7 +89,7 @@ class CartesianDomain( Domain ):
         # Set escape flag (can still be an interaction).
         self.escape = True
         try:
-            log.debug( '\t\tDebug. Cartesian drawEventType. r0 = %.3g. L = %.3g. dt = %.3g. ' % (self.r0, self.L, dt) + str(self.gf) )
+            log.debug( '\t\tDebug. Cartesian drawEventType. r0 = %.3g. L = %.3g. dt = %.3g. ' % ( self.r0, self.L, dt ) + str( self.gf ) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), dt )
 	except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; r0 = %g; dt = %g; L = %g' %
@@ -116,7 +116,7 @@ class CartesianDomain( Domain ):
 
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Cartesian drawR. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Cartesian drawR. ' + str( self.gf ) )
             r = self.gf.drawR( rnd, dt  )
         except Exception, e:
             raise Stop( 'gf.drawR failed; %s; rnd = %g, dt = %g, r0 = %g, L = %g' %
@@ -140,7 +140,7 @@ class RadialDomain( Domain ):
     def drawTime( self ):
 	try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Radial drawTime. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial drawTime. ' + str( self.gf ) )
 	    dt = self.gf.drawTime( rnd )
 	except Exception, e:
 	    raise Stop( 'gf.drawTime() failed; %s; rnd = %g; a = %g' %
@@ -163,7 +163,7 @@ class RadialDomain( Domain ):
             return self.a
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Radial drawR. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial drawR. ' + str( self.gf ) )
             r = self.gf.drawR( rnd, dt  )
         except Exception, e:
             raise Stop( 'gf.drawR failed; %s; rnd = %g, dt = %g, a = %g' %
@@ -173,7 +173,7 @@ class RadialDomain( Domain ):
 
 
 '''
-For example the (r-theta) domain used with PairGreensFunctions (3D as well as 
+For example the ( r, theta ) domain used with PairGreensFunctions (3D as well as 
 2D).
 '''
 class CompositeDomain( Domain ):
@@ -187,7 +187,7 @@ class CompositeDomain( Domain ):
         assert self.escape == False
 	try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Radial2D drawTime. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawTime. ' + str( self.gf ) )
 	    dt = self.gf.drawTime( rnd, self.r0 )
 	except Exception, e:
 	    raise Stop( 'gf.drawTime() failed; %s; rnd = %g, sigma = %g, r0 = %g, a = %g' %
@@ -201,7 +201,7 @@ class CompositeDomain( Domain ):
     def drawEventType( self, dt ):
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Radial2D drawEventType. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawEventType. ' + str( self.gf ) )
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; sigma = %g; r0 = %g; a = %g; dt = %g' %
@@ -220,14 +220,14 @@ class CompositeDomain( Domain ):
         else:
             r = self.drawR_pair( gf, dt )
         theta = self.drawTheta_pair( gf, r, dt )
-        return (r, theta)
+        return r, theta
 
 
     # Draw r for the pair inter-particle vector.
     def drawR_pair( self, gf, dt ):
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Radial2D drawR_pair. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawR_pair. ' + str( self.gf ) )
             r = gf.drawR( rnd, self.r0, dt )
             # redraw; shouldn't happen often
             while r >= self.a or r <= self.sigma: 
@@ -245,7 +245,7 @@ class CompositeDomain( Domain ):
     def drawTheta_pair( self, gf, r, dt ):
         try:
             rnd = numpy.random.uniform()
-            log.debug( '\t\tDebug. Radial2D drawTheta_pair. ' + str(self.gf) )
+            log.debug( '\t\tDebug. Radial2D drawTheta_pair. ' + str( self.gf ) )
             # Todo. gf.drawTheta() failed; GSL error: endpoints do not 
             # straddle.
             #theta = gf.drawTheta( rnd, r, self.r0, dt )
@@ -255,9 +255,9 @@ class CompositeDomain( Domain ):
                 ( str( e ), rnd, r, self.sigma, self.r0, self.a, dt  ) )
 
         '''
-        Heads up. For cylinders theta should be between [-pi, pi]. For spheres 
+        Heads up. For cylinders theta should be between [ -pi, pi ]. For spheres 
         it doesn't matter.
         '''
-        return random.choice( [-1,1] ) * theta
+        return random.choice( [ -1, 1 ] ) * theta
 
 

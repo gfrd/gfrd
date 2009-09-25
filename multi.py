@@ -107,7 +107,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
     def clearOuterVolume( self, pos, radius, ignore=[] ):
 
-        self.main.clearVolume( pos, radius, ignore=[self.multiref(),] )
+        self.main.clearVolume( pos, radius, ignore=[ self.multiref(), ] )
         if not self.main.checkOverlap( pos, radius, ignore ):
             raise NoSpace()
 
@@ -181,7 +181,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
         # all particles within the shell.
         for p in self.particleList:
-            assert self.withinShell( p.pos, p.species.radius ),\
+            assert self.withinShell( p.pos, p.species.radius ), \
                 'not all particles within the shell.'
 
 

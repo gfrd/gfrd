@@ -32,8 +32,7 @@ class ObjectMatrix( object ):
 
     def setMatrixSize( self, size ):
         if size < 3:
-            raise RuntimeError,\
-                'Size of distance cell matrix must be at least 3'
+            raise RuntimeError( 'Size of distance cell matrix must be at least 3' )
         self.matrixSize = size
         self.initialize()
 
@@ -116,14 +115,14 @@ class ObjectMatrix( object ):
 
         steps = [ offset + stepSize * i for i in range( numSteps ) ]
         # Sample all these points:
-        points = [[x,y,z] for x in steps for y in steps for z in steps ] 
+        points = [ [ x, y, z ] for x in steps for y in steps for z in steps ] 
 
         seen = {} 
         for point in points:
             particles, _ = self.impl.all_neighbors_array_cyclic( point )
             for particle in particles:
                 if particle not in seen:
-                    seen[ particle ] = None
+                    seen[particle] = None
 
         return seen.keys()
 

@@ -40,30 +40,29 @@ BDSimulatorCoreBase.
 Child classes of BDSimulatorCoreBase are:
 * BDSimulatorCore
     - Instantiated by BDSimulator as BDSimulator.core.
-    - Uses the particleMatrix from the simulator that instantiates it (that 
-      would be a BDSimulator) for particle detection. BDsimulator 
-      derives from ParticleSimulatorBase, which has declared this 
-      particleMatrix.
+    - Uses the particleMatrix from the simulator that instantiates it, that 
+      would be a BDSimulator, for particle detection. BDsimulator derives from 
+      ParticleSimulatorBase, which has declared this particleMatrix.
 * MultiBDCore
     - Instantiated by Multi as Multi.core.
-    - Uses a self declared particleMatrix for particle detection (which 
+    - Uses a self declared particleMatrix for particle detection, which 
       contains only the particles that are in the Multi, not other particles 
       that might still be in the EGFRDSimulator.
 
 BDSimulatorCoreBase uses a particle*List* to loop over all particles in each 
-step (and propagate them).
+step, and propagate them.
 '''
 class BDSimulatorCoreBase( object ):
     
     '''
     BDSimulatorCoreBase borrows the following from the main simulator:
     - speciesList
-    - reactionTypes list (both 1 and 2)
+    - reactionTypes list, both 1 and 2.
     
     '''
     def __init__( self, main ):
 
-        # Reference to the main (egfrd) simulator.
+        # Reference to the main, egfrd, simulator.
         self.main = weakref.proxy( main )
 
         self.particleList = []
@@ -116,7 +115,7 @@ class BDSimulatorCoreBase( object ):
     def getP_acct( self, rt, D, sigma ):
 
         try:
-            return self.P_acct[ rt ]
+            return self.P_acct[rt]
 
         except KeyError:
             I = _gfrd.I_bd( sigma, self.dt, D )
@@ -128,7 +127,7 @@ class BDSimulatorCoreBase( object ):
                 raise ( RuntimeError,
                     'Invalid acceptance ratio (%s) for reaction %s. rt.k = %.3g, I = %.3g' % ( p, rt, rt.k, I ) )
                 '''
-            self.P_acct[ rt ] = p
+            self.P_acct[rt] = p
             return p
 
 
@@ -183,7 +182,7 @@ class BDSimulatorCoreBase( object ):
         newpos %= self.main.worldSize   #self.applyBoundary( newpos )
         
         neighbors = self.getParticlesWithinRadiusNoSort( newpos, species.radius,
-                                                         ignore=[particle] )
+                                                         ignore=[ particle, ] )
 
         '''
         2. Try reaction of 2 particles, even if newpos also overlaps with surface. 
@@ -223,7 +222,7 @@ class BDSimulatorCoreBase( object ):
         '''
         3. Try binding with surface.
         '''
-        surface, distanceToSurface = self.main.getClosestSurfaceWithinRadius( newpos, species.radius, ignore=[particle] )
+        surface, distanceToSurface = self.main.getClosestSurfaceWithinRadius( newpos, species.radius, ignore=[ particle, ] )
         if surface:
             rt = self.main.getInteractionType( species, surface )
 
@@ -252,7 +251,7 @@ class BDSimulatorCoreBase( object ):
 
         # No reaction or interaction. 
         try:
-            self.clearVolume( newpos, particle.radius, ignore=[particle] )
+            self.clearVolume( newpos, particle.radius, ignore=[ particle, ] )
             self.moveParticle( particle, newpos )
         except NoSpace:
             log.info( '\tpropagation move rejected.' )
@@ -294,7 +293,7 @@ class BDSimulatorCoreBase( object ):
             
             self.removeParticle( particle )
 
-            self.lastReaction = Reaction( rt, [particle], [] )
+            self.lastReaction = Reaction( rt, [ particle ], [] )
             
         elif len( rt.products ) == 1:
             
@@ -311,16 +310,16 @@ class BDSimulatorCoreBase( object ):
                 newpos = oldpos
 
             if not self.checkOverlap( newpos, radius,
-                                      ignore = [ particle, ] ):
+                                      ignore=[ particle, ] ):
                 log.info( '\tno space for product particle.' )
                 raise NoSpace()
 
-            self.clearVolume( newpos, radius, ignore = [ particle ] )
+            self.clearVolume( newpos, radius, ignore=[ particle, ] )
                 
             self.removeParticle( particle )
             newparticle = self.createParticle( productSpecies, newpos )
 
-            self.lastReaction = Reaction( rt, [particle], [newparticle] )
+            self.lastReaction = Reaction( rt, [ particle ], [ newparticle ] )
 
             
         elif len( rt.products ) == 2:
@@ -362,17 +361,16 @@ class BDSimulatorCoreBase( object ):
 
                 # accept the new positions if there is enough space.
                 if self.checkOverlap( newpos1, radius1,
-                                      ignore = [ particle, ]) and \
+                                      ignore = [ particle, ] ) and \
                                       self.checkOverlap( newpos2, radius2,
-                                                         ignore = 
-                                                         [ particle, ]):
+                                                         ignore=[ particle, ] ):
                     break
             else:
                 log.info( '\tno space for product particles.' )
                 raise NoSpace()
 
-            self.clearVolume( newpos1, radius1, ignore = [ particle ] )
-            self.clearVolume( newpos2, radius2, ignore = [ particle ] )
+            self.clearVolume( newpos1, radius1, ignore=[ particle, ] )
+            self.clearVolume( newpos2, radius2, ignore=[ particle, ] )
 
             # move accepted
             self.removeParticle( particle )
@@ -380,8 +378,8 @@ class BDSimulatorCoreBase( object ):
             newparticle1 = self.createParticle( productSpecies1, newpos1 )
             newparticle2 = self.createParticle( productSpecies2, newpos2 )
 
-            self.lastReaction = Reaction( rt, [particle], 
-                                          [newparticle1, newparticle2] )
+            self.lastReaction = Reaction( rt, [ particle ], 
+                                          [ newparticle1, newparticle2 ] )
 
         else:
             raise RuntimeError, 'num products >= 3 not supported.'
@@ -426,14 +424,13 @@ class BDSimulatorCoreBase( object ):
 
             self.reactionEvents += 1
 
-            self.lastReaction = Reaction( rt, [particle1, particle2], 
-                                          [newparticle] )
+            self.lastReaction = Reaction( rt, [ particle1, particle2 ], 
+                                          [ newparticle ] )
 
             return
         
         else:
-            raise NotImplementedError,\
-                'num products >= 2 not supported.'
+            raise NotImplementedError( 'num products >= 2 not supported.' )
 
 
     def check( self ):
@@ -442,7 +439,7 @@ class BDSimulatorCoreBase( object ):
 
         for particle in self.particleList:
             assert self.checkOverlap( particle.pos, particle.radius,
-                                      ignore=[particle,] )
+                                      ignore=[ particle, ] )
 
 
 

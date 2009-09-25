@@ -8,8 +8,8 @@ This logging faciliy can be used for info en debug messages and such.
 
 Usage:
     * from log import *
-    * log.info('foo')
-    * log.debug('bar')
+    * log.info( 'foo' )
+    * log.debug( 'bar' )
 '''
 def setupLogging():
     global log 

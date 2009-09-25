@@ -38,7 +38,7 @@ class Cylinder( Shape ):
         self.vectorZ = self.unitZ * size # Extra.
 
         # Select basis vector in which self.unitZ is smallest.
-        _, basisVector = min( zip(abs(self.unitZ), [[1,0,0], [0,1,0], [0,0,1]]) )
+        _, basisVector = min( zip( abs( self.unitZ ), [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) )
         # Find (any) 2 vectors perpendicular to self.unitZ.
         self.unitX = normalize( numpy.cross( self.unitZ, basisVector ) )
         self.unitY = normalize( numpy.cross( self.unitZ, self.unitX ) )
@@ -54,7 +54,7 @@ class Cylinder( Shape ):
     # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
         r, z, = self.toInternal( pos )
-        dz = abs(z) - self.size
+        dz = abs( z ) - self.size
         dr = r - self.radius
         if dz > 0:
             # pos is (either) to the right or to the left of the cylinder.
@@ -73,8 +73,8 @@ class Cylinder( Shape ):
         return distance
 
 
-    # Return the (z,r) components of pos in a coordinate system defined by the 
-    # vectors unitR and unitZ, where unitR is choosen such that unitR and 
+    # Return the ( z, r ) components of pos in a coordinate system defined by 
+    # the vectors unitR and unitZ, where unitR is choosen such that unitR and 
     # unitZ define a plane in which pos lies.
     def toInternal( self, pos ):
         posVector = pos - self.origin
@@ -107,11 +107,11 @@ class Cylinder( Shape ):
 class Box( Shape ):
     def __init__( self, origin, vectorX, vectorY, vectorZ, Lx, Ly, Lz ):
         Shape.__init__( self )
-        self.origin = numpy.array(origin)
+        self.origin = numpy.array( origin )
 
-        self.unitX = normalize(numpy.array(vectorX))
-        self.unitY = normalize(numpy.array(vectorY))
-        self.unitZ = normalize(numpy.array(vectorZ))
+        self.unitX = normalize( numpy.array( vectorX ) )
+        self.unitY = normalize( numpy.array( vectorY ) )
+        self.unitZ = normalize( numpy.array( vectorZ ) )
 
         self.Lx = Lx
         self.Ly = Ly
@@ -126,9 +126,9 @@ class Box( Shape ):
     # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
         x, y, z = self.toInternal( pos )
-        dx = abs(x) - self.Lx
-        dy = abs(y) - self.Ly
-        dz = abs(z) - self.Lz
+        dx = abs( x ) - self.Lx
+        dy = abs( y ) - self.Ly
+        dz = abs( z ) - self.Lz
 
         if dx > 0:
             if dy > 0:
@@ -152,14 +152,14 @@ class Box( Shape ):
 		    distance = dz
 		else:
                     # Inside box. Pick negative distance closest to 0.
-		    distance = max( max(dx,dy), dz )
+		    distance = max( max( dx, dy ), dz )
 
         return distance
 
 
     def toInternal( self, pos ):
-        # First compute the (x,y,z) components of pos in a coordinate system 
-        # defined by the vectors unitX, unitY, unitZ of the box.
+        # First compute the ( x, y, z ) components of pos in a coordinate 
+        # system defined by the vectors unitX, unitY, unitZ of the box.
         posVector = pos - self.origin
         x = numpy.dot( posVector, self.unitX )
         y = numpy.dot( posVector, self.unitY )

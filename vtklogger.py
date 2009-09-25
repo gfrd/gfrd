@@ -29,9 +29,9 @@ Logger that can be used to visualize data with Kitware ParaView.
 
 Inner workings:
     log():
-        (get.......Data = createDoc() + addPiece()) + writeDoc()
+        ( get.......Data = createDoc() + addPiece() ) + writeDoc()
     stop():
-        writePvd(name.pvd)
+        writePvd( name.pvd )
 
 
 === Cylinders
@@ -46,7 +46,7 @@ As explainded in the above link, to give cylinders the right color, there are
 Paraview3/VTK/Graphics/vtkTensorGlyph.cxx after
     newScalars = vtkFloatArray::New();
 a new line:
-    newScalars->SetName("colors");
+    newScalars->SetName( "colors" );
 2. Do that Python script thing.
 
 Another hack was needed to get the coloring to work. This makes VTKLogger 
@@ -54,7 +54,7 @@ write a vector instead of a scalar value for each color to the .vtu files. But
 you shouldn't have to worry about that, just select 'colors' to color the Glyph.
 '''
 class VTKLogger:
-    def __init__(self, sim, name, bufferSize=None, brownian=False):
+    def __init__( self, sim, name, bufferSize=None, brownian=False ):
         self.sim = sim
         self.brownian = brownian
 
@@ -64,8 +64,8 @@ class VTKLogger:
 
         # Filename stuff.
         self.name = name
-        if not os.path.exists('data/' + self.name + '/files'):
-            os.makedirs('data/' + self.name + '/files')
+        if not os.path.exists( 'data/' + self.name + '/files' ):
+            os.makedirs( 'data/' + self.name + '/files' )
 
         self.fileList = []
         self.staticList = []
@@ -79,7 +79,7 @@ class VTKLogger:
 
     def log( self ):
         time = self.sim.t
-        if (abs(time - self.lastTime) < 1e-9) and not self.brownian:
+        if ( abs( time - self.lastTime ) < 1e-9 ) and not self.brownian:
             # Hack to make Paraview understand this is a different simulator 
             # step but with the same time.
             # 1. During multi global time is not updated.
@@ -107,20 +107,20 @@ class VTKLogger:
         # Write to buffer or file.
         if self.bufferSize:
             # Store in buffer, instead of writing to file directly.
-            self.buffer.append( (time, self.i, particles, spheres, cylinders) )
+            self.buffer.append( ( time, self.i, particles, spheres, cylinders ) )
 
             if self.i >= self.bufferSize:
                 # FIFO.
                 del self.buffer[0]
         else:
             # Write normal log.
-            self.writelog( time, self.i, (particles, spheres, cylinders) )
+            self.writelog( time, self.i, ( particles, spheres, cylinders ) )
 
         self.i += 1
         self.lastTime = time
 
 
-    def writelog( self, time, index, (particles, spheres, cylinders) ):
+    def writelog( self, time, index, ( particles, spheres, cylinders ) ):
         self.makeSnapshot( 'particles', particles, index, time )
         if not self.brownian:
             self.makeSnapshot( 'spheres', spheres, index, time )
@@ -130,39 +130,39 @@ class VTKLogger:
     # Write data to file.
     def makeSnapshot( self, type, data, index='', time=None ):
         doc = self.vtk_writer.createDoc( data )
-        fileName = 'files/' + type + str(index) + '.vtu'
-        self.vtk_writer.writeDoc(doc, 'data/' + self.name + '/' + fileName)
+        fileName = 'files/' + type + str( index ) + '.vtu'
+        self.vtk_writer.writeDoc( doc, 'data/' + self.name + '/' + fileName )
 
         # Store filename and time in fileList, used by vtk_wrtie.writePVD().
         if time:
-            self.fileList.append( (type, fileName, index, time) )
+            self.fileList.append( ( type, fileName, index, time ) )
         else:
-            self.staticList.append( (type, fileName, None, None) )
+            self.staticList.append( ( type, fileName, None, None ) )
 
 
     def stop( self ):
         self.log()
-        for newIndex, entry in enumerate(self.buffer):
+        for newIndex, entry in enumerate( self.buffer ):
             self.writelog( entry[0], newIndex, entry[2:] )
-        self.vtk_writer.writePVD('data/' + self.name + '/' + 'files.pvd', self.fileList)
+        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'files.pvd', self.fileList )
 
         # Surfaces don't move.
         self.makeSnapshot( 'cylindricalSurfaces', self.getCylindricalSurfaceData() )
         self.makeSnapshot( 'planarSurfaces', self.getPlanarSurfaceData() )
         self.makeSnapshot( 'cuboidalSurfaces', self.getCuboidalSurfaceData() )
 
-        self.vtk_writer.writePVD('data/' + self.name + '/' + 'static.pvd', self.staticList)
+        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'static.pvd', self.staticList )
 
 
 
     def getParticleData( self ):
         posList, radiusList, typeList = [], [], []
 
-        for speciesIndex,species in enumerate(self.sim.speciesList.values()):
+        for speciesIndex, species in enumerate( self.sim.speciesList.values() ):
             for particlePos in species.pool.positions:
-                self.appendLists( posList, particlePos, typeList, speciesIndex, radiusList, species.radius)
+                self.appendLists( posList, particlePos, typeList, speciesIndex, radiusList, species.radius )
 
-        return (posList, radiusList, typeList, [])
+        return ( posList, radiusList, typeList, [] )
 
 
     def getShellDataFromScheduler( self ):
@@ -191,7 +191,7 @@ class VTKLogger:
                 for shell in object.shellList:
                     self.appendLists( posList, shell.origin, typeList, type, radiusList, shell.radius )
 
-        return (posList, radiusList, typeList, []), self.processCylinders( cylinders, cylinderTypeList )
+        return ( posList, radiusList, typeList, [] ), self.processCylinders( cylinders, cylinderTypeList )
 
 
     def getCylindricalShellData( self ):
@@ -211,38 +211,38 @@ class VTKLogger:
             boxes = [ DummyBox() ] 
 
         for box in boxes:
-            tensor = numpy.concatenate((box.vectorX, box.vectorY, box.vectorZ))
-            self.appendLists(posList, box.origin, tensorList=tensorList, tensor=tensor) 
+            tensor = numpy.concatenate( ( box.vectorX, box.vectorY, box.vectorZ ) )
+            self.appendLists( posList, box.origin, tensorList=tensorList, tensor=tensor ) 
 
-        return (posList, [], [], tensorList)
+        return ( posList, [], [], tensorList )
 
 
     def getCylindricalSurfaceData( self ):
         # Todo. Make DNA blink when reaction takes place.
-        cylinders = [ surface for surface in self.sim.surfaceList if isinstance(surface, Cylinder) ]
+        cylinders = [ surface for surface in self.sim.surfaceList if isinstance( surface, Cylinder ) ]
         return self.processCylinders( cylinders )
 
 
     def getPlanarSurfaceData( self ):
         posList, typeList, tensorList = [], [], []
 
-        boxes = [ surface for surface in self.sim.surfaceList if isinstance(surface, Box) ]
-        if len(boxes) == 0:
+        boxes = [ surface for surface in self.sim.surfaceList if isinstance( surface, Box ) ]
+        if len( boxes ) == 0:
             # Add dummy box to stop tensorGlyph from complaining.
             boxes = [ DummyBox() ] 
 
         for box in boxes:
-            tensor = numpy.concatenate((box.vectorX, box.vectorY, box.vectorZ))
-            self.appendLists(posList, box.origin, tensorList=tensorList, 
-                    tensor=tensor) 
+            tensor = numpy.concatenate( ( box.vectorX, box.vectorY, box.vectorZ ) )
+            self.appendLists( posList, box.origin, tensorList=tensorList, 
+                    tensor=tensor ) 
 
-        return (posList, [], [], tensorList)
+        return ( posList, [], [], tensorList )
 
 
     def processCylinders( self, cylinders=[], typeList=[] ):
         posList, tensorList = [], []
 
-        if len(cylinders) == 0:
+        if len( cylinders ) == 0:
             # Add dummy cylinder to stop tensorGlyph from complaining.
             cylinders = [ DummyCylinder() ] 
 
@@ -258,24 +258,24 @@ class VTKLogger:
             '''
 
             # Select basis vector in which orientation is smallest.
-            _, basisVector = min( zip(abs(orientation), [[1,0,0], [0,1,0], [0,0,1]]) )
+            _, basisVector = min( zip( abs( orientation ), [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) )
             # Find 2 vectors perpendicular to orientation.
             perpendicular1 = numpy.cross( orientation, basisVector )
             perpendicular2 = numpy.cross( orientation, perpendicular1 )
             # A 'tensor' is represented as an array of 9 values.
             # Stupid Paraview wants  a normal vector to the cylinder to orient  
             # it. So orientation and perpendicular1 swapped.
-            tensor = numpy.concatenate((perpendicular1 * radius, 
-                orientation * size, perpendicular2 * radius))
+            tensor = numpy.concatenate( ( perpendicular1 * radius, 
+                orientation * size, perpendicular2 * radius ) )
 
             self.appendLists( posList, cylinder.origin, tensorList=tensorList, tensor=tensor ) 
 
-        return (posList, [], typeList, tensorList)
+        return ( posList, [], typeList, tensorList )
 
 
     # Helper.
-    def appendLists(self, posList, pos, typeList=[], type=None, radiusList=[], radius=None, 
-            tensorList=[], tensor=None):
+    def appendLists( self, posList, pos, typeList=[], type=None, radiusList=[], radius=None, 
+            tensorList=[], tensor=None ):
         factor = 1
         # Convert all lengths to nanometers.
         #factor = 1e8
@@ -296,10 +296,10 @@ class VTKLogger:
 
 class DummyCylinder( Cylinder ):
     def __init__( self ):
-        Cylinder.__init__( self, [0,0,0], 1e-20, [0,0,1], 1e-20 ) 
+        Cylinder.__init__( self, [ 0, 0, 0 ], 1e-20, [ 0, 0, 1 ], 1e-20 ) 
 
 
 class DummyBox( Box ):
     def __init__( self ):
-        Box.__init__( self, [0,0,0], [1,0,0], [0,1,0], [0,0,1], 1e-20, 1e-20, 1e-20 ) 
+        Box.__init__( self, [ 0, 0, 0], [ 1, 0, 0], [ 0, 1, 0 ], [ 0, 0, 1 ], 1e-20, 1e-20, 1e-20 ) 
 

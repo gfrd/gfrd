@@ -42,10 +42,10 @@ def maxz_y( n ):
 def jnyn( n, resolution ):
 
     delta = numpy.pi / resolution
-    zTable = numpy.mgrid[delta:max( maxz_j(n), maxz_y(n) ):delta]
+    zTable = numpy.mgrid[delta:max( maxz_j( n ), maxz_y( n ) ):delta]
 
-    jTable = numpy.zeros( ( len( zTable ), n+1 ) )
-    yTable = numpy.zeros( ( len( zTable ), n+1 ) )
+    jTable = numpy.zeros( ( len( zTable ), n + 1 ) )
+    yTable = numpy.zeros( ( len( zTable ), n + 1 ) )
     for i, z in enumerate( zTable ):
         jTable[i], _, yTable[i], _ = special.sph_jnyn( n, z )
 
@@ -64,8 +64,8 @@ def make_table( func, n, z0, z1, tol ):
     jp_prev = jp[n]
     jpp_prev = 0
 
-    zTable = numpy.array( [z,] )
-    yTable = numpy.array( [j[n],] )
+    zTable = numpy.array( [ z, ] )
+    yTable = numpy.array( [ j[n], ] )
 
     while z < z1:
         j, jp = func( n, z + dz )
@@ -131,7 +131,7 @@ def writeTableArray( file, name, minn, maxn ):
     for n in range( minn ):
         file.write( '    0,\n' )
 
-    for n in range( minn, maxn+1 ):
+    for n in range( minn, maxn + 1 ):
         file.write( '    &%s%d,\n' % ( name, n ) )
 
     file.write( '};\n\n' )
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     for n in range( minn_y, maxn_y + 1 ):
 
         #zTable, yTable = make_table( special.sph_yn, n, 
-        #                             minz_y(n), maxz_y(n), tolerance )
+        #                             minz_y( n ), maxz_y( n ), tolerance )
         #writeArray( file, 'sy_table%d_z' % n, zTable )
         #writeArray( file, 'sy_table%d_f' % n, yTable )
         #writeTable( file, 'sy_table%d' % n, len( zTable ) )

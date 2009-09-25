@@ -72,8 +72,8 @@ class Pair( object ):
         self.CoM, self.IV = self.getCoMandIV()
         self.pairDistance = distFunc( particle1.pos, particle2.pos )
         # Todo: why discrepancy of about 1e-15 here?
-        assert abs(self.pairDistance - length( self.IV )) < 1e-10, \
-                    '%.15g != %.15g' % (self.pairDistance, length( self.IV ))
+        assert abs( self.pairDistance - length( self.IV ) ) < 1e-10, \
+                    '%.15g != %.15g' % ( self.pairDistance, length( self.IV ) )
 
 
     def __del__( self ):
@@ -172,7 +172,7 @@ class Pair( object ):
 
             den1 = qrrtD1D25 + D1 * ( sqrtD_geom + sqrtD_tot )
 
-            a_R_1 = sqrtD_geom * ( D2 * ( shellSize - radius1) + 
+            a_R_1 = sqrtD_geom * ( D2 * ( shellSize - radius1 ) + 
                                    D1 * ( shellSize - pairDistance - radius1 ) ) / den1
 
             a_r_1 = self.D_tot * ( sqrtD_geom * pairDistance + sqrtD_tot * 
@@ -215,7 +215,7 @@ class Pair( object ):
         return a_R, a_r
 
      
-    # Returns a (dt, activeDomain) tuple.
+    # Returns a ( dt, activeDomain ) tuple.
     def drawEscapeOrReactionTime( self ):
         '''
         Note: we are not deciding yet if this is an escape or a pair 
@@ -233,12 +233,12 @@ class Pair( object ):
         * EventType.ESCAPE can still mean any of CoM or IV escape or *pair* 
           reaction.
         '''
-        return min( (d.drawTime(), d) for d in self.domains )
+        return min( ( d.drawTime(), d ) for d in self.domains )
 
 
-    # Returns a (dt, single) tuple.
+    # Returns a ( dt, single ) tuple.
     def drawSingleReactionTime( self ):
-        return min( ((single.drawReactionTime(), single) for single in self.singles ))
+        return min(( (single.drawReactionTime(), single) for single in self.singles ))
 
 
     def checkNewpos( self, pos1, pos2 ):
@@ -269,8 +269,8 @@ class Pair( object ):
 
 
     def __str__( self ):
-        buf = '( ' + str(self.single1.particle) + \
-              ',\n\t\t\t' + str(self.single2.particle) + ' )'
+        buf = '( ' + str( self.single1.particle ) + \
+              ',\n\t\t\t' + str( self.single2.particle ) + ' )'
         return buf
 
 
@@ -316,7 +316,7 @@ class SphericalPair( Pair ):
         
         the rotation axis is a normalized cross product of the z-axis and the 
         original vector.
-        rotationAxis = crossproduct( [ 0,0,1 ], IV )
+        rotationAxis = crossproduct( [ 0, 0, 1 ], IV )
         '''
 
         oldIV = self.IV
@@ -346,7 +346,7 @@ class SphericalPair( Pair ):
     def drawNewIV( self, dt ):  
         gf = self.choosePairGreensFunction( dt )
         r, theta = self.domains[1].drawPosition( gf, dt )
-        newInterParticleS = numpy.array([r, theta, numpy.random.random() * 2 * Pi])
+        newInterParticleS = numpy.array( [ r, theta, numpy.random.random() * 2 * Pi ] )
         return sphericalToCartesian( newInterParticleS )
 
 
@@ -432,14 +432,14 @@ class PlanarSurfacePair( Pair ):
     a new inter-particle vector, and an old inter-particle vector.
     '''
     def drawNewPositions( self, dt ):
-        newCoM, (r, theta) = self.drawNewCoM( dt ), self.drawNewIV( dt )
+        newCoM, ( r, theta ) = self.drawNewCoM( dt ), self.drawNewIV( dt )
         unitX = self.surface.unitX
         unitY = self.surface.unitY
         angle = vectorAngle( unitX, self.IV )
         # Todo. Test if nothing changes when theta == 0.
         newAngle = angle + theta
         
-        rotated = r * math.cos(newAngle) * unitX + r * math.sin(newAngle) * unitY
+        rotated = r * math.cos( newAngle ) * unitX + r * math.sin( newAngle ) * unitY
 
         newpos1 = newCoM - rotated * ( self.D1 / self.D_tot )
         newpos2 = newCoM + rotated * ( self.D2 / self.D_tot )
@@ -494,7 +494,7 @@ class CylindricalSurfacePair( Pair ):
         # from sigma (radiating boundary) to a_r (absorbing boundary). Now, 
         # cartesian domain goes from minus a_cartesian (radiating boundary) to 
         # plus a_cartesian (absorbing boundary).
-        a_cartesian = (self.a_r - self.sigma ) / 2
+        a_cartesian = (self.a_r - self.sigma) / 2
         r0_cartesian = self.pairDistance - self.sigma - a_cartesian
         ivDomain = CartesianDomain( r0_cartesian, a_cartesian, self.pgf )
 

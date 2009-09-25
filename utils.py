@@ -47,26 +47,26 @@ def feq( a, b, typical=1, tolerance=TOLERANCE ):
     multipied by this typical value, and will be used when comparing a value 
     to zero. By default, the typical value is 1.
     '''
-    return abs(a - b) < tolerance * ( typical + min(abs(a), abs(b)) )
+    return abs( a - b ) < tolerance * ( typical + min( abs( a ), abs( b ) ) )
 
 
 def fgreater( a, b, typical=1, tolerance=TOLERANCE ):
-    return a - b > tolerance * ( typical + min(abs(a), abs(b)) )
+    return a - b > tolerance * ( typical + min( abs( a ), abs( b ) ) )
 
 
 def fless( a, b, typical=1, tolerance=TOLERANCE ):
-    return b - a > tolerance * ( typical + min(abs(a), abs(b)) )
+    return b - a > tolerance * ( typical + min( abs( a ), abs( b ) ) )
 
 
 def fgeq( a, b, typical=1, tolerance=TOLERANCE ):
     diff = a - b
-    barrier = tolerance * ( typical + min(abs(a), abs(b)) )
+    barrier = tolerance * ( typical + min( abs( a ), abs( b ) ) )
     return diff > barrier or abs( diff ) < barrier
 
 
 def fleq( a, b, typical=1, tolerance=TOLERANCE ):
     diff = b - a
-    barrier = tolerance * ( typical + min(abs(a), abs(b)) )
+    barrier = tolerance * ( typical + min( abs( a ), abs( b ) ) )
     return diff > barrier or abs( diff ) < barrier
 
 
@@ -76,11 +76,11 @@ class NeverGetHere( Exception ):
 
 class Stop( Exception ):
     '''
-    def __init__(self, value):
+    def __init__( self, value ):
         self.value = value
 
-    def __str__(self):
-        return repr(self.value)
+    def __str__( self ):
+        return repr( self.value )
     '''
     pass
 
@@ -181,7 +181,7 @@ def cartesianToSpherical( c ):
     r = length( c )
     theta = math.acos( c[2] / r )
     phi = math.atan2( c[1], c[0] )
-    if phi < 0.0:  # atan2 returns [- PI, PI]
+    if phi < 0.0:  # atan2 returns [ - PI, PI ]
         phi += 2.0 * Pi
     return numpy.array( [ r, theta, phi ] )
 
@@ -219,7 +219,7 @@ def randomPerpendicularVector( vector, r ):
     index = 
 
     v = crossproduct( vector,  
-    norm = numpy.linalg.norm(v)
+    norm = numpy.linalg.norm( v )
     return v * ( r / norm )
 """
 
@@ -227,7 +227,7 @@ def randomPerpendicularVector( vector, r ):
 # Return a random 2D cartesian vector of length r.
 def randomVector2D( r ):
     v = numpy.random.uniform( -1, 1, 2 )
-    norm = numpy.linalg.norm(v)
+    norm = numpy.linalg.norm( v )
     return v * ( r / norm )
 
 
@@ -278,22 +278,22 @@ def rotateVector( v, r, alpha ):
                          cosalphac * r[1] * r[2] + r[0] * sinalpha,
                          cosalpha + cosalphac * r[2] * r[2] ] ] )
 
-    return numpy.dot( M,v )
+    return numpy.dot( M, v )
 
 
-def permutate(seq):
+def permutate( seq ):
 
     """permutate a sequence and return a list of the permutations"""
 
     if not seq:
-        return [seq] # is an empty sequence
+        return [ seq ] # is an empty sequence
     else:
         temp = []
 
-        for k in range(len(seq)):
+        for k in range( len( seq ) ):
             part = seq[:k] + seq[k+1:]
-            for m in permutate(part):
-                temp.append(seq[k:k+1] + m)
+            for m in permutate( part ):
+                temp.append( seq[k:k+1] + m )
         return temp
 
 

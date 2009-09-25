@@ -59,7 +59,7 @@ class Logger:
         self.writeTimecourseComment( comment )
 
         speciesNameList = '\'' + \
-            "\', \'".join( [key[0] for key in self.sim.speciesList.keys()]  ) + '\''
+            "\', \'".join( [ key[0] for key in self.sim.speciesList.keys() ] ) + '\''
         columns = '[ \'t\', ' + speciesNameList + ']'
         self.writeTimecourseComment( '@ columns= ' + columns )
 
@@ -80,7 +80,7 @@ class Logger:
     def writeParticles( self ):
 
         filename = self.logname + '_' + \
-            str( self.fileCounter ).zfill(4) + '.dat'
+            str( self.fileCounter ).zfill( 4 ) + '.dat'
 
         file = open( self.directory + os.sep + filename, 'w' )
 

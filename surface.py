@@ -67,18 +67,18 @@ class PlanarSurface( Surface, Box ):
     Only uniform if vectorX and vectorY have same length.
     '''
     def randomPosition( self ):
-        return self.origin + random.uniform(-1,1) * self.vectorX + random.uniform(-1,1) * self.vectorY
+        return self.origin + random.uniform( -1, 1 ) * self.vectorX + random.uniform( -1, 1 ) * self.vectorY
 
 
     # A particle that is not on this surface has to be at least this far away 
     # from the z = 0-plane of the surface.
     def minimalOffset( self, radius ):
-        return (self.Lz + radius ) * UNBIND_SAFETY
+        return (self.Lz + radius) * UNBIND_SAFETY
 
 
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
-        return pos + random.choice( [-1,1] ) * self.minimalOffset( radius )  * self.unitZ
+        return pos + random.choice( [ -1, 1 ] ) * self.minimalOffset( radius )  * self.unitZ
 
 
 '''
@@ -107,7 +107,7 @@ class CylindricalSurface( Surface, Cylinder ):
 
 
     def randomPosition( self ):
-        return self.origin + random.uniform(-1, 1) * self.vectorZ
+        return self.origin + random.uniform( -1, 1 ) * self.vectorZ
 
 
     # A particle that is not on this surface has to be at least this far away 
@@ -139,11 +139,11 @@ class CuboidalSurface( Surface, Box ):
     '''
     def __init__( self, origin, size, name='world' ):
         Surface.__init__( self, name )
-        self.size = numpy.array(size)
+        self.size = numpy.array( size )
         Lx = size[0]
         Ly = size[1]
         Lz = size[2]
-        Box.__init__( self, origin + self.size / 2, [Lx, 0, 0], [0, Ly, 0], [0, 0, Lz], Lx / 2, Ly / 2, Lz / 2 ) 
+        Box.__init__( self, origin + self.size / 2, [ Lx, 0, 0 ], [ 0, Ly, 0 ], [ 0, 0, Lz ], Lx / 2, Ly / 2, Lz / 2 ) 
         self.defaultSingle = SphericalSingle
         self.defaultPair = SphericalPair
 
@@ -181,6 +181,6 @@ class CuboidalSurface( Surface, Box ):
         edge = self.origin - self.size / 2
         return numpy.array( [ random.uniform( edge[0], self.size[0] ),
                               random.uniform( edge[1], self.size[1] ),
-                              random.uniform( edge[2], self.size[2] )])
+                              random.uniform( edge[2], self.size[2] ) ] )
 
 

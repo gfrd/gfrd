@@ -40,16 +40,16 @@ class Single( object ):
 
 
     '''
-    Returns an (escapeTime, eventType, activeDomain)-tuple.
+    Returns an ( escapeTime, eventType, activeDomain )-tuple.
     By returning the arguments it is a pure function. 
     '''
     def determineNextEvent( self ):
-        return min(self.drawEscapeOrInteractionTime(), 
-                self.drawReactionTime()) 
+        return min( self.drawEscapeOrInteractionTime(), 
+                    self.drawReactionTime() ) 
 
 
     '''
-    Returns an (escapeTime, eventType, activeDomain)-tuple.
+    Returns an ( escapeTime, eventType, activeDomain )-tuple.
     Handles also all interaction events.
     '''
     def drawEscapeOrInteractionTime( self ):
@@ -69,11 +69,11 @@ class Single( object ):
             be used at all, since reaction events are taken care of before 
             escape events in fireSingle.
             '''
-            return min( (d.drawTime(), EventType.ESCAPE, d) for d in self.domains )
+            return min( ( d.drawTime(), EventType.ESCAPE, d ) for d in self.domains )
 
 
     '''
-    Returns a (reactionTime, eventType, activeDomain=None)-tuple.
+    Returns a ( reactionTime, eventType, activeDomain=None )-tuple.
     '''
     def drawReactionTime( self ):
         if self.k_tot == 0:
@@ -143,7 +143,7 @@ class NonInteractionSingle( Single ):
     def drawNewPosition( self, dt ):
         r = self.domains[0].drawPosition( dt )
         displacement = self.displacement( r )
-        assert abs( length( displacement ) - abs(r) ) <= 1e-15 * abs(r)
+        assert abs( length( displacement ) - abs( r ) ) <= 1e-15 * abs( r )
         return self.pos + displacement
 
 
@@ -166,7 +166,7 @@ class NonInteractionSingle( Single ):
 '''
 1 Particle inside a (spherical) shell not on any surface.
 
-    * Particle coordinate inside shell: r,theta,phi.
+    * Particle coordinate inside shell: r, theta, phi.
     * Domain: radial r.
     * Initial position: r = 0.
     * Selected randomly when drawing displacement vector: theta, phi.
@@ -182,7 +182,7 @@ class SphericalSingle( NonInteractionSingle ):
         self.domains = [ RadialDomain( self.getMobilityRadius(), gf ) ]
 
     def displacement( self, r ):
-        return randomVector(r)
+        return randomVector( r )
 
 
     def __str__( self ):
@@ -193,7 +193,7 @@ class SphericalSingle( NonInteractionSingle ):
 '''
 1 Particle inside a (cylindrical) shell on a PlanarSurface. (Hockey pucks).
 
-    * Particle coordinates on surface: x,y.
+    * Particle coordinates on surface: x, y.
     * Domain: radial r. (determines x and y together with theta).
     * Initial position: r = 0.
     * Selected randomly when drawing displacement vector: theta.
