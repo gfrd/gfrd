@@ -11,7 +11,8 @@ There are 2 main types of Singles:
     * NonInteractionSingle
     * InteractionSingle (when the particle is nearby a surface)
 
-Each type of Single defines a list of domains, see domain.py. For each domain the Green's function is specified.
+Each type of Single defines a list of domains, see domain.py. For each domain 
+the Green's function is specified.
 '''
 class Single( object ):
     def __init__( self, particle, reactionTypes ):
@@ -69,7 +70,8 @@ class Single( object ):
             be used at all, since reaction events are taken care of before 
             escape events in fireSingle.
             '''
-            return min( ( d.drawTime(), EventType.ESCAPE, d ) for d in self.domains )
+            return min( ( d.drawTime(), EventType.ESCAPE, d )
+                        for d in self.domains )
 
 
     '''
@@ -127,10 +129,10 @@ class NonInteractionSingle( Single ):
 
 
     def getRadius( self ):
-        #raise RuntimeError, 'Todo'
+        #raise RuntimeError( 'Todo' )
         return self.shellList[0].radius
     def setRadius( self, radius ):
-        #raise RuntimeError, 'Todo'
+        #raise RuntimeError( 'Todo' )
         # setRadius is called when NonInteractionSingles are updated.
         assert radius - self.getMinRadius() >= 0.0
         self.shellList[0].radius = radius
@@ -159,8 +161,8 @@ class NonInteractionSingle( Single ):
 
 
     def isReset( self ):
-        return self.radius == self.getMinRadius() and self.dt == 0.0\
-               and self.eventType == EventType.ESCAPE
+        return self.radius == self.getMinRadius() and self.dt == 0.0 and \
+               self.eventType == EventType.ESCAPE
 
 
 '''
@@ -180,6 +182,7 @@ class SphericalSingle( NonInteractionSingle ):
         # Create a radial domain of size mobilityRadius = 0.
         gf = FirstPassageGreensFunction( self.getD() )
         self.domains = [ RadialDomain( self.getMobilityRadius(), gf ) ]
+
 
     def displacement( self, r ):
         return randomVector( r )
@@ -208,7 +211,8 @@ class PlanarSurfaceSingle( NonInteractionSingle ):
         reaction we still have to clear the target volume and the move may be 
         rejected (NoSpace error).
         '''
-        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.getMinRadius() ) ]
+        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), 
+                                     self.surface.unitZ, self.getMinRadius() ) ]
 
         # Create a radial domain of size mobilityRadius = 0.
         gf = FirstPassageGreensFunction2D( self.getD() )
@@ -246,7 +250,8 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         Heads up. The cylinder's *size*, not radius, is changed when you 
         make the cylinder bigger, because of the redefinition of setRadius.
         '''
-        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), self.surface.unitZ, self.getMinRadius() ) ]
+        self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), 
+                                     self.surface.unitZ, self.getMinRadius() ) ]
 
         # Create a cartesian domain of size mobilityRadius = 0.
         gf = FirstPassageGreensFunction1D( self.getD() )
@@ -264,12 +269,13 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
     '''
     def getRadius( self ):
         # Heads up. Return cylinder's size.
-        #raise RuntimeError, 'Todo'
+        #raise RuntimeError( 'Todo' )
         return self.shellList[0].size
     def setRadius( self, size ):
-        #raise RuntimeError, 'Todo'
+        #raise RuntimeError( 'Todo' )
         assert size - self.getMinRadius() >= 0.0 # Still fine.
-        # Heads up. A larger shell means a larger CylindricalSurfaceSingle's size.
+        # Heads up. A larger shell means a larger CylindricalSurfaceSingle's 
+        # size.
         self.shellList[0].size = size
         self.domains[0].a = self.getMobilityRadius()
     radius = property( getRadius, setRadius )
@@ -300,7 +306,7 @@ class InteractionSingle( Single ):
 
 
     def getRadius( self ):
-        #raise RuntimeError, 'Todo'
+        #raise RuntimeError( 'Todo' )
         return self.shellList[0].radius
     radius = property( getRadius )
 
@@ -310,11 +316,12 @@ class InteractionSingle( Single ):
 
 
     def reset( self ):
-        raise SystemError, 'Interaction singles should never be reset (reused)'
+        raise SystemError( 'Interaction singles should never be reset (reused)' )
 
 
 '''
-1 Particle close to a PlanarSurface, inside a cylindrical shell placed on top of the surface.
+1 Particle close to a PlanarSurface, inside a cylindrical shell placed on top 
+of the surface.
 
     * Particle coordinates inside shell: r, theta, z.
     * Domains: radial r, cartesian z.
@@ -322,8 +329,11 @@ class InteractionSingle( Single ):
     * Selected randomly when drawing displacement vector: theta.
 '''
 class PlanarSurfaceInteraction( InteractionSingle ):
-    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint = None, sizeOfDomain = None ):
-        InteractionSingle.__init__( self, particle, surface, reactionTypes, interactionType )
+    def __init__( self, particle, surface, reactionTypes, interactionType, 
+                  origin, radius, orientationVector, size, particleOffset, 
+                  projectedPoint = None, sizeOfDomain = None ):
+        InteractionSingle.__init__( self, particle, surface, reactionTypes, 
+                                    interactionType )
 
         self.shellList = [ Cylinder( origin, radius, orientationVector, size ) ]
 
@@ -340,7 +350,8 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         '''
         gfz = FirstPassageGreensFunction1DRad( self.getD(), interactionType.k )
         # Cartesian domain of size L. Correction with getMinRadius().
-        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2 * self.getMinRadius(), gfz )
+        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), 
+                                   sizeOfDomain - 2 * self.getMinRadius(), gfz )
 
         self.domains = [ rDomain, zDomain ]
 
@@ -351,7 +362,8 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         z = self.domains[1].drawPosition( dt )
         x, y = randomVector2D( r )
         # Add displacement vector to self.particle.pos, not self.pos!
-        return self.particle.pos + x * self.interactionSurface.unitX + y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
+        return self.particle.pos + x * self.interactionSurface.unitX + \
+               y * self.interactionSurface.unitY + z * self.shellList[0].unitZ
 
 
     def __str__( self ):
@@ -367,20 +379,29 @@ class PlanarSurfaceInteraction( InteractionSingle ):
     * Selected randomly when drawing displacement vector: none.
 '''
 class CylindricalSurfaceInteraction( InteractionSingle ):
-    def __init__( self, particle, surface, reactionTypes, interactionType, origin, radius, orientationVector, size, particleOffset, projectedPoint, sizeOfDomain=None ):
-        self.unitR = normalize( particle.pos - projectedPoint ) # Only needed for this type of Interaction.
-        InteractionSingle.__init__( self, particle, surface, reactionTypes, interactionType )
+    def __init__( self, particle, surface, reactionTypes, interactionType, 
+                  origin, radius, orientationVector, size, particleOffset, 
+                  projectedPoint, sizeOfDomain=None ):
+        # Only needed for this type of Interaction.
+        self.unitR = normalize( particle.pos - projectedPoint )
+        InteractionSingle.__init__( self, particle, surface, reactionTypes, 
+                                    interactionType )
 
         self.shellList = [ Cylinder( origin, radius, orientationVector, size ) ]
 
         # Interaction possible in r direction.
-        self.pgf = FirstPassagePairGreensFunction2D( self.getD(), interactionType.k, surface.radius )
-        rthetaDomain = CompositeDomain( surface.radius + self.getMinRadius(), particleOffset[0], radius - self.getMinRadius(), self.pgf )
+        self.pgf = FirstPassagePairGreensFunction2D( self.getD(),
+                                                     interactionType.k, 
+                                                     surface.radius )
+        rthetaDomain = CompositeDomain( surface.radius + self.getMinRadius(), 
+                                        particleOffset[0], 
+                                        radius - self.getMinRadius(), self.pgf )
 
         # Free diffusion in z direction.
         gfz = FirstPassageGreensFunction1D( self.getD() )
         # Cartesian domain of size L. Correction with getMinRadius().
-        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), sizeOfDomain - 2 * self.getMinRadius(), gfz )
+        zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), 
+                                   sizeOfDomain - 2 * self.getMinRadius(), gfz )
 
         self.domains = [ rthetaDomain, zDomain ]
 
@@ -390,7 +411,8 @@ class CylindricalSurfaceInteraction( InteractionSingle ):
         # Cartesian domain returns displacement, not absolute position.
         z = self.domains[1].drawPosition( dt )
         # Calculate new position starting from origin.
-        newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, theta )
+        newVectorR = r * rotateVector( self.unitR, self.shellList[0].unitZ, 
+                                       theta )
         # Orientation matters (plus or minus), so shellList[0].unitZ is used 
         # here instead of surface.unitZ.
         # Add displacement vector to self.particle.pos, not self.pos!

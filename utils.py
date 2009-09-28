@@ -79,6 +79,7 @@ class Stop( Exception ):
     def __init__( self, value ):
         self.value = value
 
+
     def __str__( self ):
         return repr( self.value )
     '''
@@ -117,7 +118,7 @@ def cyclicTranspose( pos1, pos2, fsize ):
     
     # Make sure you do the multiplication before the subtraction.
     reloc = numpy.greater( diff, halfsize ) * fsize - \
-        numpy.less( diff, -halfsize ) * fsize
+            numpy.less( diff, -halfsize ) * fsize
 
     return pos1 + reloc
 
@@ -135,23 +136,29 @@ def distanceSq_Simple( position1, position2, fsize = None ):
     diff = position1 - position2
     return numpy.dot( diff, diff )
 
+
 def distance( position1, position2, fsize = 0 ):
     return math.sqrt( distanceSq_Simple( position1, position2 ) )
 '''
+
 
 # These 4 functions are used if worldsize is a float in 
 # ParticleSimulatorBase.setWorldSize.
 def distanceSq_Simple( position1, position2, fsize = None ):
     return _gfrd.distanceSq( position1, position2 )
 
+
 def distance_Simple( position1, position2, fsize = 0 ):
     return _gfrd.distance( position1, position2 )
+
 
 def distanceSqArray_Simple( position1, positions, fsize = None ):
     return numpy.square( positions - position1 ).sum( 1 )
 
+
 def distanceArray_Simple( position1, positions, fsize = None ):
     return numpy.sqrt( distanceSqArray_Simple( position1, positions ) )
+
 
 '''
 def distanceSq_Cyclic( position1, position2, fsize ):
@@ -160,21 +167,25 @@ def distanceSq_Cyclic( position1, position2, fsize ):
     return numpy.dot( diff, diff )
 '''
 
+
 # These 4 functions are used if worldsize is.. Todo.
 def distanceSq_Cyclic( position1, position2, fsize ):
     return _gfrd.distanceSq_Cyclic( position1, position2, fsize )
 
+
 def distance_Cyclic( position1, position2, fsize ):
     return _gfrd.distance_Cyclic( position1, position2, fsize )
 
-def distanceSqArray_Cyclic( position1, positions, fsize ):
 
+def distanceSqArray_Cyclic( position1, positions, fsize ):
     diff = numpy.abs( positions - position1 )
     diff -= numpy.greater( diff, fsize * 0.5 ) * fsize # transpose
     return numpy.square( diff ).sum( 1 )
 
+
 def distanceArray_Cyclic( position1, positions, fsize = 0 ):
     return numpy.sqrt( distanceSqArray_Cyclic( position1, positions, fsize ) )
+
 
 def cartesianToSpherical( c ):
     # x, y, z = c
@@ -187,7 +198,6 @@ def cartesianToSpherical( c ):
 
 
 def sphericalToCartesian( s ):
-
     #FIXME: it's possible that the below is a source of some bias.
     r, theta, phi = s
     sintheta = math.sin( theta )
@@ -244,15 +254,18 @@ def vectorAngle( a, b ):
     cosangle = numpy.dot( a, b ) / ( length( a ) * length( b ) )
     return math.acos( cosangle )
 
+
 def vectorAngleAgainstZAxis( b ):
     cosangle = b[2] / length( b )
     return math.acos( cosangle )
+
 
 def crossproduct( a, b ):
     M = numpy.array( [ [    0.0, - a[2],   a[1] ],
                        [   a[2],    0.0, - a[0] ],
                        [ - a[1],   a[0],    0.0 ] ] )
     return numpy.dot( M, b )
+
 
 def crossproductAgainstZAxis( a ):
     return numpy.array( [ - a[1], a[0], 0.0 ] )
@@ -282,7 +295,6 @@ def rotateVector( v, r, alpha ):
 
 
 def permutate( seq ):
-
     """permutate a sequence and return a list of the permutations"""
 
     if not seq:
@@ -297,28 +309,25 @@ def permutate( seq ):
         return temp
 
 
-
 def k_D( D, sigma ):
-
     return 4.0 * numpy.pi * D * sigma
 
-def k_a( kon, kD ):
 
+def k_a( kon, kD ):
     if kon > kD:
-        raise RuntimeError, 'kon > kD.'
+        raise RuntimeError( 'kon > kD.' )
     ka = 1 / ( ( 1 / kon ) - ( 1 / kD ) )
     return ka
 
-def k_d( koff, kon, kD ):
 
+def k_d( koff, kon, kD ):
     return k_a( kon, kD ) * koff / kon
 
-def k_on( ka, kD ):
 
+def k_on( ka, kD ):
     kon = 1 / ( ( 1 / kD ) + ( 1 / ka ) )  # m^3/s
     return kon
 
 
 def C2N( c, V ):
-
     return c * V * N_A  # round() here?

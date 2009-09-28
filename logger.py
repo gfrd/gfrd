@@ -11,11 +11,10 @@ This logging faciliy can be used to write particle traces to file.
 '''
 class Logger:
 
-    def __init__( self, sim, logname = 'log', directory = 'data',
+    def __init__( self, sim, logname='log', directory='data',
                   comment='' ):
 
         self.sim = sim
-
 
         self.logname = logname
 
@@ -40,16 +39,20 @@ class Logger:
     def setInterval( self, interval ):
         self.interval = interval
 
+
     def setParticleOutPattern( self, pattern ):
         self.particleOutPattern = re.compile( pattern )
 
+
     def getParticleOutPattern( self ):
         return self.particleOutPattern.pattern
+
 
     def setParticleOutInterval( self, interval ):
         self.particleOutInterval = interval
         self.lastTime = self.sim.t
         self.nextTime = self.lastTime + self.particleOutInterval
+
 
     def prepareTimecourseFile( self, comment ):
 
@@ -59,7 +62,8 @@ class Logger:
         self.writeTimecourseComment( comment )
 
         speciesNameList = '\'' + \
-            "\', \'".join( [ key[0] for key in self.sim.speciesList.keys() ] ) + '\''
+            "\', \'".join( [ key[0] for key in self.sim.speciesList.keys() ] ) \
+            + '\''
         columns = '[ \'t\', ' + speciesNameList + ']'
         self.writeTimecourseComment( '@ columns= ' + columns )
 
@@ -68,7 +72,8 @@ class Logger:
         self.timecourseFile.write( '#' + s + '\n' )
 
 
-    def writeTimecourse( self ):	## writes the number for all species for the current time
+    ## writes the number for all species for the current time
+    def writeTimecourse( self ):
 
 	print "writeTimecourse"
         data = [ str( i.pool.size ) for i in self.sim.speciesList.values() ]
@@ -77,10 +82,11 @@ class Logger:
         self.timecourseFile.write( '\t'.join( data ) + '\n' )
         self.timecourseFile.flush()
 
+
     def writeParticles( self ):
 
         filename = self.logname + '_' + \
-            str( self.fileCounter ).zfill( 4 ) + '.dat'
+                   str( self.fileCounter ).zfill( 4 ) + '.dat'
 
         file = open( self.directory + os.sep + filename, 'w' )
 
@@ -94,7 +100,8 @@ class Logger:
             species = self.sim.speciesList[ speciesName ]
             for i in species.pool.positions:
                 file.write( '%s\t%20.14g %20.14g %20.14g %.15g\n' % 
-                            ( speciesName[0], i[0], i[1], i[2], species.radius ) )
+                            ( speciesName[0], i[0], i[1], i[2], 
+                              species.radius ) )
 
             file.write( '#\n' )
 
@@ -108,6 +115,7 @@ class Logger:
         self.logTimeCourse()
         self.logParticles()
 
+
     def logTimeCourse( self ):
 
         if self.sim.lastReaction:
@@ -116,15 +124,15 @@ class Logger:
 
     def logParticles( self ):
         sim = self.sim
-        if self.nextTime <= sim.t + sim.dt:		## only log if the next logging event occurs before
-            #log.info( 'log %g' % self.nextTime )	## the simulation event. So when logging and sim
-							## events don't coincide, you log the state in be
-            sim.stop( self.nextTime )			## tween the simulation events (before the event)
+
+        ## only log if the next logging event occurs before the simulation 
+        ## event. So when logging and sim events don't coincide, you log the 
+        ## state in between the simulation events (before the event)
+        if self.nextTime <= sim.t + sim.dt:
+            #log.info( 'log %g' % self.nextTime )
+							
+            sim.stop( self.nextTime )		
             self.writeParticles()
 
             self.nextTime += self.particleOutInterval
 
-
-        
-
-        

@@ -35,7 +35,6 @@ class NoSpace( Exception ):
 
 
 class Species( object ):
-    
     def __init__( self, id, D, radius ):
         self.id = id
         self.D = D
@@ -44,7 +43,6 @@ class Species( object ):
 
 
     def newParticle( self, position ):
-
         serial = self.pool.newParticle( position )
         return serial
 
@@ -52,12 +50,12 @@ class Species( object ):
     def removeParticleByIndex( self, index ):
         self.pool.removeByIndex( index )
 
+
     def removeParticleBySerial( self, serial ):
         self.pool.removeBySerial( serial )
 
 
 class ReactionType( object ):
-
     def __init__( self, reactants=[], products=[], k=0.0 ):
         self.reactants = reactants
         self.products = products
@@ -71,14 +69,15 @@ class ReactionType( object ):
             for product in self.products:
                 totalProductRadii += product.radius
             if totalProductRadii > self.reactants[0].radius * 2:
-                raise ValueError, \
-                    'total product radii must be smaller than ' \
-                    + 'reactant radius * 2'
+                raise ValueError( 'total product radii must be smaller than '
+                                  'reactant radius * 2' )
         if self.k < 0:
-            raise ValueError, 'k < 0'
+            raise ValueError( 'k < 0' )
+
 
     def order( self ):
         return len( self.reactants )
+
 
     def __str__( self ):
         s = ''
@@ -104,7 +103,6 @@ Reaction Types.
 A -> B
 '''
 class UnimolecularReactionType( ReactionType ):
-
     def __init__( self, s1, p1, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, ], k )
 
@@ -113,7 +111,6 @@ class UnimolecularReactionType( ReactionType ):
 A -> None
 '''
 class DecayReactionType( ReactionType ):
-
     def __init__( self, s1, k ):
         ReactionType.__init__( self, [ s1, ], [], k )
 
@@ -122,7 +119,6 @@ class DecayReactionType( ReactionType ):
 A + B -> C
 '''
 class BindingReactionType( ReactionType ):
-
     def __init__( self, s1, s2, p1, k ):
         ReactionType.__init__( self, [ s1, s2 ], [ p1, ], k )
         # Todo. These are not used.
@@ -134,7 +130,6 @@ class BindingReactionType( ReactionType ):
 C -> A + B
 '''
 class UnbindingReactionType( ReactionType ):
-
     def __init__( self, s1, p1, p2, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, p2 ], k )
  
@@ -143,7 +138,6 @@ class UnbindingReactionType( ReactionType ):
 A + B is repulsive.
 '''
 class RepulsionReactionType( ReactionType ):
-
     def __init__( self, s1, s2 ):
         ReactionType.__init__( self, [ s1, s2 ], [], 0.0 )
         # Todo. These are not used.
@@ -155,23 +149,27 @@ class RepulsionReactionType( ReactionType ):
 Surface binding.
 
 Surface binding is not a Poisson process, so interactions should not be added 
-to the reaction list using addReactionType but added to the interaction list using
-addInteractionType.
+to the reaction list using addReactionType but added to the interaction list 
+using addInteractionType.
 
 A + Surface -> B_on_Surface
 '''
 class SurfaceBindingInteractionType( ReactionType ):
     def __init__( self, reactantSpecies, productSpecies,  k ):
-        ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies, ], k )
+        ReactionType.__init__( self, [ reactantSpecies ], 
+                               [ productSpecies, ], k )
 
 
 '''
 A + B_on_Surface + Surface -> C_on_Surface
 A + Surface should be repulsive.
 '''
+
 class SurfaceDirectBindingInteractionType( ReactionType ):
-    def __init__( self, reactantSpecies1, reactantSpecies2, productSpecies,  k ):
-        ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2 ], [ productSpecies, ], k )
+    def __init__( self, reactantSpecies1, reactantSpecies2, 
+                  productSpecies,  k ):
+        ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2 ],
+                               [ productSpecies, ], k )
 
 
 '''
@@ -194,7 +192,8 @@ class SurfaceUnbindingReactionType( ReactionType ):
     def __init__( self, reactantSpecies, productSpecies, k ):
         # After unbinding from a surface the particle always ends up on the 
         # defaultSurface (world) for now.
-        ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies, ], k )
+        ReactionType.__init__( self, [ reactantSpecies ],
+                               [ productSpecies, ], k )
 
 
 '''
@@ -205,7 +204,8 @@ class SurfaceDirectUnbindingReactionType( ReactionType ):
         # After unbinding from a surface, particle2 always ends up on the 
         # defaultSurface (world), and particle1 stays on the surface it was 
         # on.
-        ReactionType.__init__( self, [ reactantSpecies ], [ productSpecies1, productSpecies2 ], k )
+        ReactionType.__init__( self, [ reactantSpecies ], 
+                               [ productSpecies1, productSpecies2 ], k )
 
 
 ##############################################################################
@@ -215,18 +215,15 @@ class Reaction:
         self.type = type
         self.reactants = reactants
         self.products = products
-
     def __str__( self ):
-        return 'Reaction( ' + str( self.type ) + ', ' + str( self.reactants )\
-            + ', ' + str( self.products ) + ' )'
+        return ( 'Reaction( ' + str( self.type ) + ', ' + 
+                 str( self.reactants ) + ', ' + str( self.products ) + ' )' )
 
 
 class Particle( object ):
-
     ### Not only constructor, but can also be used to make a copy of a
     ### particle by index or serial.
     def __init__( self, species, serial=None, index=None ):
-
         self.species = species
 
         if not serial is None:
@@ -234,7 +231,7 @@ class Particle( object ):
         elif not index is None:
             self.serial = species.pool.getSerialByIndex( index )
         else:
-            raise ValueError, 'give either serial or index.'
+            raise ValueError( 'give either serial or index.' )
 
         self.hash = hash( self.species ) ^ self.serial
 
@@ -243,28 +240,29 @@ class Particle( object ):
 
     def posString( self ):
         factor = 1
-        return '(%.3g %.3g %.3g)' % ( self.getPos()[0 ] * factor, self.getPos()[1] * factor, self.getPos()[2] * factor ) 
+        return '(%.3g %.3g %.3g)' % \
+               ( self.getPos()[0 ] * factor, self.getPos()[1] * factor, 
+                 self.getPos()[2] * factor ) 
 
 
     def __str__( self ):
+        return ( "( '" + self.species.id + "', " + str( self.species.surface ) +
+                 ", " + str( self.serial ) + ' ). pos = ' + self.posString() )
 
-        return "( '" + self.species.id + "', " + str( self.species.surface ) + ", " + str( self.serial ) + ' ). pos = ' + self.posString()
 
     def __repr__( self ):
-
         return self.__str__()
 
 
     def __eq__( self, other ):
-
         return self.species == other.species and self.serial == other.serial
 
-    def __ne__( self, other ):
 
+    def __ne__( self, other ):
         return self.species != other.species or self.serial != other.serial
 
-    def __cmp__( self, other ):
 
+    def __cmp__( self, other ):
         if self.species == other.species:
             return self.serial - other.serial
         elif self.species < other.species:
@@ -274,7 +272,6 @@ class Particle( object ):
 
 
     def __hash__( self ):
-
         return self.hash
 
 
@@ -282,15 +279,15 @@ class Particle( object ):
         pool = self.species.pool
         return pool.positions[pool.indexMap[self.serial]]
 
+
     def setPos( self, newpos ):
         pool = self.species.pool
         pool.positions[pool.indexMap[self.serial]] = newpos
-
     pos = property( getPos, setPos )
+
 
     def getRadius( self ):
         return self.species.radius
-
     radius = property( getRadius )
 
 
@@ -307,9 +304,7 @@ class DummyParticle( object ):
 
 # Stores positions only.
 class ParticlePool( object ):
-
     def __init__( self ):
-
         self.indexMap = {}
         self.serialCounter = 0
 
@@ -322,7 +317,6 @@ class ParticlePool( object ):
 
 
     def newParticle( self, position ):
-
         newindex = self.size
         newserial = self.serialCounter
         
@@ -339,19 +333,16 @@ class ParticlePool( object ):
     
 
     def __resizeArrays( self, newsize ):
-
         self.serials.resize( newsize )
         self.positions.resize( ( newsize, 3 ) )
 
 
     def removeBySerial( self, serial ):
-
         index = self.getIndex( serial )
         self.removeByIndex( index )
 
 
     def removeByIndex( self, index ):
-
         self.size -= 1
 
         if self.size == 0:
@@ -374,21 +365,17 @@ class ParticlePool( object ):
         self.indexMap[serialOfMovedItem] = index
 
 
-
     def getSerialByIndex( self, index ):
-        
         return self.serials[index]
 
-    def getIndex( self, serial ):
 
+    def getIndex( self, serial ):
         return self.indexMap[serial]
 
 
 
 class ParticleSimulatorBase( object ):
-    
     def __init__( self, worldSize ):
-
         self.speciesList = {}
         ### Per species key a list of reactiontypes.
         self.reactionTypeMap1 = {}
@@ -409,7 +396,8 @@ class ParticleSimulatorBase( object ):
         self.rejectedMoves = 0
         self.reactionEvents = 0
 
-        self.particleMatrix = SphereMatrix() # Stores complete particles (unlike particlePool).
+        # Stores complete particles (unlike particlePool).
+        self.particleMatrix = SphereMatrix()
 
         self.setWorldSize( worldSize )
 
@@ -420,7 +408,9 @@ class ParticleSimulatorBase( object ):
         # The world has to be cubic, because the objectmatrix neeeds it to be.
         # This line here is also why worldSize has to be specified in the
         # constructor now, and should not be redefined.
-        self.defaultSurface = CuboidalSurface( [ 0, 0, 0 ], [ worldSize, worldSize, worldSize ], 'world' )
+        self.defaultSurface = \
+            CuboidalSurface( [ 0, 0, 0 ], [ worldSize, worldSize, worldSize ], 
+                             'world' )
 
 
     def initialize( self ):
@@ -445,7 +435,8 @@ class ParticleSimulatorBase( object ):
                 ignoreSurfaces.append( obj.surface )
 	for surface in self.surfaceList:
             if surface not in ignoreSurfaces:
-		posTransposed = cyclicTranspose( pos, surface.origin, self.worldSize )
+                posTransposed = cyclicTranspose( pos, surface.origin, 
+                                                 self.worldSize )
 	        distanceToSurface = surface.signedDistanceTo( posTransposed )
                 if distanceToSurface < 0.0:
                     self.errors += 1
@@ -455,7 +446,8 @@ class ParticleSimulatorBase( object ):
 
 
     def getClosestSurfaceWithinRadius( self, pos, radius, ignore ):
-        distanceToSurface, closestSurface = self.getClosestSurface( pos, ignore ) 
+        distanceToSurface, closestSurface = self.getClosestSurface( pos, 
+                                                                    ignore ) 
         if distanceToSurface < radius:
             return  closestSurface, distanceToSurface
         else:
@@ -463,18 +455,15 @@ class ParticleSimulatorBase( object ):
 
 
     def reconstructParticleMatrix( self ):
-
         self.particleMatrix.clear()
         for species in self.speciesList.values():
             for i in range( species.pool.size ):
                 particle = Particle( species, index=i )
-                self.particleMatrix.add( particle,
-                                         particle.pos, species.radius )
-
+                self.particleMatrix.add( particle, particle.pos, 
+                                         species.radius )
 
 
     def setWorldSize( self, size ):
-
         if isinstance( size, list ) or isinstance( size, tuple ):
             size = numpy.array( size )
 
@@ -499,25 +488,32 @@ class ParticleSimulatorBase( object ):
             self._distanceSq = distanceSq_Cyclic
             self._distanceSqArray = distanceSqArray_Cyclic
 
+
     def getWorldSize( self ):
         return self.worldSize
 
+
     def setMatrixSize( self, size ):
         self.particleMatrix.setMatrixSize( size )
+
 
     # Use this method to account for periodic boundary conditions.
     def applyBoundary( self, pos ):
         pos %= self.worldSize
 
+
     def getReactionType1( self, species ):
         return self.reactionTypeMap1.get( species, None )
+
 
     def getReactionType2( self, species1, species2 ):
         return self.reactionTypeMap2.get( ( species1, species2 ), None )
 
+
     def getInteractionType( self, species, surface ):
         return self.interactionTypeMap.get( ( species, surface ) )
     
+
     def getSpeciesByIndex( self, i ):
         return self.speciesList.values()[i]
 
@@ -525,14 +521,18 @@ class ParticleSimulatorBase( object ):
     def distanceSq( self, position1, position2 ):
         return self._distanceSq( position1, position2, self.worldSize )
 
+
     def distance( self, position1, position2 ):
         return self._distance( position1, position2, self.worldSize )
         
+
     def distanceSqArray( self, position1, positions ):
         return self._distanceSqArray( position1, positions, self.worldSize )
 
+
     def distanceArray( self, position1, positions ):
         return numpy.sqrt( self.distanceSqArray( position1, positions ) )
+
 
     def addSurface( self, surface ):
         self.surfaceList.append( surface )
@@ -544,15 +544,17 @@ class ParticleSimulatorBase( object ):
             # surface specified, it can only live in the cytosol.
             species.surface = self.defaultSurface
         else:
-            assert any( surface == s for s in self.surfaceList ), '%s not in surfaceList.' % ( surface )
+            assert any( surface == s for s in self.surfaceList ), \
+                   '%s not in surfaceList.' % ( surface )
             species.surface = surface
             
-        #assert not self.speciesList.has_key( species.id ), 'Species with id = %s has already been added.' % ( species.id )
+        #assert not self.speciesList.has_key( species.id ), \
+        #       'Species with id = %s has already been added.' %
+        #       ( species.id )
         self.speciesList[( species.id, surface )] = species
 
 
     def addReactionType( self, rt ):
-
         numReactants = len( rt.reactants )
 
         if numReactants == 1:
@@ -561,14 +563,13 @@ class ParticleSimulatorBase( object ):
             if len( rt.products ) == 1:
                 ### why this check, and why *2 here?
                 if species1.radius * 2 < rt.products[0].radius:
-                    raise RuntimeError( 'radius of product must be smaller ' 
+                    raise RuntimeError( 'radius of product must be smaller '
                                         'than radius of reactant.' )
             elif len( rt.products ) == 2:
-                if species1.radius < rt.products[0].radius or\
-                        species1.radius < rt.products[1].radius:
-                    raise RuntimeError(
-                        'radii of both products must be smaller than ' 
-                        'reactant.radius.' )
+                if ( species1.radius < rt.products[0].radius or
+                     species1.radius < rt.products[1].radius ):
+                    raise RuntimeError( 'radii of both products must be '
+                                        'smaller than reactant.radius.' )
 
             if self.reactionTypeMap1.has_key( species1 ):
                 self.reactionTypeMap1[species1].append( rt )
@@ -583,7 +584,7 @@ class ParticleSimulatorBase( object ):
                 self.reactionTypeMap2[( species2, species1 )] = rt
 
         else:
-            raise RuntimeError, 'Invalid ReactionType.'
+            raise RuntimeError( 'Invalid ReactionType.' )
 
 
     def addInteractionType( self, it ):
@@ -599,28 +600,28 @@ class ParticleSimulatorBase( object ):
                     _ = self.reactionTypeMap2[( species1, species2) ]
                 except:
                     self.reactionTypeMap2[( species1, species2 )] = \
-                                            RepulsionReactionType( species1,
-                                                                   species2 )
+                        RepulsionReactionType( species1, species2 )
+
         for species in self.speciesList.values():
             for surface in self.surfaceList:
                 try:
                     _ = self.interactionTypeMap[( species, surface )]
                 except:
                     self.interactionTypeMap[( species, surface )] = \
-                            SurfaceRepulsionInteractionType( species, surface )
+                        SurfaceRepulsionInteractionType( species, surface )
         
 
+    # Todo. Cleanup.
     def throwInParticles( self, species, n, surface=None ):
-        if not surface:					## if no surface is supplied it uses the surface
-            surface = species.surface			## associated with the species->default
-							## so you can put particles on surfaces which they
-							## don't belong
+        if not surface:
+            surface = species.surface
 
-        log.info( '\tthrowing in %s %s particles to %s' % ( n, species.id, surface ) )
+        log.info( '\tthrowing in %s %s particles to %s' % ( n, species.id, 
+                                                            surface ) )
 
         i = 0
-        while i < int( n ):					## place n particles
-            position = surface.randomPosition()			## pick a random position on the surface
+        while i < int( n ):
+            position = surface.randomPosition()
 
             # Check overlap.
             if self.checkOverlap( position, species.radius ):
@@ -628,15 +629,20 @@ class ParticleSimulatorBase( object ):
                 # Check if not too close to a neighbouring surfaces for 
                 # particles added to the world, or added to a self-defined 
                 # box.
-                if surface == self.defaultSurface or ( surface != self.defaultSurface and isinstance( surface, CuboidalSurface ) ):
-                    distance, closestSurface = self.getClosestSurface( position, [] )
-                    if closestSurface and distance < closestSurface.minimalOffset( species.radius ):
-                        log.info( '\t%d-th particle rejected. To close to surface. I will keep trying.' % i )
+                if surface == self.defaultSurface or \
+                   ( surface != self.defaultSurface and 
+                     isinstance( surface, CuboidalSurface ) ):
+                    distance, closestSurface = self.getClosestSurface( position,
+                                                                       [] )
+                    if ( closestSurface and distance < 
+                             closestSurface.minimalOffset( species.radius ) ):
+                        log.info( '\t%d-th particle rejected. To close to '
+                                  'surface. I will keep trying.' % i )
                         create = False
                 if create:
                     # All checks passed. Create particle.
                     self.createParticle( species, position )
-                    i += 1					## creation succeded
+                    i += 1
             else:
                 log.info( '\t%d-th particle rejected. I will keep trying.' % i )
 
@@ -647,7 +653,7 @@ class ParticleSimulatorBase( object ):
         radius = species.radius
 
         if not self.checkOverlap( pos, radius ):
-            raise NoSpace, 'overlap check failed'
+            raise NoSpace( 'overlap check failed' )
 
         particle = self.createParticle( species, pos )
         return particle
@@ -675,8 +681,10 @@ class ParticleSimulatorBase( object ):
         self.particleMatrix.add( particle,
                                  pos, particle.species.radius )
 
+
     def removeFromParticleMatrix( self, particle ):
         self.particleMatrix.remove( particle )
+
 
     def updateOnParticleMatrix( self, particle, pos ):
         self.particleMatrix.update( particle,
@@ -700,7 +708,6 @@ class ParticleSimulatorBase( object ):
         else:
             return True
 
-
         
     def getParticlesWithinRadius( self, pos, radius, ignore=[] ):
         particles, _ = \
@@ -717,7 +724,6 @@ class ParticleSimulatorBase( object ):
 
 
     def clear( self ):
-
         self.dtMax = self.dtLimit
         self.dt = self.dtLimit
 
@@ -747,6 +753,7 @@ class ParticleSimulatorBase( object ):
         neighbors = [ Particle( i[0], i[1] ) for i in n ]
         return neighbors, d
 
+
     def getNeighborParticlesNoSort( self, pos, n=None ):
         ### getNeighborsNoSort() does not have parameter n.
         n, d = self.particleMatrix.getNeighborsNoSort( pos, n )
@@ -755,9 +762,8 @@ class ParticleSimulatorBase( object ):
 
 
     def getClosestParticle( self, pos, ignore=[] ):
-
-        neighbors, distances = \
-            self.getNeighborParticles( pos, len( ignore ) + 1 )
+        neighbors, distances = self.getNeighborParticles( pos, 
+                                                          len( ignore ) + 1 )
 
         for i in range( len( neighbors ) ): 
             if neighbors[i] not in ignore:
@@ -772,7 +778,6 @@ class ParticleSimulatorBase( object ):
 
 
     def checkSurfaces( self, speciesIndex1, particleIndex ):
-
         speciesList = self.speciesList.values()
 
         species = speciesList[speciesIndex1]
@@ -787,16 +792,16 @@ class ParticleSimulatorBase( object ):
         dist = dist[idx]
 
         dt = ( dist - species.radius ) ** 2 / \
-                ( self.H * self.H * 6.0 * species.D ) 
+             ( self.H * self.H * 6.0 * species.D ) 
         
         return dt, idx
-        
     """
 
-    def checkParticleMatrix( self ):
 
+    def checkParticleMatrix( self ):
         if self.worldSize != self.particleMatrix.worldSize:
-            raise RuntimeError( 'self.worldSize != self.particleMatrix.worldSize' )
+            raise RuntimeError( 'self.worldSize != '
+                                'self.particleMatrix.worldSize' )
 
 
         ### why use numpy.array() here?
@@ -806,7 +811,9 @@ class ParticleSimulatorBase( object ):
 
         ### Check number of particles.
         if total != self.particleMatrix.size:
-            raise RuntimeError( 'total number of particles %d != self.particleMatrix.size %d' % ( total, self.particleMatrix.size ) )
+            raise RuntimeError( 'total number of particles %d != '
+                                'self.particleMatrix.size %d' % 
+                                ( total, self.particleMatrix.size ) )
 
         ### Check positions and radiuses of particles.
         for species in self.speciesList.values():
@@ -815,12 +822,14 @@ class ParticleSimulatorBase( object ):
                 pos, radius = self.particleMatrix.get( particle )
 
                 if ( particle.pos - pos ).sum() != 0:
-                    raise RuntimeError( 'particleMatrix positions consistency broken' )
+                    raise RuntimeError( 'particleMatrix positions consistency '
+                                        'broken' )
                 if particle.species.radius != radius:
-                    raise RuntimeError( 'particleMatrix radii consistency broken' )
+                    raise RuntimeError( 'particleMatrix radii consistency '
+                                        'broken' )
+
 
     def check( self ):
-
         self.checkParticleMatrix()
 
 

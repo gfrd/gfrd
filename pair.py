@@ -29,7 +29,6 @@ class Pair( object ):
     '''
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         self.multiplicity = 2
-
         '''
         Individual singles are preserved, but removed from shellMatrix and 
         eventScheduler.
@@ -52,7 +51,8 @@ class Pair( object ):
         particle1 = self.single1.particle
         particle2 = self.single2.particle
 
-        self.biggestParticleRadius = max( particle1.species.radius, particle2.species.radius )
+        self.biggestParticleRadius = max( particle1.species.radius, 
+                                          particle2.species.radius )
 
         self.D1, self.D2 = particle1.species.D, particle2.species.D
         # Todo. Is this also correct for 1D and 2D?
@@ -73,7 +73,7 @@ class Pair( object ):
         self.pairDistance = distFunc( particle1.pos, particle2.pos )
         # Todo: why discrepancy of about 1e-15 here?
         assert abs( self.pairDistance - length( self.IV ) ) < 1e-10, \
-                    '%.15g != %.15g' % ( self.pairDistance, length( self.IV ) )
+               '%.15g != %.15g' % ( self.pairDistance, length( self.IV ) )
 
 
     def __del__( self ):
@@ -156,33 +156,35 @@ class Pair( object ):
         pairDistance = self.pairDistance
 
         assert pairDistance >= self.sigma, \
-            '%s;  pairDistance %.3g < sigma %.3g' % ( self, pairDistance, self.sigma )
+               '%s;  pairDistance %.3g < sigma %.3g' % \
+               ( self, pairDistance, self.sigma )
 
         # equalize expected mean t_r and t_R.
 
         qrrtD1D25 = ( D1    * D2**5 ) ** 0.25
         qrrtD15D2 = ( D1**5 * D2 ) ** 0.25
 
-        if qrrtD15D2 * pairDistance + ( qrrtD15D2 + qrrtD1D25 ) * radius1 \
-                + D1 * ( sqrtD_tot * ( shellSize - radius2 ) 
-                         - sqrtD_geom * radius2 )\
-                - D2 * ( sqrtD_geom * pairDistance + sqrtD_tot * 
-                         ( shellSize - radius1 ) )\
-                         - qrrtD1D25 * radius2 >= 0:
+        if qrrtD15D2 * pairDistance + ( qrrtD15D2 + qrrtD1D25 ) * radius1 + \
+           D1 * ( sqrtD_tot * ( shellSize - radius2 ) -
+                  sqrtD_geom * radius2 ) - \
+           D2 * ( sqrtD_geom * pairDistance + sqrtD_tot *
+                  ( shellSize - radius1 ) ) - \
+           qrrtD1D25 * radius2 >= 0:
 
             den1 = qrrtD1D25 + D1 * ( sqrtD_geom + sqrtD_tot )
 
             a_R_1 = sqrtD_geom * ( D2 * ( shellSize - radius1 ) + 
-                                   D1 * ( shellSize - pairDistance - radius1 ) ) / den1
+                                   D1 * ( shellSize - pairDistance - 
+                                          radius1 ) ) / den1
 
             a_r_1 = self.D_tot * ( sqrtD_geom * pairDistance + sqrtD_tot * 
                                    ( shellSize - radius1 ) ) / den1
 
             assert a_R_1 + a_r_1 * D1_factor + radius1 >= \
-                a_R_1 + a_r_1 * D2_factor + radius2
+                   a_R_1 + a_r_1 * D2_factor + radius2
 
-            assert abs( a_R_1 + a_r_1 * D1_factor + radius1 - shellSize ) \
-                < 1e-12 * shellSize
+            assert abs( a_R_1 + a_r_1 * D1_factor + radius1 - shellSize ) < \
+                   1e-12 * shellSize
 
             a_r = a_r_1
             a_R = a_R_1
@@ -190,16 +192,17 @@ class Pair( object ):
             den2 = qrrtD15D2 + D2 * ( sqrtD_geom + sqrtD_tot )
 
             a_R_2 = sqrtD_geom * ( D1 * ( shellSize - radius2 ) + 
-                                   D2 * ( shellSize - pairDistance - radius2 ) ) / den2
+                                   D2 * ( shellSize - pairDistance -
+                                          radius2 ) ) / den2
 
             a_r_2 = self.D_tot * ( sqrtD_geom * pairDistance + sqrtD_tot * 
                                    ( shellSize - radius2 ) ) / den2
 
             assert a_R_2 + a_r_2 * D2_factor + radius2 >= \
-                a_R_2 + a_r_2 * D1_factor + radius1
+                   a_R_2 + a_r_2 * D1_factor + radius1
 
-            assert abs( a_R_2 + a_r_2 * D2_factor + radius2 - shellSize ) \
-                < 1e-12 * shellSize
+            assert abs( a_R_2 + a_r_2 * D2_factor + radius2 - shellSize ) < \
+                   1e-12 * shellSize
 
             a_r = a_r_2
             a_R = a_R_2
@@ -238,7 +241,8 @@ class Pair( object ):
 
     # Returns a ( dt, single ) tuple.
     def drawSingleReactionTime( self ):
-        return min(( (single.drawReactionTime(), single) for single in self.singles ))
+        return min( ( ( single.drawReactionTime(), single ) 
+                      for single in self.singles ) )
 
 
     def checkNewpos( self, pos1, pos2 ):
@@ -259,8 +263,9 @@ class Pair( object ):
         d1 = self.distance( oldCoM, pos1 ) + species1.radius
         d2 = self.distance( oldCoM, pos2 ) + species2.radius
         if d1 > self.shellSize or d2 > self.shellSize:
-            raise Stop( 'New particle(s) out of protective sphere. %s' % \
-                'radius = %.3g, d1 = %.3g, d2 = %.3g ' % ( self.shellSize, d1, d2 ) )
+            raise Stop( 'New particle(s) out of protective sphere. %s' %
+                        'radius = %.3g, d1 = %.3g, d2 = %.3g ' %
+                        ( self.shellSize, d1, d2 ) )
         return True
 
 
@@ -280,7 +285,8 @@ class Pair( object ):
 '''
 class SphericalPair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
-        Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
+        Pair.__init__( self, single1, single2, shellSize, rt, distFunc, 
+                       worldSize )
 
         # Set shellSize directly, without getMinRadius() step. Don't set 
         # radius again from initialize(). Pairs don't move.
@@ -295,8 +301,9 @@ class SphericalPair( Pair ):
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
-                                                        self.sigma )
-        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, self.pgf )
+                                                   self.sigma )
+        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, 
+                                    self.pgf )
 
         self.domains = [ comDomain, ivDomain ]
 
@@ -346,7 +353,8 @@ class SphericalPair( Pair ):
     def drawNewIV( self, dt ):  
         gf = self.choosePairGreensFunction( dt )
         r, theta = self.domains[1].drawPosition( gf, dt )
-        newInterParticleS = numpy.array( [ r, theta, numpy.random.random() * 2 * Pi ] )
+        newInterParticleS = numpy.array( [ r, theta, 
+                                           numpy.random.random() * 2 * Pi ] )
         return sphericalToCartesian( newInterParticleS )
 
 
@@ -360,7 +368,7 @@ class SphericalPair( Pair ):
         distanceFromShell = self.a_r - self.pairDistance
 
         thresholdDistance = Pair.CUTOFF_FACTOR * \
-            math.sqrt( 6.0 * self.D_tot * dt )
+                            math.sqrt( 6.0 * self.D_tot * dt )
 
         if distanceFromSigma < thresholdDistance:
             if distanceFromShell < thresholdDistance:
@@ -399,7 +407,8 @@ class SphericalPair( Pair ):
 '''
 class PlanarSurfacePair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
-        Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
+        Pair.__init__( self, single1, single2, shellSize, rt, distFunc, 
+                       worldSize )
 
         '''
         Hockey pucks do not stick out of the surface any more than they have 
@@ -410,7 +419,8 @@ class PlanarSurfacePair( Pair ):
         Set radius = shellSize directly, without getMinRadius() step. Don't set 
         radius again from initialize(). Pairs don't move.
         '''
-        self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, self.biggestParticleRadius ) ]
+        self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, 
+                                     self.biggestParticleRadius ) ]
 
         a_R, self.a_r = self.determineRadii()
 
@@ -421,8 +431,9 @@ class PlanarSurfacePair( Pair ):
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction2D( self.D_tot, self.rt.k, 
-                                                        self.sigma )
-        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, self.pgf )
+                                                     self.sigma )
+        ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, 
+                                    self.pgf )
 
         self.domains = [ comDomain, ivDomain ]
 
@@ -439,7 +450,8 @@ class PlanarSurfacePair( Pair ):
         # Todo. Test if nothing changes when theta == 0.
         newAngle = angle + theta
         
-        rotated = r * math.cos( newAngle ) * unitX + r * math.sin( newAngle ) * unitY
+        rotated = r * math.cos( newAngle ) * unitX + \
+                  r * math.sin( newAngle ) * unitY
 
         newpos1 = newCoM - rotated * ( self.D1 / self.D_tot )
         newpos2 = newCoM + rotated * ( self.D2 / self.D_tot )
@@ -467,7 +479,8 @@ class PlanarSurfacePair( Pair ):
 '''
 class CylindricalSurfacePair( Pair ):
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
-        Pair.__init__( self, single1, single2, shellSize, rt, distFunc, worldSize )
+        Pair.__init__( self, single1, single2, shellSize, rt, distFunc, 
+                       worldSize )
 
         '''
         The radius of a rod is not more than it has to be (namely 
@@ -478,7 +491,8 @@ class CylindricalSurfacePair( Pair ):
         Set shellSize directly, without getMinRadius() step. Don't set 
         radius again from initialize(). Pairs don't move.
         '''
-        self.shellList = [ Cylinder( self.CoM, self.biggestParticleRadius, self.surface.unitZ, shellSize ) ]
+        self.shellList = [ Cylinder( self.CoM, self.biggestParticleRadius, 
+                                     self.surface.unitZ, shellSize ) ]
 
         a_R, self.a_r = self.determineRadii()
 

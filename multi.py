@@ -13,7 +13,6 @@ Used internally by Multi.
 '''
 # This is the simulator that is used for multis.
 class MultiBDCore( BDSimulatorCoreBase ):
-    
     def __init__( self, main, multi ):
 
         BDSimulatorCoreBase.__init__( self, main )
@@ -33,19 +32,16 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
         
     def updateParticle( self, particle, pos ):
-
         self.particleMatrix.update( particle, pos, particle.radius )
         # Todo. Is it ok to use moveParticle here?
         self.main.moveParticle( particle, pos )
 
     def initialize( self ):
-
         BDSimulatorCoreBase.initialize( self )
         self.updateShellMatrix()
 
 
     def step( self ):
-
         self.escaped = False
         BDSimulatorCoreBase.step( self )
 
@@ -56,30 +52,30 @@ class MultiBDCore( BDSimulatorCoreBase ):
             self.main.updateOnParticleMatrix( particle, particle.pos )
     '''
 
-    def updateShellMatrix( self ):
 
+    def updateShellMatrix( self ):
         self.shellMatrix.clear()
         for shell in self.multiref().shellList:
             self.shellMatrix.add( shell, shell.origin, shell.radius )
 
+
     def addSurface( self, surface ):
         self.surfaceList.append( surface )
 
-    def addParticle( self, particle ):
 
+    def addParticle( self, particle ):
         self.addToParticleList( particle )
         self.particleMatrix.add( particle,
                                  particle.pos, particle.radius )
 
-    def removeParticle( self, particle ):
 
+    def removeParticle( self, particle ):
         self.main.removeParticle( particle )
         self.removeFromParticleList( particle )
         self.particleMatrix.remove( particle )
 
 
     def createParticle( self, species, pos ):
-
         #if not self.withinShell( pos, species.radius ):
         #    self.escaped = True
         #    self.clearOuterVolume( pos, species.radius )
@@ -91,7 +87,6 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
 
     def moveParticle( self, particle, pos ):
-
         particle.pos = pos
         self.updateParticle( particle, pos )
 
@@ -99,27 +94,23 @@ class MultiBDCore( BDSimulatorCoreBase ):
     # Check if particle has escaped from multi.
     # Todo. How does this work.
     def clearVolume( self, pos, radius, ignore=[] ):
-
         if not self.withinShell( pos, radius ):
             self.escaped = True
             self.clearOuterVolume( pos, radius, ignore )
 
 
     def clearOuterVolume( self, pos, radius, ignore=[] ):
-
         self.main.clearVolume( pos, radius, ignore=[ self.multiref(), ] )
         if not self.main.checkOverlap( pos, radius, ignore ):
             raise NoSpace()
 
  
     def withinShell( self, pos, radius ):
-
         n, _ = self.shellMatrix.getNeighborsWithinRadiusNoSort( pos, - radius )
         return n
 
         
     def checkOverlap( self, pos, radius, ignore=[] ):
-        
         n, _ = self.particleMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
 
         n = list( n )
@@ -129,6 +120,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
         return not n
 
+
     '''
     def getNeighborParticles( self, pos, n=None ):
 
@@ -136,6 +128,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
         neighbors = [ Particle( i[0], i[1] ) for i in n ]
         return neighbors, d
     '''
+
 
     def getParticlesWithinRadiusNoSort( self, pos, radius, ignore=[] ):
         neighbors, _ = \
@@ -150,7 +143,6 @@ class MultiBDCore( BDSimulatorCoreBase ):
     class.
     '''
     def getClosestParticle( self, pos, ignore=[] ):
-
         neighbors, distances = \
             self.particleMatrix.getNeighbors( pos, len( ignore ) + 1 )
 
@@ -164,7 +156,6 @@ class MultiBDCore( BDSimulatorCoreBase ):
 
 
     def check( self ):
-
         BDSimulatorCoreBase.check( self )
 
         # shellMatrix consistency
@@ -182,13 +173,11 @@ class MultiBDCore( BDSimulatorCoreBase ):
         # all particles within the shell.
         for p in self.particleList:
             assert self.withinShell( p.pos, p.species.radius ), \
-                'not all particles within the shell.'
+                   'not all particles within the shell.'
 
 
 class Multi( object ):
-
     def __init__( self, main ):
-
         # A multi does not have a shell of itself.
         self.shellList = []
         self.eventID = None
@@ -197,9 +186,7 @@ class Multi( object ):
         self.sim = MultiBDCore( main, self )
 
 
-
     def initialize( self, t ):
-
         self.lastTime = t
         self.startTime = t
 
@@ -208,32 +195,32 @@ class Multi( object ):
 
     def getDt( self ):
         return self.sim.dt
-
     dt = property( getDt )
 
 
     def getMultiplicity( self ):
         return len( self.sim.particleList )
-
     multiplicity = property( getMultiplicity )
+
 
     # A multi contains particles and their shells, but not singles.
     def addParticle( self, particle ):
         self.sim.addParticle( particle )
 
+
     def addShell( self, origin, radius ):
         self.shellList.append( Sphere( origin, radius ) )
+
 
     def addSurface( self, surface ):
         self.sim.addSurface( surface )
 
-    def check( self ):
 
+    def check( self ):
         self.sim.check()
 
 
     def __str__( self ):
-
         if len( self.sim.particleList ) == 0:
             return 'Multi()'
 

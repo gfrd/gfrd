@@ -39,7 +39,8 @@ For example a membrane.
 Movement in 2D.
 '''
 class PlanarSurface( Surface, Box ):
-    def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, name="PlanarSurface" ):
+    def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, 
+                  name="PlanarSurface" ):
         Surface.__init__( self, name )
 
         assert numpy.dot( vectorX, vectorY ) == 0.0
@@ -67,7 +68,8 @@ class PlanarSurface( Surface, Box ):
     Only uniform if vectorX and vectorY have same length.
     '''
     def randomPosition( self ):
-        return self.origin + random.uniform( -1, 1 ) * self.vectorX + random.uniform( -1, 1 ) * self.vectorY
+        return self.origin + random.uniform( -1, 1 ) * self.vectorX + \
+                             random.uniform( -1, 1 ) * self.vectorY
 
 
     # A particle that is not on this surface has to be at least this far away 
@@ -78,7 +80,8 @@ class PlanarSurface( Surface, Box ):
 
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
-        return pos + random.choice( [ -1, 1 ] ) * self.minimalOffset( radius )  * self.unitZ
+        return pos + random.choice( [ -1, 1 ] ) * \
+                     self.minimalOffset( radius )  * self.unitZ
 
 
 '''
@@ -87,7 +90,8 @@ For example the DNA.
 Movement in 1D.
 '''
 class CylindricalSurface( Surface, Cylinder ):
-    def __init__( self, origin, radius, orientation, size, name="CylindricalSurface" ):
+    def __init__( self, origin, radius, orientation, size, 
+                  name="CylindricalSurface" ):
         Surface.__init__( self, name )
         Cylinder.__init__( self, origin, radius, orientation, size )
         self.defaultSingle = CylindricalSurfaceSingle
@@ -124,8 +128,8 @@ class CylindricalSurface( Surface, Cylinder ):
 
 '''
 Surface that is only used for throwing in particles. Those particles will than 
-later be tagged with surface = defaultSurface, which is an instance of the World 
-class. See gfrdbase.py.
+later be tagged with surface = defaultSurface, which is an instance of the 
+World class. See gfrdbase.py.
 
 If no surface is specified, particles are tagged with an instance of this one.
 
@@ -143,7 +147,8 @@ class CuboidalSurface( Surface, Box ):
         Lx = size[0]
         Ly = size[1]
         Lz = size[2]
-        Box.__init__( self, origin + self.size / 2, [ Lx, 0, 0 ], [ 0, Ly, 0 ], [ 0, 0, Lz ], Lx / 2, Ly / 2, Lz / 2 ) 
+        Box.__init__( self, origin + self.size / 2, [ Lx, 0, 0 ], [ 0, Ly, 0 ],
+                      [ 0, 0, Lz ], Lx / 2, Ly / 2, Lz / 2 ) 
         self.defaultSingle = SphericalSingle
         self.defaultPair = SphericalPair
 
@@ -163,7 +168,9 @@ class CuboidalSurface( Surface, Box ):
     Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
     '''
     def signedDistanceTo( self, pos ):
-        raise 'This method should not be used. Did you accidently add this CuboidalSurface to the surfacelist using s.addSurface()?'
+        raise RuntimeError( 'This method should not be used. Did you '
+                            'accidently add this CuboidalSurface to the '
+                            'surfacelist using s.addSurface()?' )
         edge = self.origin - size / 2
         dists = numpy.concatenate( ( edge - pos,
                                      edge + self.size - pos ) )

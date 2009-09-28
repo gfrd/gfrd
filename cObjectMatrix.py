@@ -32,7 +32,8 @@ class ObjectMatrix( object ):
 
     def setMatrixSize( self, size ):
         if size < 3:
-            raise RuntimeError( 'Size of distance cell matrix must be at least 3' )
+            raise RuntimeError( 'Size of distance cell matrix must be '
+                                'at least 3' )
         self.matrixSize = size
         self.initialize()
 
@@ -84,8 +85,7 @@ class ObjectMatrix( object ):
     def getNeighborsWithinRadius( self, pos, radius ):
         assert radius < self.cellSize * .5
 
-        neighbors, distances = \
-            self.impl.neighbors_array_cyclic( pos, radius )
+        neighbors, distances = self.impl.neighbors_array_cyclic( pos, radius )
 
         topargs = distances.argsort()
         return neighbors.take( topargs ), distances.take( topargs )
@@ -135,7 +135,8 @@ class SphereMatrix( ObjectMatrix ):
 
 
     def initialize( self ):
-        self.impl = object_matrix.SphereContainer( self.worldSize, self.matrixSize )
+        self.impl = object_matrix.SphereContainer( self.worldSize, 
+                                                   self.matrixSize )
 
 
     def add( self, key, pos, radius ):
@@ -159,20 +160,23 @@ class CylinderMatrix( ObjectMatrix ):
 
 
     def initialize( self ):
-        self.impl = object_matrix.CylinderContainer( self.worldSize, self.matrixSize )
+        self.impl = object_matrix.CylinderContainer( self.worldSize, 
+                                                     self.matrixSize )
 
 
     def add( self, key, shell ):
         # Todo. Do something like this.
         #assert radius < self.cellSize * .5
         assert not self.impl.contains( key )
-        self.impl.insert( key, shell.origin, shell.radius, shell.unitZ, shell.size )
+        self.impl.insert( key, shell.origin, shell.radius, shell.unitZ, 
+                          shell.size )
 
 
     def update( self, key, shell ):
         assert self.impl.contains( key )
         # object_matrix handles updates nicely.
-        self.impl.insert( key, shell.origin, shell.radius, shell.unitZ, shell.size )
+        self.impl.insert( key, shell.origin, shell.radius, shell.unitZ, 
+                          shell.size )
 
 
 class BoxMatrix( ObjectMatrix ):
@@ -181,20 +185,23 @@ class BoxMatrix( ObjectMatrix ):
 
 
     def initialize( self ):
-        self.impl = object_matrix.BoxContainer( self.worldSize, self.matrixSize )
+        self.impl = object_matrix.BoxContainer( self.worldSize,
+                                                self.matrixSize )
 
 
     def add( self, key, shell ):
         # Todo. Do something like this.
         #assert radius < self.cellSize * .5
         assert not self.impl.contains( key )
-        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
+        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, 
+                          shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
 
 
     def update( self, key, shell ):
         assert self.impl.contains( key )
         # object_matrix handles updates nicely.
-        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
+        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, 
+                          shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
 
 
 

@@ -34,11 +34,13 @@ class Cylinder( Shape ):
         self.radius = radius
         self.unitZ = normalize( numpy.array( orientationZ ) )
         # Size is the half length of the cylinder!
-        self.size = size                                             # Formerly known as Lz.
+        # Formerly known as Lz.
+        self.size = size                            
         self.vectorZ = self.unitZ * size # Extra.
 
         # Select basis vector in which self.unitZ is smallest.
-        _, basisVector = min( zip( abs( self.unitZ ), [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) )
+        _, basisVector = min( zip( abs( self.unitZ ), 
+                                   [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) )
         # Find (any) 2 vectors perpendicular to self.unitZ.
         self.unitX = normalize( numpy.cross( self.unitZ, basisVector ) )
         self.unitY = normalize( numpy.cross( self.unitZ, self.unitX ) )
@@ -100,8 +102,8 @@ class Cylinder( Shape ):
 
 
     def __str__( self ):
-        return "Cylinder: " + str( self.origin ) + " " + str( self.radius ) + " " + \
-                              str( self.unitZ ) + " " + str( self.size )
+        return "Cylinder: " + str( self.origin ) + " " + str( self.radius ) + \
+               " " + str( self.unitZ ) + " " + str( self.size )
 
 
 class Box( Shape ):
@@ -182,7 +184,7 @@ class Box( Shape ):
 
 
     def __str__( self ):
-        return "Box: " + str( self.origin ) + " " + str( self.vectorX ) + " " + \
-                              str( self.vectorY ) + " " + str( self.vectorZ )
+        return "Box: " + str( self.origin ) + " " + str( self.vectorX ) + \
+               " " + str( self.vectorY ) + " " + str( self.vectorZ )
 
 

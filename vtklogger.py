@@ -35,8 +35,8 @@ Inner workings:
 
 
 === Cylinders
-To visualize the cylinders a workaround using tensors is used, as explained here:
-http://www.paraview.org/pipermail/paraview/2009-March/011256.html. The 
+To visualize the cylinders a workaround using tensors is used, as explained 
+here: http://www.paraview.org/pipermail/paraview/2009-March/011256.html. The 
 mentioned tensorGlyph.xml should be supplied with this package.
 
 As explainded in the above link, to give cylinders the right color, there are 
@@ -51,7 +51,8 @@ a new line:
 
 Another hack was needed to get the coloring to work. This makes VTKLogger 
 write a vector instead of a scalar value for each color to the .vtu files. But 
-you shouldn't have to worry about that, just select 'colors' to color the Glyph.
+you shouldn't have to worry about that, just select 'colors' to color the 
+Glyph.
 '''
 class VTKLogger:
     def __init__( self, sim, name, bufferSize=None, brownian=False ):
@@ -74,7 +75,6 @@ class VTKLogger:
         self.deltaT = 1e-11 # Needed for hack. Note: don't make too small, 
                             # should be relative to max time.
         self.lastTime = 0   # Needed for hack.
-
 
 
     def log( self ):
@@ -107,7 +107,8 @@ class VTKLogger:
         # Write to buffer or file.
         if self.bufferSize:
             # Store in buffer, instead of writing to file directly.
-            self.buffer.append( ( time, self.i, particles, spheres, cylinders ) )
+            self.buffer.append( ( time, self.i, particles, spheres, 
+                                  cylinders ) )
 
             if self.i >= self.bufferSize:
                 # FIFO.
@@ -144,15 +145,17 @@ class VTKLogger:
         self.log()
         for newIndex, entry in enumerate( self.buffer ):
             self.writelog( entry[0], newIndex, entry[2:] )
-        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'files.pvd', self.fileList )
+        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'files.pvd', 
+                                  self.fileList )
 
         # Surfaces don't move.
-        self.makeSnapshot( 'cylindricalSurfaces', self.getCylindricalSurfaceData() )
+        self.makeSnapshot( 'cylindricalSurfaces', 
+                           self.getCylindricalSurfaceData() )
         self.makeSnapshot( 'planarSurfaces', self.getPlanarSurfaceData() )
         self.makeSnapshot( 'cuboidalSurfaces', self.getCuboidalSurfaceData() )
 
-        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'static.pvd', self.staticList )
-
+        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'static.pvd', 
+                                  self.staticList )
 
 
     def getParticleData( self ):
@@ -160,7 +163,8 @@ class VTKLogger:
 
         for speciesIndex, species in enumerate( self.sim.speciesList.values() ):
             for particlePos in species.pool.positions:
-                self.appendLists( posList, particlePos, typeList, speciesIndex, radiusList, species.radius )
+                self.appendLists( posList, particlePos, typeList, 
+                                  speciesIndex, radiusList, species.radius )
 
         return ( posList, radiusList, typeList, [] )
 
@@ -189,9 +193,11 @@ class VTKLogger:
             except:
                 # Single or Pair or Multi.
                 for shell in object.shellList:
-                    self.appendLists( posList, shell.origin, typeList, type, radiusList, shell.radius )
+                    self.appendLists( posList, shell.origin, typeList, type, 
+                                      radiusList, shell.radius )
 
-        return ( posList, radiusList, typeList, [] ), self.processCylinders( cylinders, cylinderTypeList )
+        return ( posList, radiusList, typeList, [] ), \
+               self.processCylinders( cylinders, cylinderTypeList )
 
 
     def getCylindricalShellData( self ):
@@ -211,30 +217,35 @@ class VTKLogger:
             boxes = [ DummyBox() ] 
 
         for box in boxes:
-            tensor = numpy.concatenate( ( box.vectorX, box.vectorY, box.vectorZ ) )
-            self.appendLists( posList, box.origin, tensorList=tensorList, tensor=tensor ) 
+            tensor = numpy.concatenate( ( box.vectorX, box.vectorY, 
+                                          box.vectorZ ) )
+            self.appendLists( posList, box.origin, tensorList=tensorList, 
+                              tensor=tensor ) 
 
         return ( posList, [], [], tensorList )
 
 
     def getCylindricalSurfaceData( self ):
         # Todo. Make DNA blink when reaction takes place.
-        cylinders = [ surface for surface in self.sim.surfaceList if isinstance( surface, Cylinder ) ]
+        cylinders = [ surface for surface in self.sim.surfaceList if 
+                      isinstance( surface, Cylinder ) ]
         return self.processCylinders( cylinders )
 
 
     def getPlanarSurfaceData( self ):
         posList, typeList, tensorList = [], [], []
 
-        boxes = [ surface for surface in self.sim.surfaceList if isinstance( surface, Box ) ]
+        boxes = [ surface for surface in self.sim.surfaceList if 
+                  isinstance( surface, Box ) ]
         if len( boxes ) == 0:
             # Add dummy box to stop tensorGlyph from complaining.
             boxes = [ DummyBox() ] 
 
         for box in boxes:
-            tensor = numpy.concatenate( ( box.vectorX, box.vectorY, box.vectorZ ) )
+            tensor = numpy.concatenate( ( box.vectorX, box.vectorY,
+                                          box.vectorZ ) )
             self.appendLists( posList, box.origin, tensorList=tensorList, 
-                    tensor=tensor ) 
+                              tensor=tensor ) 
 
         return ( posList, [], [], tensorList )
 
@@ -258,7 +269,10 @@ class VTKLogger:
             '''
 
             # Select basis vector in which orientation is smallest.
-            _, basisVector = min( zip( abs( orientation ), [ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ] ) )
+            _, basisVector = min( zip( abs( orientation ), 
+                                       [ [ 1, 0, 0 ], 
+                                         [ 0, 1, 0 ], 
+                                         [ 0, 0, 1 ] ] ) )
             # Find 2 vectors perpendicular to orientation.
             perpendicular1 = numpy.cross( orientation, basisVector )
             perpendicular2 = numpy.cross( orientation, perpendicular1 )
@@ -268,14 +282,15 @@ class VTKLogger:
             tensor = numpy.concatenate( ( perpendicular1 * radius, 
                 orientation * size, perpendicular2 * radius ) )
 
-            self.appendLists( posList, cylinder.origin, tensorList=tensorList, tensor=tensor ) 
+            self.appendLists( posList, cylinder.origin, tensorList=tensorList, 
+                              tensor=tensor ) 
 
         return ( posList, [], typeList, tensorList )
 
 
     # Helper.
-    def appendLists( self, posList, pos, typeList=[], type=None, radiusList=[], radius=None, 
-            tensorList=[], tensor=None ):
+    def appendLists( self, posList, pos, typeList=[], type=None, 
+                     radiusList=[], radius=None, tensorList=[], tensor=None ):
         factor = 1
         # Convert all lengths to nanometers.
         #factor = 1e8
@@ -301,5 +316,6 @@ class DummyCylinder( Cylinder ):
 
 class DummyBox( Box ):
     def __init__( self ):
-        Box.__init__( self, [ 0, 0, 0], [ 1, 0, 0], [ 0, 1, 0 ], [ 0, 0, 1 ], 1e-20, 1e-20, 1e-20 ) 
+        Box.__init__( self, [ 0, 0, 0], [ 1, 0, 0], [ 0, 1, 0 ], [ 0, 0, 1 ], 
+                      1e-20, 1e-20, 1e-20 ) 
 

@@ -16,7 +16,7 @@ from surface import *
 
 from gfrdbase import *
 
-### Ok.
+
 class Single:
     def __init__( self, si, i ):
         ### si1 = speciesIndex, i1 = particleIndex.
@@ -24,7 +24,6 @@ class Single:
         self.i = i
 
 
-### Ok.
 class Pair:
     def __init__( self, dt, rdt, si1, i1, si2, i2, rt=None ):
         ### rdt = reactiontime, dt = delta t, rt = reactiontype.
@@ -41,16 +40,12 @@ class Pair:
                      self.si1, self.i1, self.si2, self.i2, self.rt ) )
 
 
-
 class GFRDSimulator( ParticleSimulatorBase ):
-    
     def __init__( self ):
         ParticleSimulatorBase.__init__( self )
 
 
-    ### Ok.
     def step( self ):
-    
         self.clear()
 
         self.formPairs()
@@ -62,9 +57,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
         
         self.determineNextReaction()
 
-        print 'maxdt', self.dtMax, 'dt', self.dt, \
-              'reactions', self.reactionEvents, \
-              'rejected moves', self.rejectedMoves
+        print 'maxdt', self.dtMax, 'dt', self.dt, 'reactions', \
+              self.reactionEvents, 'rejected moves', self.rejectedMoves
         
         self.propagateParticles()
 
@@ -72,7 +66,6 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
 
     def clear( self ):
-
         self.dtMax = self.dtLimit
         self.dt = self.dtLimit
 
@@ -82,13 +75,11 @@ class GFRDSimulator( ParticleSimulatorBase ):
         self.singles = []
 
 
-
     def isPopulationChanged( self ):
         return self.nextReaction != None
 
-    ### Ok.
-    def simpleDiffusion( self, speciesIndex, particleIndex ):
 
+    def simpleDiffusion( self, speciesIndex, particleIndex ):
         species = self.speciesList.values()[speciesIndex]
         if species.D == 0.0:
             return
@@ -113,7 +104,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
         ### What is this?
         pos %= self.worldSize
 
-    ### Ok.
+
     def simpleDiffusionWithSurface( self, speciesIndex, particleIndex,
                                     surface ):
         species = self.speciesList.values()[speciesIndex]
@@ -135,14 +126,9 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
         #SURFACE
         print surface
-        
 
 
-
-
-    ### Ok.
     def determineNextReaction( self ):
-
         self.dt = self.dtMax
 
         # first order reactions
@@ -190,9 +176,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
         print 'next reaction = ', self.nextReaction
 
 
-    ### Ok.
     def nextReactionTime1( self, rt, pool ):
-
         if pool.size == 0:
             return None, None
 
@@ -202,12 +186,9 @@ class GFRDSimulator( ParticleSimulatorBase ):
         i = numpy.argmin( dts )
 
         return dts[i], i 
-        
 
 
-    ### Ok.
     def nextReactionTime2( self, pair ):
-
         if pair.rt == None:
             return INF
 
@@ -234,10 +215,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
         return res
 
 
-    ### Ok.
     ### A single particle reacts into 0, 1 or 2 new particles.
     def fireReaction1( self, reaction ):
-
         dt, reactantSpecies, index, rt = reaction
         
         pos = reactantSpecies.pool.positions[index].copy()
@@ -248,8 +227,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
             reactantSpecies.removeParticleByIndex( index )
 
             if reactantSpecies.radius < productSpecies.radius and \
-                   not self.checkOverlap( pos, productSpecies1.radius ):
-                raise 'fireReaction1: overlap check failed'
+               not self.checkOverlap( pos, productSpecies1.radius ):
+                raise( 'fireReaction1: overlap check failed' )
 
             productSpecies.newParticle( pos )
 
@@ -265,7 +244,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
             unitVector = randomUnitVector()
 
-            #print 'unit', self.distance( unitVector, numpy.array( [ 0, 0, 0 ] ) )
+            #print 'unit', self.distance( unitVector, 
+            #                             numpy.array( [ 0, 0, 0 ] ) )
             distance = productSpecies1.radius + productSpecies2.radius
             ### Why the safety measure?
             vector = unitVector * ( distance * ( 1.0 + 1e-2 ) ) # safety
@@ -282,7 +262,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
             # debug
             d = self.distance( newpos1, newpos2 )
             if d < distance:
-                raise "d = %s, %s" % ( d, distance )
+                raise( "d = %s, %s" % ( d, distance ) )
 
             productSpecies1.newParticle( newpos1 )
             productSpecies2.newParticle( newpos2 )
@@ -292,10 +272,9 @@ class GFRDSimulator( ParticleSimulatorBase ):
             reactantSpecies.removeParticleByIndex( index )
 
         else:
-            raise "num products >= 3 not supported."
+            raise( "num products >= 3 not supported." )
 
             
-    ### Ok.
     ### A pair of particles reacts 1 new particle.
     def fireReaction2( self, pair ):
         print 'fire:', pair
@@ -348,9 +327,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
             species3.newParticle( newpos )
 
 
-    ### Ok.
     def propagateParticles( self ):
-
         self.propagateSingles()
 
 
@@ -359,8 +336,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
         if self.nextReaction == None:  # no reaction
             self.propagatePairs( self.pairs )
-        elif len( self.pairs ) != 0 and\
-                 self.nextReaction == self.pairs[0]: # binary reaction
+        elif len( self.pairs ) != 0 and \
+             self.nextReaction == self.pairs[0]: # binary reaction
             ### The pairs are sorted according to dt, so pair[0] reacts.
             if len( self.pairs ) > 1: 
                 self.propagatePairs( self.pairs[1:] )
@@ -371,15 +348,13 @@ class GFRDSimulator( ParticleSimulatorBase ):
             self.fireReaction1( self.nextReaction ) # after propagatePairs()
             self.reactionEvents += 1
 
-    ### Ok.
-    def propagateSingles( self ):
 
+    def propagateSingles( self ):
         for single in self.singles:
             self.simpleDiffusion( single.si, single.i )
                     
     
     def propagatePairs( self, pairs ):
-
         for pair in pairs:
 
             print pair
@@ -396,7 +371,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
             #debug
             if D1 == 0.0 and D1 == D2:
-                raise "unexpected: D1 == D2 == 0.0"
+                raise( "unexpected: D1 == D2 == 0.0" )
 
             pos1 = species1.pool.positions[pair.i1]
             pos2 = species2.pool.positions[pair.i2]
@@ -444,7 +419,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
             while True:
 
-                r = pair.rt.pairGreensFunction.drawR( random.random(), r0, self.dt )
+                r = pair.rt.pairGreensFunction.drawR( random.random(),
+                                                      r0, self.dt )
                 
                 theta = pair.rt.pairGreensFunction.drawTheta( random.random(),
                                                               r, r0, self.dt )
@@ -472,8 +448,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
                                                  rotationAxis,
                                                  angle )
 
-                newpos1 = ( R - sqrtD1D2 * newInterParticle ) \
-                          / ( sqrtD1D2 + sqrtD2D1 )
+                newpos1 = ( R - sqrtD1D2 * newInterParticle ) / \
+                          ( sqrtD1D2 + sqrtD2D1 )
                 
                 newpos2 = newpos1 + newInterParticle
                 
@@ -481,8 +457,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
                 newDistance22 = distance( newpos2, pos2 )
                 newParticleDistance = distance( newpos1, newpos2 )
                 if limit1 >= newDistance11 and \
-                       limit2 >= newDistance22 and \
-                       newParticleDistance > radius1 + radius2:
+                   limit2 >= newDistance22 and \
+                   newParticleDistance > radius1 + radius2:
                     break
                 
                 print 'rejected move: ', \
@@ -493,7 +469,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
                       r0, self.dt, pos1, pos2, newpos1, newpos2
                 
                 self.rejectedMoves += 1
-                raise 'stop'
+                raise( 'stop' )
 
 
             #FIXME: SURFACE
@@ -503,9 +479,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
             species1.pool.positions[pair.i1] = newpos1
             species2.pool.positions[pair.i2] = newpos2
 
-    ### Todo.
-    def formPairs( self ):
 
+    def formPairs( self ):
         # 1. form pairs in self.pairs
         # 2. list singles in self.singles
 
@@ -576,7 +551,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
                 #     this and the partner's second closest.
                 #     We take the particle that has this neighbor.
                 if partnersPartner != ( speciesIndex1, particleIndex1 ) or \
-                       partnerDts[1] < dts[1]:
+                   partnerDts[1] < dts[1]:
                     continue
                 
                 # (4) Now we have a candidate pair.
@@ -616,7 +591,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
                 break   # pairs are sorted by dt.  break here.
 
             if checklist[pair.si1][pair.i1] == 0 or \
-                   checklist[pair.si2][pair.i2] == 0:
+               checklist[pair.si2][pair.i2] == 0:
                 print self.pairs[:i+1]
                 print dtCache[pair.si1][pair.i1], dtCache[pair.si2][pair.i2]
                 print neighborCache[pair.si1][pair.i1], \
@@ -650,9 +625,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
               ', # singles = ', numSingles
 
 
-    ### Todo
     def checkPairs( self, speciesIndex1, particleIndex ):
-
         speciesList = self.speciesList.values()
 
         neighbordts = [ INF, INF ]
@@ -685,13 +658,13 @@ class GFRDSimulator( ParticleSimulatorBase ):
                 neighbors.extend( ( ( speciesIndex1, topIndices[0] ), ) )
 
         #for speciesIndex2 in range( speciesIndex1 + 1, len( speciesList ) ):
-        for speciesIndex2 in range( speciesIndex1 )\
-                + range( speciesIndex1 + 1, len( speciesList ) ):
+        for speciesIndex2 in range( speciesIndex1 ) + \
+                             range( speciesIndex1 + 1, len( speciesList ) ):
             species2 = speciesList[speciesIndex2]
 
             # non reactive
-            if self.reactionTypeMap2.get( ( species1, species2 ), None )\
-                   == None:
+            if self.reactionTypeMap2.get( ( species1, species2 ), None ) == \
+               None:
                 continue
             
             if species2.pool.size == 0:
@@ -718,9 +691,7 @@ class GFRDSimulator( ParticleSimulatorBase ):
         return topNeighborDts, topNeighbors
 
 
-    ### Todo
     def checkDistance( self, position1, positions2, species1, species2 ):
-
         #positions2 = species2.pool.positions
 
         distanceSq = self.distanceSqArray( position1, positions2 )
@@ -733,11 +704,11 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
         # check if particles overlap
         if distanceSq[sortedindices[0]] < radius12sq - 1e-20 and \
-               distanceSq[sortedindices[0]] != 0.0:
+           distanceSq[sortedindices[0]] != 0.0:
             print position1, positions2[sortedindices[0]]
-            print 'dr<radius', math.sqrt( distanceSq[sortedindices[0]] ), radius12
-            print species1.id, species2.id, sortedindices[0]
-            raise "critical"
+            print 'dr<radius', math.sqrt( distanceSq[sortedindices[0]] )
+            print radius12, species1.id, species2.id, sortedindices[0]
+            raise( "critical" )
 
         factor = ( math.sqrt( species1.D ) + math.sqrt( species2.D ) ) * self.H
         factor *= factor
@@ -755,16 +726,14 @@ class GFRDSimulator( ParticleSimulatorBase ):
         #if min( dts ) < 0.0:
         #print 'negative dts occured, clipping.', dts
         #dts = numpy.clip( dts, 0.0, INF )
-        # raise 'stop'
+        # raise('stop' )
 
         indices = sortedindices[:2]
 
         return dts, indices # , distanceSqSorted[0]
 
 
-    ### Todo
     def checkSurfaces( self, speciesIndex1, particleIndex ):
-
         speciesList = self.speciesList.values()
 
         species = speciesList[speciesIndex1]
@@ -779,14 +748,13 @@ class GFRDSimulator( ParticleSimulatorBase ):
         dist = dist[idx]
 
         dt = ( dist - species.radius ) ** 2 / \
-                ( self.H * self.H * 6.0 * species.D ) 
+             ( self.H * self.H * 6.0 * species.D ) 
         
         return dt, idx
         
 
     ### Again nextReactionTime1? Exactly the same.
     def nextReactionTime1( self, rt, pool ):
-
         if pool.size == 0:
             return None, None
 
@@ -800,7 +768,6 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
     ### Again nextReactionTime2? Slightly different.
     def nextReactionTime2( self, pair ):
-
         ( dt, ndt, s1, i1, s2, i2, rt ) = pair
 
         if rt == None:

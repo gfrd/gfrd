@@ -46,8 +46,8 @@ class VTK_XML_Serial_Unstructured:
 
         string = str()
         for pos in posList:
-            string = string + repr( pos[0] ) + ' ' + repr( pos[1] ) \
-                    + ' ' + repr( pos[2] ) + ' '
+            string = string + repr( pos[0] ) + ' ' + repr( pos[1] ) + \
+                     ' ' + repr( pos[2] ) + ' '
         point_coords_data = doc.createTextNode( string )
         point_coords.appendChild( point_coords_data )
 
@@ -160,7 +160,8 @@ class VTK_XML_Serial_Unstructured:
 
                 string = str()
                 for color in colors:
-                    string = string + repr( color ) + ' ' + repr( color ) + ' ' + repr( color ) + ' '
+                    string += repr( color ) + ' ' + repr( color ) + ' ' + \
+                              repr( color ) + ' '
                 colorData = doc.createTextNode( string )
                 colorNode.appendChild( colorData )
 
