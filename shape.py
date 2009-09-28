@@ -143,27 +143,27 @@ class Box( Shape ):
 
         if dx > 0:
             if dy > 0:
-		if dz > 0:
-		    distance = sqrt( dx * dx + dy * dy + dz * dz )
-		else:
-		    distance = sqrt( dx * dx + dy * dy )
-	    else:
-		if dz > 0:
-		    distance = sqrt( dx * dx + dz * dz )
-		else:
-		    distance = dx
-	else:
+                if dz > 0:
+                    distance = sqrt( dx * dx + dy * dy + dz * dz )
+                else:
+                    distance = sqrt( dx * dx + dy * dy )
+            else:
+                if dz > 0:
+                    distance = sqrt( dx * dx + dz * dz )
+                else:
+                    distance = dx
+        else:
             if dy > 0:
-		if dz > 0:
-		    distance = sqrt( dy * dy + dz * dz )
-		else:
-		    distance = dy
-	    else:
-		if dz > 0:
-		    distance = dz
-		else:
+                if dz > 0:
+                    distance = sqrt( dy * dy + dz * dz )
+                else:
+                    distance = dy
+            else:
+                if dz > 0:
+                    distance = dz
+                else:
                     # Inside box. Pick negative distance closest to 0.
-		    distance = max( max( dx, dy ), dz )
+                    distance = max( max( dx, dy ), dz )
 
         return distance
 

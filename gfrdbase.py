@@ -450,15 +450,15 @@ class ParticleSimulatorBase( object ):
             if isinstance( obj.surface, Surface ):
                 # Ignore surface that particle is currently on.
                 ignoreSurfaces.append( obj.surface )
-	for surface in self.surfaceList:
+        for surface in self.surfaceList:
             if surface not in ignoreSurfaces:
                 posTransposed = cyclicTranspose( pos, surface.origin, 
                                                  self.worldSize )
-	        distanceToSurface = surface.signedDistanceTo( posTransposed )
+                distanceToSurface = surface.signedDistanceTo( posTransposed )
                 if distanceToSurface < 0.0:
                     self.errors += 1
                 distances.append( distanceToSurface )
-		surfaces.append( surface )
+                surfaces.append( surface )
         return min( zip( distances, surfaces ) )
 
 

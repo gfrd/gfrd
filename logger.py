@@ -28,7 +28,7 @@ class Logger:
         self.particleOutInterval = INF
 
         self.lastTime = 0.0
-        self.nextTime = INF			## time for the next log event
+        self.nextTime = INF                     ## time for the next log event
 
         self.particleOutPattern = re.compile( '' )
         self.prepareTimecourseFile( comment )
@@ -74,7 +74,7 @@ class Logger:
         """Writes the number for all species for the current time.
 
         """
-	print "writeTimecourse"
+        print "writeTimecourse"
         data = [ str( i.pool.size ) for i in self.sim.speciesList.values() ]
             
         self.timecourseFile.write( '%g' % self.sim.t + '\t' )
@@ -126,8 +126,8 @@ class Logger:
         ## state in between the simulation events (before the event)
         if self.nextTime <= sim.t + sim.dt:
             #log.info( 'log %g' % self.nextTime )
-							
-            sim.stop( self.nextTime )		
+
+            sim.stop( self.nextTime )
             self.writeParticles()
 
             self.nextTime += self.particleOutInterval

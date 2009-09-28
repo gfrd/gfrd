@@ -172,7 +172,7 @@ class BDSimulatorCoreBase( object ):
             return
 
         displacement = particle.surface.drawBDdisplacement( self.dt, D )
-	log.debug( '\t\tDebug. Multi. %s, displacement = [%.3g, %.3g, %.3g].' %
+        log.debug( '\t\tDebug. Multi. %s, displacement = [%.3g, %.3g, %.3g].' %
                    ( particle, displacement[0], displacement[1], 
                      displacement[2] ) )
 
@@ -294,8 +294,8 @@ class BDSimulatorCoreBase( object ):
             productSpecies = rt.products[0]
             radius = productSpecies.radius
     
-	    if isinstance( rt, SurfaceUnbindingReactionType ):
-		newpos = currentSurface.randomUnbindingSite( oldpos, radius )
+            if isinstance( rt, SurfaceUnbindingReactionType ):
+                newpos = currentSurface.randomUnbindingSite( oldpos, radius )
             elif isinstance( rt, SurfaceBindingInteractionType ):
                 # Todo. Does this obey detailed balance?
                 # Select position on surface with z = 0.

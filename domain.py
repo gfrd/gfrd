@@ -72,14 +72,14 @@ class CartesianDomain( Domain ):
 
     def drawTime( self ):
         assert self.escape == False
-	try:
+        try:
             rnd = numpy.random.uniform()
             log.debug( '\t\tDebug. Cartesian drawTime. ' + str( self.gf ) )
-	    dt = self.gf.drawTime( rnd )
-	except Exception, e:
-	    raise Stop( 'gf.drawTime() failed; %s; rnd = %g; r0 = %g; L = %g' %
+            dt = self.gf.drawTime( rnd )
+        except Exception, e:
+            raise Stop( 'gf.drawTime() failed; %s; rnd = %g; r0 = %g; L = %g' %
                         ( str( e ), rnd, self.r0, self.L ) )
-	return dt
+        return dt
 
 
     def drawEventType( self, dt ):
@@ -96,7 +96,7 @@ class CartesianDomain( Domain ):
                        'L = %.3g. dt = %.3g. ' % ( self.r0, self.L, dt ) + 
                        str( self.gf ) )
             eventType = self.gf.drawEventType( numpy.random.uniform(), dt )
-	except Exception, e:
+        except Exception, e:
             raise Stop( 'gf.drawEventType() failed; %s; r0 = %g; dt = %g; '
                         'L = %g' % ( str( e ), self.r0, dt, self.L ) )
         if eventType == EventType.REACTION:
@@ -146,23 +146,23 @@ class RadialDomain( Domain ):
 
 
     def drawTime( self ):
-	try:
+        try:
             rnd = numpy.random.uniform()
             log.debug( '\t\tDebug. Radial drawTime. ' + str( self.gf ) )
-	    dt = self.gf.drawTime( rnd )
-	except Exception, e:
-	    raise Stop( 'gf.drawTime() failed; %s; rnd = %g; a = %g' %
+            dt = self.gf.drawTime( rnd )
+        except Exception, e:
+            raise Stop( 'gf.drawTime() failed; %s; rnd = %g; a = %g' %
                         ( str( e ), rnd, self.a ) )
-	return dt
+        return dt
 
 
     def drawEventType( self, _ ):
         """(!) Not a pure function.
 
         """
-	self.escape = True
+        self.escape = True
         # Always return escape.
-	return EventType.ESCAPE
+        return EventType.ESCAPE
 
 
     def drawPosition( self, dt ):
@@ -181,7 +181,7 @@ class RadialDomain( Domain ):
             raise Stop( 'gf.drawR failed; %s; rnd = %g, dt = %g, a = %g' %
                         ( str( e ), rnd, dt, self.a ) )
 
-	return r
+        return r
 
 
 class CompositeDomain( Domain ):
@@ -198,17 +198,17 @@ class CompositeDomain( Domain ):
 
     def drawTime( self ):
         assert self.escape == False
-	try:
+        try:
             rnd = numpy.random.uniform()
             log.debug( '\t\tDebug. Radial2D drawTime. ' + str( self.gf ) )
-	    dt = self.gf.drawTime( rnd, self.r0 )
-	except Exception, e:
-	    raise Stop( 'gf.drawTime() failed; %s; rnd = %g, sigma = %g, '
+            dt = self.gf.drawTime( rnd, self.r0 )
+        except Exception, e:
+            raise Stop( 'gf.drawTime() failed; %s; rnd = %g, sigma = %g, '
                         'r0 = %g, a = %g' % ( str( e ), rnd, self.sigma, 
                                               self.r0, self.a ) )
         self.check_dt = dt
         self.check_gf = self.gf
-	return dt
+        return dt
 
 
     def drawEventType( self, dt ):
