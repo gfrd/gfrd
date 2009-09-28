@@ -7,10 +7,11 @@ class Shape( object ):
         pass
 
 
-    # Note: cyclicTranspose 'pos' before you use this.
     def distanceTo( self, pos ):
-        return abs( self.signedDistanceTo( pos ) )
+        """Note: cyclicTranspose 'pos' before you use this.
 
+        """
+        return abs( self.signedDistanceTo( pos ) )
 
 
 class Sphere( Shape ):
@@ -20,8 +21,10 @@ class Sphere( Shape ):
         self.radius = radius
 
 
-    # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
+        """Note: cyclicTranspose 'pos' before you use this.
+         
+        """
         return length( pos - self.origin ) - self.radius
 
 
@@ -53,8 +56,10 @@ class Cylinder( Shape ):
     size = property( getSize, setSize )
 
 
-    # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
+        """Note: cyclicTranspose 'pos' before you use this.
+
+        """
         r, z, = self.toInternal( pos )
         dz = abs( z ) - self.size
         dr = r - self.radius
@@ -75,10 +80,12 @@ class Cylinder( Shape ):
         return distance
 
 
-    # Return the ( z, r ) components of pos in a coordinate system defined by 
-    # the vectors unitR and unitZ, where unitR is choosen such that unitR and 
-    # unitZ define a plane in which pos lies.
     def toInternal( self, pos ):
+        """Return the ( z, r ) components of pos in a coordinate system 
+        defined by the vectors unitR and unitZ, where unitR is choosen such 
+        that unitR and unitZ define a plane in which pos lies.
+
+        """
         posVector = pos - self.origin
 
         z = numpy.dot( posVector, self.unitZ ) # Can be <0.
@@ -90,13 +97,13 @@ class Cylinder( Shape ):
         return r, z
 
 
-    '''
-    Returns:
-    1. the position of the projected point of 'pos' onto the main axis of the 
-       cylinder.
-    2. the distance (always positive) between that point and 'pos'.
-    '''
     def projectedPoint( self, pos ):
+        """Returns:
+        1. the position of the projected point of 'pos' onto the main axis of 
+        the cylinder.
+        2. the distance (always positive) between that point and 'pos'.
+
+        """
         r, z = self.toInternal( pos )
         return self.origin + z * self.unitZ, r
 
@@ -125,8 +132,10 @@ class Box( Shape ):
         self.vectorZ = self.unitZ * Lz
 
 
-    # Note: cyclicTranspose 'pos' before you use this.
     def signedDistanceTo( self, pos ):
+        """Note: cyclicTranspose 'pos' before you use this.
+
+        """
         x, y, z = self.toInternal( pos )
         dx = abs( x ) - self.Lx
         dy = abs( y ) - self.Ly
@@ -160,8 +169,10 @@ class Box( Shape ):
 
 
     def toInternal( self, pos ):
-        # First compute the ( x, y, z ) components of pos in a coordinate 
-        # system defined by the vectors unitX, unitY, unitZ of the box.
+        """First compute the ( x, y, z ) components of pos in a coordinate 
+        system defined by the vectors unitX, unitY, unitZ of the box.
+
+        """
         posVector = pos - self.origin
         x = numpy.dot( posVector, self.unitX )
         y = numpy.dot( posVector, self.unitY )
@@ -170,15 +181,15 @@ class Box( Shape ):
         return x, y, z
 
 
-    '''
-    Returns:
-    1. the position of the projected point of 'pos' onto the xy-plane of the 
-       box.
-    2. the distance (positive or negative) between that point and 'pos'.
-
-    Note: cyclicTranspose 'pos' if you are going to use the 'z' value.
-    '''
     def projectedPoint( self, pos ):
+        """Returns:
+        1. the position of the projected point of 'pos' onto the xy-plane of 
+        the box.
+        2. the distance (positive or negative) between that point and 'pos'.
+
+        Note: cyclicTranspose 'pos' if you are going to use the 'z' value.
+
+        """
         x, y, z = self.toInternal( pos )
         return self.origin + x * self.unitX + y * self.unitY, z
 

@@ -6,14 +6,13 @@ import numpy
 
 INF = numpy.inf
 
-'''
-This logging faciliy can be used to write particle traces to file.
-'''
 class Logger:
+    """This logging faciliy can be used to write particle traces to file.
+
+    """
 
     def __init__( self, sim, logname='log', directory='data',
                   comment='' ):
-
         self.sim = sim
 
         self.logname = logname
@@ -55,7 +54,6 @@ class Logger:
 
 
     def prepareTimecourseFile( self, comment ):
-
         self.timecourseFilename = self.logname + '_tc' + '.dat'
         self.timecourseFile = open( self.directory + os.sep + 
                                     self.timecourseFilename, 'w' )
@@ -72,9 +70,10 @@ class Logger:
         self.timecourseFile.write( '#' + s + '\n' )
 
 
-    ## writes the number for all species for the current time
     def writeTimecourse( self ):
+        """Writes the number for all species for the current time.
 
+        """
 	print "writeTimecourse"
         data = [ str( i.pool.size ) for i in self.sim.speciesList.values() ]
             
@@ -84,7 +83,6 @@ class Logger:
 
 
     def writeParticles( self ):
-
         filename = self.logname + '_' + \
                    str( self.fileCounter ).zfill( 4 ) + '.dat'
 
@@ -111,13 +109,11 @@ class Logger:
 
 
     def log( self ):
-
         self.logTimeCourse()
         self.logParticles()
 
 
     def logTimeCourse( self ):
-
         if self.sim.lastReaction:
             self.writeTimecourse()
 

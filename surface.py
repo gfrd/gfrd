@@ -8,24 +8,27 @@ from pair import *
 from utils import *
 
 
-'''
-Surface should be added to the egfrd simulator by calling sim.addSurface().
-'''
 class Surface( object ):
+    """Surface should be added to the egfrd simulator by calling 
+    sim.addSurface().
+
+    """
+
     def __init__( self, name ):
         self.name = name
 
 
-    '''
-    This method computes the absolute distance between pos and
-    a closest point on the surface.
-
-    signedDistanceTo on the other hand returns a positive
-    or negative value depending on in which side the position is.
-    When this surface defines a closed region in space,
-    negative value means that the position is inside.
-    '''
     def distanceTo( self, pos ):
+        """Compute the absolute distance between pos and a closest point on 
+        the surface.
+
+        signedDistanceTo on the other hand returns a positive or negative 
+        value depending on in which side the position is.  When this surface 
+        defines a closed region in space, negative value means that the 
+        position is inside.
+
+        """
+
         return abs( self.signedDistanceTo( pos ) )
    
 
@@ -33,12 +36,13 @@ class Surface( object ):
         return self.name
 
 
-'''
-For example a membrane.
-
-Movement in 2D.
-'''
 class PlanarSurface( Surface, Box ):
+    """For example a membrane.
+
+    Movement in 2D.
+
+    """
+
     def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, 
                   name="PlanarSurface" ):
         Surface.__init__( self, name )
@@ -64,17 +68,19 @@ class PlanarSurface( Surface, Box ):
         return x * self.unitX + y * self.unitY
 
 
-    '''
-    Only uniform if vectorX and vectorY have same length.
-    '''
     def randomPosition( self ):
+        """Only uniform if vectorX and vectorY have same length.
+
+        """
         return self.origin + random.uniform( -1, 1 ) * self.vectorX + \
                              random.uniform( -1, 1 ) * self.vectorY
 
 
-    # A particle that is not on this surface has to be at least this far away 
-    # from the z = 0-plane of the surface.
     def minimalOffset( self, radius ):
+        """A particle that is not on this surface has to be at least this far 
+        away from the z = 0-plane of the surface.
+
+        """
         return (self.Lz + radius) * UNBIND_SAFETY
 
 
@@ -84,12 +90,13 @@ class PlanarSurface( Surface, Box ):
                      self.minimalOffset( radius )  * self.unitZ
 
 
-'''
-For example the DNA.
-
-Movement in 1D.
-'''
 class CylindricalSurface( Surface, Cylinder ):
+    """For example the DNA.
+
+    Movement in 1D.
+
+    """
+
     def __init__( self, origin, radius, orientation, size, 
                   name="CylindricalSurface" ):
         Surface.__init__( self, name )
@@ -114,9 +121,11 @@ class CylindricalSurface( Surface, Cylinder ):
         return self.origin + random.uniform( -1, 1 ) * self.vectorZ
 
 
-    # A particle that is not on this surface has to be at least this far away 
-    # from the central axis of the surface.
     def minimalOffset( self, radius ):
+        """A particle that is not on this surface has to be at least this far 
+        away from the central axis of the surface.
+
+        """
         return ( self.radius + radius ) * UNBIND_SAFETY
 
 
@@ -126,22 +135,24 @@ class CylindricalSurface( Surface, Cylinder ):
         return pos + x * self.unitX + y * self.unitY
 
 
-'''
-Surface that is only used for throwing in particles. Those particles will than 
-later be tagged with surface = defaultSurface, which is an instance of the 
-World class. See gfrdbase.py.
-
-If no surface is specified, particles are tagged with an instance of this one.
-
-Movement in 3D.
-'''
 class CuboidalSurface( Surface, Box ):
-    '''
-    origin -- = [ x0, y0, z0 ] is one edge of the cube.
-    size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
-    point.
-    '''
+    """Surface that is only used for throwing in particles. Those particles 
+    will than later be tagged with surface = defaultSurface, which is an 
+    instance of the World class. See gfrdbase.py.
+
+    If no surface is specified, particles are tagged with an instance of this 
+    one.
+
+    Movement in 3D.
+
+    """
+
     def __init__( self, origin, size, name='world' ):
+        """origin -- = [ x0, y0, z0 ] is one edge of the cube.
+        size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
+        point.
+
+        """
         Surface.__init__( self, name )
         self.size = numpy.array( size )
         Lx = size[0]
@@ -163,11 +174,11 @@ class CuboidalSurface( Surface, Box ):
         return randomVector( length )
 
 
-    '''
-    Overrule signedDistanceTo from Box. 
-    Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
-    '''
     def signedDistanceTo( self, pos ):
+        """Overrule signedDistanceTo from Box. 
+        Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
+
+        """
         raise RuntimeError( 'This method should not be used. Did you '
                             'accidently add this CuboidalSurface to the '
                             'surfacelist using s.addSurface()?' )
@@ -179,12 +190,12 @@ class CuboidalSurface( Surface, Box ):
         return dists[i]
 
 
-    '''
-    Returns a random position equidistributed within
-    the region in space defined by negative signed distance.
-    See also signedDistanceTo().
-    '''
     def randomPosition( self ):
+        """Returns a random position equidistributed within
+        the region in space defined by negative signed distance.
+        See also signedDistanceTo().
+
+        """
         edge = self.origin - self.size / 2
         return numpy.array( [ random.uniform( edge[0], self.size[0] ),
                               random.uniform( edge[1], self.size[1] ),

@@ -8,11 +8,13 @@ class Shell( object ):
 '''
 
 
-'''
-Used internally by Multi.
-'''
-# This is the simulator that is used for multis.
 class MultiBDCore( BDSimulatorCoreBase ):
+    """This is the simulator that is used for multis.
+
+    Used internally by Multi.
+
+    """
+
     def __init__( self, main, multi ):
 
         BDSimulatorCoreBase.__init__( self, main )
@@ -91,9 +93,12 @@ class MultiBDCore( BDSimulatorCoreBase ):
         self.updateParticle( particle, pos )
 
         
-    # Check if particle has escaped from multi.
-    # Todo. How does this work.
     def clearVolume( self, pos, radius, ignore=[] ):
+        """Check if particle has escaped from multi.
+
+        Todo. How does this work.
+
+        """
         if not self.withinShell( pos, radius ):
             self.escaped = True
             self.clearOuterVolume( pos, radius, ignore )
@@ -136,13 +141,15 @@ class MultiBDCore( BDSimulatorCoreBase ):
         return [ n for n in neighbors if n not in ignore ]
 
 
-    '''
-    Find closest particle in *this* particleMatrix (not the main simulator's).
-
-    Same method as in ParticleSimulatorBase, but we are not a child of that 
-    class.
-    '''
     def getClosestParticle( self, pos, ignore=[] ):
+        """Find closest particle in *this* particleMatrix (not the main 
+        simulator's).
+
+        Same method as in ParticleSimulatorBase, but we are not a child of 
+        that class.
+
+        """
+
         neighbors, distances = \
             self.particleMatrix.getNeighbors( pos, len( ignore ) + 1 )
 
@@ -203,8 +210,8 @@ class Multi( object ):
     multiplicity = property( getMultiplicity )
 
 
-    # A multi contains particles and their shells, but not singles.
     def addParticle( self, particle ):
+        # A multi contains particles and their shells, but not singles.
         self.sim.addParticle( particle )
 
 

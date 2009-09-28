@@ -3,15 +3,15 @@ import logging.handlers
 import os
 import sys
 
-'''
-This logging faciliy can be used for info en debug messages and such.
-
-Usage:
-    * from log import *
-    * log.info( 'foo' )
-    * log.debug( 'bar' )
-'''
 def setupLogging():
+    """This logging faciliy can be used for info en debug messages and such.
+
+    Usage:
+        * from log import *
+        * log.info( 'foo' )
+        * log.debug( 'bar' )
+
+    """
     global log 
 
     log = logging.getLogger( 'pdpp' )

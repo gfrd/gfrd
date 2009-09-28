@@ -10,51 +10,53 @@ from bd import BDSimulator
 INF = numpy.inf
 
 
-'''
-Logger that can be used to visualize data with Kitware ParaView.
-
-
-* Setup. Specify bufferSize to only write last 'bufferSize' simulation steps 
-  to file:
-    vtklogger = VTKLogger( sim=s, name='run' )
-    or
-    vtklogger = VTKLogger( sim=s, name='run', bufferSize=100 )
-
-* Each step, to write .vtk files:
-    vtklogger.log()
-
-* Finalize, to write .pvd file:
-    vtklogger.stop()
-
-
-Inner workings:
-    log():
-        ( get.......Data = createDoc() + addPiece() ) + writeDoc()
-    stop():
-        writePvd( name.pvd )
-
-
-=== Cylinders
-To visualize the cylinders a workaround using tensors is used, as explained 
-here: http://www.paraview.org/pipermail/paraview/2009-March/011256.html. The 
-mentioned tensorGlyph.xml should be supplied with this package.
-
-As explainded in the above link, to give cylinders the right color, there are 
-2 options.
-
-1. Build Paraview from source, after adding in file
-Paraview3/VTK/Graphics/vtkTensorGlyph.cxx after
-    newScalars = vtkFloatArray::New();
-a new line:
-    newScalars->SetName( "colors" );
-2. Do that Python script thing.
-
-Another hack was needed to get the coloring to work. This makes VTKLogger 
-write a vector instead of a scalar value for each color to the .vtu files. But 
-you shouldn't have to worry about that, just select 'colors' to color the 
-Glyph.
-'''
 class VTKLogger:
+    """Logger that can be used to visualize data with Kitware ParaView.
+
+
+    * Setup. Specify bufferSize to only write last 'bufferSize' simulation 
+      steps to file:
+        vtklogger = VTKLogger( sim=s, name='run' )
+        or
+        vtklogger = VTKLogger( sim=s, name='run', bufferSize=100 )
+
+    * Each step, to write .vtk files:
+        vtklogger.log()
+
+    * Finalize, to write .pvd file:
+        vtklogger.stop()
+
+
+    Inner workings:
+        log():
+            ( get.......Data = createDoc() + addPiece() ) + writeDoc()
+        stop():
+            writePvd( name.pvd )
+
+
+    === Cylinders
+    To visualize the cylinders a workaround using tensors is used, as 
+    explained here: 
+        http://www.paraview.org/pipermail/paraview/2009-March/011256.html.
+    The mentioned tensorGlyph.xml should be supplied with this package.
+
+    As explainded in the above link, to give cylinders the right color, there 
+    are 2 options.
+
+    1. Build Paraview from source, after adding in file
+    Paraview3/VTK/Graphics/vtkTensorGlyph.cxx after
+        newScalars = vtkFloatArray::New();
+    a new line:
+        newScalars->SetName( "colors" );
+    2. Do that Python script thing.
+
+    Another hack was needed to get the coloring to work. This makes VTKLogger 
+    write a vector instead of a scalar value for each color to the .vtu files. 
+    But you shouldn't have to worry about that, just select 'colors' to color 
+    the Glyph.
+
+    """
+
     def __init__( self, sim, name, bufferSize=None, brownian=False ):
         self.sim = sim
         self.brownian = brownian
@@ -128,8 +130,10 @@ class VTKLogger:
             self.makeSnapshot( 'cylinders', cylinders, index, time )
 
 
-    # Write data to file.
     def makeSnapshot( self, type, data, index='', time=None ):
+        """Write data to file.
+
+        """
         doc = self.vtk_writer.createDoc( data )
         fileName = 'files/' + type + str( index ) + '.vtu'
         self.vtk_writer.writeDoc( doc, 'data/' + self.name + '/' + fileName )
@@ -262,11 +266,9 @@ class VTKLogger:
             orientation = cylinder.unitZ
             size = cylinder.size
 
-            '''
-            Construct tensor. Use tensor glyph plugin from:
-            http://www.paraview.org/pipermail/paraview/2009-March/011256.html
-            Unset Extract eigenvalues.
-            '''
+            # Construct tensor. Use tensor glyph plugin from:
+            # http://www.paraview.org/pipermail/paraview/2009-March/011256.html
+            # Unset Extract eigenvalues.
 
             # Select basis vector in which orientation is smallest.
             _, basisVector = min( zip( abs( orientation ), 
@@ -288,9 +290,11 @@ class VTKLogger:
         return ( posList, [], typeList, tensorList )
 
 
-    # Helper.
     def appendLists( self, posList, pos, typeList=[], type=None, 
                      radiusList=[], radius=None, tensorList=[], tensor=None ):
+        """Helper.
+
+        """
         factor = 1
         # Convert all lengths to nanometers.
         #factor = 1e8

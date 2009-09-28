@@ -5,35 +5,32 @@ from domain import *
 from log import *
 
 
-'''
-There are 3 types of pairs:
-    * SphericalPair
-    * PlanarSurfacePair
-    * CylindricalSurfacePair
-
-Todo. Add more comments.
-'''
 class Pair( object ):
-    '''
-    Todo. How does this work exactly?
-    CUTOFF_FACTOR is a threshold to choose between the real and approximate
-    Green's functions.
-    H = 4.0: ~3e-5, 4.26: ~1e-6, 5.0: ~3e-7, 5.2: ~1e-7,
-    5.6: ~1e-8, 6.0: ~1e-9
-    '''
+    """There are 3 types of pairs:
+        * SphericalPair
+        * PlanarSurfacePair
+        * CylindricalSurfacePair
+
+    Todo. Add more comments.
+    """
+
+    # Todo. How does this work exactly?
+    # CUTOFF_FACTOR is a threshold to choose between the real and approximate
+    # Green's functions.
+    # H = 4.0: ~3e-5, 4.26: ~1e-6, 5.0: ~3e-7, 5.2: ~1e-7,
+    # 5.6: ~1e-8, 6.0: ~1e-9
     CUTOFF_FACTOR = 5.6
 
-    '''
-    The distance function is passed to be able to take the boundary 
-    conditions into account.
-    '''
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
+        """The distance function is passed to be able to take the boundary 
+        conditions into account.
+
+        """
+
         self.multiplicity = 2
-        '''
-        Individual singles are preserved, but removed from shellMatrix and 
-        eventScheduler.
-        Order single1 and single2 so that D1 < D2.
-        '''
+        # Individual singles are preserved, but removed from shellMatrix and 
+        # eventScheduler.
+        # Order single1 and single2 so that D1 < D2.
         if single1.particle.species.D <= single2.particle.species.D:
             self.single1, self.single2 = single1, single2 
         else:
@@ -101,11 +98,12 @@ class Pair( object ):
         return self.D_tot #FIXME: is this correct?
 
 
-    '''
-    This method returns the radius from its CoM that this Pair must reserve
-    to remain mobile.
-    '''
     def getMinRadius( self ):
+        """This method returns the radius from its CoM that this Pair must 
+        reserve to remain mobile.
+
+        """
+
         minRadius = max( pairDistance * self.D1 /
                          self.D_tot + self.single1.getMinRadius(),
                          pairDistance * self.D2 /
@@ -113,10 +111,10 @@ class Pair( object ):
         return minRadius
 
 
-    '''
-    Calculate and return the "Center of Mass" (== CoM) of this pair.
-    '''
     def getCoMandIV( self ):
+        """Calculate and return the "Center of Mass" (== CoM) of this pair.
+
+        """
         pos1 = self.single1.particle.pos
         pos2 = self.single2.particle.pos
 
@@ -127,16 +125,16 @@ class Pair( object ):
         return CoM % self.worldSize, IV
 
 
-    '''
-    Determine a_r and a_R.
-
-    Todo. Check all this and make sure the radius of the largest particle is 
-    subtracted from a_r and a_R to get values of the same type as 
-    getMobilityRadius() for singles. 
-    
-          Make dimension specific.
-    '''
     def determineRadii( self ):
+        """Determine a_r and a_R.
+
+        Todo. Check all this and make sure the radius of the largest particle 
+        is subtracted from a_r and a_R to get values of the same type as 
+        getMobilityRadius() for singles. 
+        
+        Todo. Make dimension specific.
+
+        """
         single1 = self.single1
         single2 = self.single2
         radius1 = single1.particle.species.radius
@@ -218,9 +216,9 @@ class Pair( object ):
         return a_R, a_r
 
      
-    # Returns a ( dt, activeDomain ) tuple.
     def drawEscapeOrReactionTime( self ):
-        '''
+        """Returns a ( dt, activeDomain ) tuple.
+
         Note: we are not deciding yet if this is an escape or a pair 
         reaction, since we aren't calling domain.drawEventType() yet. We 
         postpone it to the very last minute (when this event is executed 
@@ -235,12 +233,15 @@ class Pair( object ):
         * EventType.REACTION means *single* reaction,
         * EventType.ESCAPE can still mean any of CoM or IV escape or *pair* 
           reaction.
-        '''
+
+        """
         return min( ( d.drawTime(), d ) for d in self.domains )
 
 
-    # Returns a ( dt, single ) tuple.
     def drawSingleReactionTime( self ):
+        """Return a ( dt, single ) tuple.
+
+        """
         return min( ( ( single.drawReactionTime(), single ) 
                       for single in self.singles ) )
 
@@ -280,10 +281,11 @@ class Pair( object ):
 
 
 ##############################################################################
-'''
-2 Particles inside a (spherical) shell not on any surface.
-'''
 class SphericalPair( Pair ):
+    """2 Particles inside a (spherical) shell not on any surface.
+
+    """
+
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, 
                        worldSize )
@@ -308,23 +310,22 @@ class SphericalPair( Pair ):
         self.domains = [ comDomain, ivDomain ]
 
 
-    '''
-    Calculate new positions of the pair particles using a new center-of-mass, 
-    a new inter-particle vector, and an old inter-particle vector.
-    '''
     def drawNewPositions( self, dt ):
+        """Calculate new positions of the pair particles using a new 
+        center-of-mass, a new inter-particle vector, and an old inter-particle 
+        vector.
+
+        """
         newCoM, newIV = self.drawNewCoM( dt ), self.drawNewIV( dt )
         #FIXME: need better handling of angles near zero and pi.
 
-        '''
-        Rotate the new interparticle vector along the rotation axis that is 
-        perpendicular to both the z-axis and the original interparticle vector 
-        for the angle between these.
+        # Rotate the new interparticle vector along the rotation axis that is 
+        # perpendicular to both the z-axis and the original interparticle 
+        # vector for the angle between these.
         
-        the rotation axis is a normalized cross product of the z-axis and the 
-        original vector.
-        rotationAxis = crossproduct( [ 0, 0, 1 ], IV )
-        '''
+        # the rotation axis is a normalized cross product of the z-axis and 
+        # the original vector.
+        # rotationAxis = crossproduct( [ 0, 0, 1 ], IV )
 
         oldIV = self.IV
         angle = vectorAngleAgainstZAxis( oldIV )
@@ -358,12 +359,11 @@ class SphericalPair( Pair ):
         return sphericalToCartesian( newInterParticleS )
 
 
-    '''
-    Decide if we need to use an approximate Green's function for drawing 
-    positions. Really needed for small dt for example.
-    ro is interparticle distance.
-    '''
     def choosePairGreensFunction( self, dt ):
+        """Decide if we need to use an approximate Green's function for drawing 
+        positions. Really needed for small dt for example.
+
+        """
         distanceFromSigma = self.pairDistance - self.sigma
         distanceFromShell = self.a_r - self.pairDistance
 
@@ -402,23 +402,23 @@ class SphericalPair( Pair ):
         return 'SphericalPair' + Pair.__str__( self )
 
 
-'''
-2 Particles inside a (cylindrical) shell on a PlanarSurface. (Hockey pucks).
-'''
 class PlanarSurfacePair( Pair ):
+    """2 Particles inside a (cylindrical) shell on a PlanarSurface. (Hockey 
+    pucks).
+
+    """
+
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, 
                        worldSize )
 
-        '''
-        Hockey pucks do not stick out of the surface any more than they have 
-        to (getMinRadius()), so if one of the particles undergoes an unbinding 
-        reaction we still have to clear the target volume and the move may be 
-        rejected (NoSpace error).
+        # Hockey pucks do not stick out of the surface any more than they have 
+        # to (getMinRadius()), so if one of the particles undergoes an 
+        # unbinding reaction we still have to clear the target volume and the 
+        # move may be rejected (NoSpace error).
 
-        Set radius = shellSize directly, without getMinRadius() step. Don't set 
-        radius again from initialize(). Pairs don't move.
-        '''
+        # Set radius = shellSize directly, without getMinRadius() step. Don't 
+        # set radius again from initialize(). Pairs don't move.
         self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, 
                                      self.biggestParticleRadius ) ]
 
@@ -438,11 +438,12 @@ class PlanarSurfacePair( Pair ):
         self.domains = [ comDomain, ivDomain ]
 
 
-    '''
-    Calculate new positions of the pair particles using a new center-of-mass, 
-    a new inter-particle vector, and an old inter-particle vector.
-    '''
     def drawNewPositions( self, dt ):
+        """Calculate new positions of the pair particles using a new 
+        center-of-mass, a new inter-particle vector, and an old inter-particle 
+        vector.
+
+        """
         newCoM, ( r, theta ) = self.drawNewCoM( dt ), self.drawNewIV( dt )
         unitX = self.surface.unitX
         unitY = self.surface.unitY
@@ -474,23 +475,23 @@ class PlanarSurfacePair( Pair ):
         return 'PlanarSurfacePair' + Pair.__str__( self )
 
 
-'''
-2 Particles inside a (cylindrical) shell on a CylindricalSurface. (Rods).
-'''
 class CylindricalSurfacePair( Pair ):
+    """2 Particles inside a (cylindrical) shell on a CylindricalSurface. 
+    (Rods).
+
+    """
+
     def __init__( self, single1, single2, shellSize, rt, distFunc, worldSize ):
         Pair.__init__( self, single1, single2, shellSize, rt, distFunc, 
                        worldSize )
 
-        '''
-        The radius of a rod is not more than it has to be (namely 
-        getMinRadius()), so if the particle undergoes an unbinding 
-        reaction we still have to clear the target volume and the move may be 
-        rejected (NoSpace error).
+        # The radius of a rod is not more than it has to be (namely 
+        # getMinRadius()), so if the particle undergoes an unbinding reaction 
+        # we still have to clear the target volume and the move may be 
+        # rejected (NoSpace error).
 
-        Set shellSize directly, without getMinRadius() step. Don't set 
-        radius again from initialize(). Pairs don't move.
-        '''
+        # Set shellSize directly, without getMinRadius() step. Don't set 
+        # radius again from initialize(). Pairs don't move.
         self.shellList = [ Cylinder( self.CoM, self.biggestParticleRadius, 
                                      self.surface.unitZ, shellSize ) ]
 

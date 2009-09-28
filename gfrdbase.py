@@ -97,28 +97,31 @@ class ReactionType( object ):
         return s[:-1]
 
 
-'''
-Reaction Types.
+#Reaction Types.
 
-A -> B
-'''
 class UnimolecularReactionType( ReactionType ):
+    """A -> B
+
+    """
+
     def __init__( self, s1, p1, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, ], k )
 
 
-'''
-A -> None
-'''
 class DecayReactionType( ReactionType ):
+    """A -> None
+
+    """
+
     def __init__( self, s1, k ):
         ReactionType.__init__( self, [ s1, ], [], k )
 
 
-'''
-A + B -> C
-'''
 class BindingReactionType( ReactionType ):
+    """A + B -> C
+
+    """
+
     def __init__( self, s1, s2, p1, k ):
         ReactionType.__init__( self, [ s1, s2 ], [ p1, ], k )
         # Todo. These are not used.
@@ -126,18 +129,20 @@ class BindingReactionType( ReactionType ):
         sigma = s1.radius + s2.radius
 
 
-'''
-C -> A + B
-'''
 class UnbindingReactionType( ReactionType ):
+    """C -> A + B
+
+    """
+
     def __init__( self, s1, p1, p2, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, p2 ], k )
  
 
-'''
-A + B is repulsive.
-'''
 class RepulsionReactionType( ReactionType ):
+    """A + B is repulsive.
+
+    """
+
     def __init__( self, s1, s2 ):
         ReactionType.__init__( self, [ s1, s2 ], [], 0.0 )
         # Todo. These are not used.
@@ -145,65 +150,70 @@ class RepulsionReactionType( ReactionType ):
         sigma = s1.radius + s2.radius
 
 
-'''
-Surface binding.
-
-Surface binding is not a Poisson process, so interactions should not be added 
-to the reaction list using addReactionType but added to the interaction list 
-using addInteractionType.
-
-A + Surface -> B_on_Surface
-'''
 class SurfaceBindingInteractionType( ReactionType ):
+    """Surface binding.
+
+    Surface binding is not a Poisson process, so interactions should not be 
+    added to the reaction list using addReactionType but added to the 
+    interaction list using addInteractionType.
+
+    A + Surface -> B_on_Surface
+
+    """
+
     def __init__( self, reactantSpecies, productSpecies,  k ):
         ReactionType.__init__( self, [ reactantSpecies ], 
                                [ productSpecies, ], k )
 
 
-'''
-A + B_on_Surface + Surface -> C_on_Surface
-A + Surface should be repulsive.
-'''
 
 class SurfaceDirectBindingInteractionType( ReactionType ):
+    """A + B_on_Surface + Surface -> C_on_Surface
+    A + Surface should be repulsive.
+
+    """
+
     def __init__( self, reactantSpecies1, reactantSpecies2, 
                   productSpecies,  k ):
         ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2 ],
                                [ productSpecies, ], k )
 
 
-'''
-A + Surface is repulsive.
-'''
 class SurfaceRepulsionInteractionType( ReactionType ):
+    """A + Surface is repulsive.
+
+    """
+
     def __init__( self, species, surface ):
         ReactionType.__init__( self, [ species, surface ], [], 0.0 )
 
 
-'''
-Surface unbinding.
-
-Surface unbinding is a Poisson process, so these reactions can be added to the 
-reaction list by using addReactionType.
-
-A_on_Surface -> B
-'''
 class SurfaceUnbindingReactionType( ReactionType ):
+    """A_on_Surface -> B
+    
+    Surface unbinding.
+
+    Surface unbinding is a Poisson process, so these reactions can be added to 
+    the reaction list by using addReactionType.
+
+    After unbinding from a surface the particle always ends up on the 
+    defaultSurface (world) for now.
+
+    """
+
     def __init__( self, reactantSpecies, productSpecies, k ):
-        # After unbinding from a surface the particle always ends up on the 
-        # defaultSurface (world) for now.
         ReactionType.__init__( self, [ reactantSpecies ],
                                [ productSpecies, ], k )
 
 
-'''
-A_on_Surface -> B_on_Surface + C
-'''
 class SurfaceDirectUnbindingReactionType( ReactionType ):
+    """A_on_Surface -> B_on_Surface + C
+
+    After unbinding from a surface, particle2 always ends up on the 
+    defaultSurface (world), and particle1 stays on the surface it was on.
+    """
+
     def __init__( self, reactantSpecies, productSpecies1, productSpecies2, k ):
-        # After unbinding from a surface, particle2 always ends up on the 
-        # defaultSurface (world), and particle1 stays on the surface it was 
-        # on.
         ReactionType.__init__( self, [ reactantSpecies ], 
                                [ productSpecies1, productSpecies2 ], k )
 
@@ -221,9 +231,11 @@ class Reaction:
 
 
 class Particle( object ):
-    ### Not only constructor, but can also be used to make a copy of a
-    ### particle by index or serial.
     def __init__( self, species, serial=None, index=None ):
+        """Not only constructor, but can also be used to make a copy of a
+        particle by index or serial.
+
+        """
         self.species = species
 
         if not serial is None:
@@ -302,8 +314,13 @@ class DummyParticle( object ):
 
 
 
-# Stores positions only.
 class ParticlePool( object ):
+    """ParticlePool
+
+    Stores positions only.
+
+    """
+
     def __init__( self ):
         self.indexMap = {}
         self.serialCounter = 0
@@ -417,15 +434,15 @@ class ParticleSimulatorBase( object ):
         pass
 
 
-    '''
-    Returns sorted list of pairs:
-    - distance to surface
-    - surface itself
-
-    We can not use objectmatrix, it would miss a surface if the origin of the 
-    surface would not be in the same or neighboring cells as pos.
-    '''
     def getClosestSurface( self, pos, ignore ):
+        """Return sorted list of pairs:
+        - distance to surface
+        - surface itself
+
+        We can not use objectmatrix, it would miss a surface if the origin of the 
+        surface would not be in the same or neighboring cells as pos.
+
+        """
         surfaces = [ None ]
         distances = [ INF ]
         ignoreSurfaces = []
@@ -497,8 +514,10 @@ class ParticleSimulatorBase( object ):
         self.particleMatrix.setMatrixSize( size )
 
 
-    # Use this method to account for periodic boundary conditions.
     def applyBoundary( self, pos ):
+        """Use this method to account for periodic boundary conditions.
+        
+        """
         pos %= self.worldSize
 
 
@@ -611,8 +630,8 @@ class ParticleSimulatorBase( object ):
                         SurfaceRepulsionInteractionType( species, surface )
         
 
-    # Todo. Cleanup.
     def throwInParticles( self, species, n, surface=None ):
+        # Todo. Cleanup.
         if not surface:
             surface = species.surface
 
@@ -691,12 +710,12 @@ class ParticleSimulatorBase( object ):
                                     pos, particle.species.radius )
 
 
-    # checkOverlap return true if there are no particles within the
-    # particles radius.
-    # In subSpaceSimulator called from: fireSingleReaction. Asserts in:
-    # propagateSingle, firePair, burstSingle, breakUpPair.
     def checkOverlap( self, pos, radius, ignore=[] ):
-        
+        """Return true if there are no particles within the particles radius.
+
+        In subSpaceSimulator called from: fireSingleReaction. Asserts in:
+        propagateSingle, firePair, burstSingle, breakUpPair.
+        """
         particles, _ = \
             self.particleMatrix.getNeighborsWithinRadiusNoSort( pos, radius )
         if len( particles ) == 0:
@@ -729,25 +748,25 @@ class ParticleSimulatorBase( object ):
 
 
         
-    '''
-    Get closest n Particles.
-
-    When the optional argument speciesList is given, only Particles of
-    species in the list are considered.  When speciesList is not given
-    or is None, all species in the simulator are considered.
-    
-    This method returns a tuple ( neighbors, distances ), where neighbors
-    is a list of Particle objects.
-    '''
 
     # There is a problem with these 4 methods: Particles can not be indexed.  
     # And they are not used anyway. Maybe before with gfrd?
     # In all these methods we try to get a reference to to the original 
     # particle, since we don't just want the values that the particleMatrix 
     # returns?
-
-    """
+    '''
     def getNeighborParticles( self, pos, n=None ):
+        """
+        Get closest n Particles.
+
+        When the optional argument speciesList is given, only Particles of
+        species in the list are considered.  When speciesList is not given
+        or is None, all species in the simulator are considered.
+        
+        This method returns a tuple ( neighbors, distances ), where neighbors
+        is a list of Particle objects.
+
+        """
         n, d = self.particleMatrix.getNeighbors( pos, n )
         # This doesn't seem right.
         neighbors = [ Particle( i[0], i[1] ) for i in n ]
@@ -795,7 +814,7 @@ class ParticleSimulatorBase( object ):
              ( self.H * self.H * 6.0 * species.D ) 
         
         return dt, idx
-    """
+    '''
 
 
     def checkParticleMatrix( self ):

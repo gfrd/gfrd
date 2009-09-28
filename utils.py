@@ -31,14 +31,11 @@ class Delegate( object ):
         return self.method( self.obj, *arg )
 
 
-'''
-Float comparison functions.
-'''
+# Float comparison functions.
 def feq( a, b, typical=1, tolerance=TOLERANCE ):
-    '''
-    Also see numpy.allclose().
+    """Return True if all a and b are equal subject to given tolerances.
 
-    Returns True if all a and b are equal subject to given tolerances.
+    Also see numpy.allclose().
 
     The (relative) tolerance must be positive and << 1.0
 
@@ -46,7 +43,8 @@ def feq( a, b, typical=1, tolerance=TOLERANCE ):
     value for a or b. The absolute tolerance is then the relative tolerance 
     multipied by this typical value, and will be used when comparing a value 
     to zero. By default, the typical value is 1.
-    '''
+
+    """
     return abs( a - b ) < tolerance * ( typical + min( abs( a ), abs( b ) ) )
 
 
@@ -100,18 +98,19 @@ def uniq( l ):
     return nset.keys()
 
 
-'''
-Transpose the position pos1 so that it can be used with another 
-position pos2.
-
-pos1 is transposed into one of mirror images of the cyclic boundary
-condition so that the distance between pos1 and pos2 is smallest.
-
-Both of given pos1 and pos2 must be within the cyclic boundary.  However,
-note that the returned transposed pos1 may not be within the cyclic boundary.
-'''
 
 def cyclicTranspose( pos1, pos2, fsize ):
+    """Transpose the position pos1 so that it can be used with another 
+    position pos2.
+
+    pos1 is transposed into one of mirror images of the cyclic boundary
+    condition so that the distance between pos1 and pos2 is smallest.
+
+    Both of given pos1 and pos2 must be within the cyclic boundary.  However,
+    note that the returned transposed pos1 may not be within the cyclic 
+    boundary.
+
+    """
     halfsize = fsize * 0.5
 
     diff = pos2 - pos1
@@ -123,10 +122,10 @@ def cyclicTranspose( pos1, pos2, fsize ):
     return pos1 + reloc
 
 
-'''
-Just a free func ver of Pair.getCoM().
-'''
 def calculatePairCoM( pos1, pos2, D1, D2, worldSize ):
+    """Just a free func ver of Pair.getCoM().
+
+    """
     pos2t = cyclicTranspose( pos2, pos1, worldSize )
     return ( ( D2 * pos1 + D1 * pos2t ) / ( D1 + D2 ) ) % worldSize
 
@@ -222,20 +221,24 @@ def randomVector( r ):
     return v * ( r / _gfrd.distance( ZEROPOS, v ) )
 
 
-"""
-# Return a vector perpendicular to 'vector' of length 'r'.
+'''
 def randomPerpendicularVector( vector, r ):
+    """Return a vector perpendicular to 'vector' of length 'r'.
+
+    """
     # Select index of element with least magnitude.
     index = 
 
     v = crossproduct( vector,  
     norm = numpy.linalg.norm( v )
     return v * ( r / norm )
-"""
+'''
 
 
-# Return a random 2D cartesian vector of length r.
 def randomVector2D( r ):
+    """Return a random 2D cartesian vector of length r.
+
+    """
     v = numpy.random.uniform( -1, 1, 2 )
     norm = numpy.linalg.norm( v )
     return v * ( r / norm )
@@ -271,12 +274,12 @@ def crossproductAgainstZAxis( a ):
     return numpy.array( [ - a[1], a[0], 0.0 ] )
 
 
-'''
-v: vector to rotate
-r: normalized rotation axis
-alpha: rotation angle in radian
-'''
 def rotateVector( v, r, alpha ):
+    """v: vector to rotate
+    r: normalized rotation axis
+    alpha: rotation angle in radian
+
+    """
     cosalpha = math.cos( alpha )
     sinalpha = math.sin( alpha )
     cosalphac = 1.0 - cosalpha
@@ -295,8 +298,9 @@ def rotateVector( v, r, alpha ):
 
 
 def permutate( seq ):
-    """permutate a sequence and return a list of the permutations"""
-
+    """Permutate a sequence and return a list of the permutations.
+    
+    """
     if not seq:
         return [ seq ] # is an empty sequence
     else:

@@ -7,18 +7,19 @@ from shape import Sphere, Cylinder
 #from gfrdbase import log
 
 
-'''
-object_matrix is a module (library) that is written in C++ and
-pythonified using Boost library.
-
-Source:
-    object_matrix/src/object_container.hpp
-Distance to shell functionality: 
-    object_matrix/boost.python/peer/ObjectContainer.hpp
-Pythonifier:
-    object_matrix/boost.python/object_matrix_module.hpp
-'''
 class ObjectMatrix( object ):
+    """object_matrix is a module (library) that is written in C++ and
+    pythonified using Boost library.
+
+    Source:
+        object_matrix/src/object_container.hpp
+    Distance to shell functionality: 
+        object_matrix/boost.python/peer/ObjectContainer.hpp
+    Pythonifier:
+        object_matrix/boost.python/object_matrix_module.hpp
+
+    """
+
     def __init__( self ):
         self.worldSize = 1.0
         self.setMatrixSize( 3 )
@@ -62,17 +63,19 @@ class ObjectMatrix( object ):
         self.impl.erase( key )
 
 
-    '''
-    Different getNeighbors methods. Return neighbors and distances.
-    Options:
-        * Sort yes/no.
-        * Within radius?
-            + yes: impl.neighbors_array_cyclic
-            + no: impl.all_neighbors_array_cyclic
-    These 4 methods return the distance from pos to the *shell*, not to the 
-    origin.
-    '''
     def getNeighbors( self, pos, n=None ):
+        """Return neighbors and distances.
+
+        Different getNeighbors methods. 
+        Options:
+            * Sort yes/no.
+            * Within radius?
+                + yes: impl.neighbors_array_cyclic
+                + no: impl.all_neighbors_array_cyclic
+        These 4 methods return the distance from pos to the *shell*, not to 
+        the origin.
+
+        """
         neighbors, distances = self.impl.all_neighbors_array_cyclic( pos )
         topargs = distances.argsort()[:n] # Actually works when n is None!
         return neighbors.take( topargs ), distances.take( topargs )
@@ -100,12 +103,13 @@ class ObjectMatrix( object ):
         pass
 
 
-    ''' 
-    Get all objects from all cells in the matrix.
-    Calling all_neighbors_array_cyclic once is not sufficient.
-    Ugly! Hack! Todo! Fixme! Now!
-    '''
     def getAll( self ):
+        """Get all objects from all cells in the matrix.
+
+        Calling all_neighbors_array_cyclic once is not sufficient.
+        Ugly! Hack! Todo! Fixme! Now!
+
+        """
         if not isinstance( self.worldSize, float ): 
             raise NotImplementedError
         cellSize = self.cellSize
@@ -127,9 +131,12 @@ class ObjectMatrix( object ):
         return seen.keys()
 
 
-# Used for particles as particleMatrix in ParticleSimulatorBase, and for 
-# spherical shells in EGFRDSimulator.
 class SphereMatrix( ObjectMatrix ):
+    """Used for particles as particleMatrix in ParticleSimulatorBase, and for 
+    spherical shells in EGFRDSimulator.
+
+    """
+
     def __init__( self ):
         ObjectMatrix.__init__( self )
 

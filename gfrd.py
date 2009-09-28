@@ -215,8 +215,10 @@ class GFRDSimulator( ParticleSimulatorBase ):
         return res
 
 
-    ### A single particle reacts into 0, 1 or 2 new particles.
     def fireReaction1( self, reaction ):
+        """A single particle reacts into 0, 1 or 2 new particles.
+
+        """
         dt, reactantSpecies, index, rt = reaction
         
         pos = reactantSpecies.pool.positions[index].copy()
@@ -275,8 +277,10 @@ class GFRDSimulator( ParticleSimulatorBase ):
             raise( "num products >= 3 not supported." )
 
             
-    ### A pair of particles reacts 1 new particle.
     def fireReaction2( self, pair ):
+        """A pair of particles reacts 1 new particle.
+
+        """
         print 'fire:', pair
 
         #dt, pdt, ndt, speciesIndex1, index1, speciesIndex2, index2, rt = pair
@@ -329,7 +333,6 @@ class GFRDSimulator( ParticleSimulatorBase ):
 
     def propagateParticles( self ):
         self.propagateSingles()
-
 
         # fireReaction should come last in any case because
         # it can change particle identities, thus invalidate particle indices.
@@ -753,8 +756,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
         return dt, idx
         
 
-    ### Again nextReactionTime1? Exactly the same.
     def nextReactionTime1( self, rt, pool ):
+        ### Again nextReactionTime1? Exactly the same.
         if pool.size == 0:
             return None, None
 
@@ -766,8 +769,8 @@ class GFRDSimulator( ParticleSimulatorBase ):
         return dts[i], i 
         
 
-    ### Again nextReactionTime2? Slightly different.
     def nextReactionTime2( self, pair ):
+        ### Again nextReactionTime2? Slightly different.
         ( dt, ndt, s1, i1, s2, i2, rt ) = pair
 
         if rt == None:

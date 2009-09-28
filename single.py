@@ -6,15 +6,16 @@ from shape import *
 from domain import *
 
 
-'''
-There are 2 main types of Singles:
-    * NonInteractionSingle
-    * InteractionSingle (when the particle is nearby a surface)
-
-Each type of Single defines a list of domains, see domain.py. For each domain 
-the Green's function is specified.
-'''
 class Single( object ):
+    """There are 2 main types of Singles:
+        * NonInteractionSingle
+        * InteractionSingle (when the particle is nearby a surface)
+
+    Each type of Single defines a list of domains, see domain.py. For each 
+    domain the Green's function is specified.
+
+    """
+
     def __init__( self, particle, reactionTypes ):
         self.particle = particle
         self.surface = particle.surface
@@ -40,44 +41,42 @@ class Single( object ):
         return self.radius - self.getMinRadius()
 
 
-    '''
-    Returns an ( escapeTime, eventType, activeDomain )-tuple.
-    By returning the arguments it is a pure function. 
-    '''
     def determineNextEvent( self ):
+        """Return an ( escapeTime, eventType, activeDomain )-tuple.
+        By returning the arguments it is a pure function. 
+
+        """
         return min( self.drawEscapeOrInteractionTime(), 
                     self.drawReactionTime() ) 
 
 
-    '''
-    Returns an ( escapeTime, eventType, activeDomain )-tuple.
-    Handles also all interaction events.
-    '''
     def drawEscapeOrInteractionTime( self ):
+        """Return an ( escapeTime, eventType, activeDomain )-tuple.
+        Handles also all interaction events.
+
+        """
         if self.getD() == 0:
             return INF, EventType.ESCAPE, None
         else:
-            '''
-            Note: we are not calling domain.drawEventType() just yet, but 
-            postpone it to the very last minute (when this event is executed 
-            in fireSingle), and memorize the activeDomain like this.
+            # Note: we are not calling domain.drawEventType() just yet, but 
+            # postpone it to the very last minute (when this event is executed 
+            # in fireSingle), and memorize the activeDomain like this.
 
-            So this can still be an interaction or an escape.
+            # So this can still be an interaction or an escape.
 
-            Also note that in case this single will get a reaction event 
-            instead of this escape event (its dt is smaller in 
-            determineNextEvent), and even though activeDomain is set, it won't 
-            be used at all, since reaction events are taken care of before 
-            escape events in fireSingle.
-            '''
+            # Also note that in case this single will get a reaction event 
+            # instead of this escape event (its dt is smaller in 
+            # determineNextEvent), and even though activeDomain is set, it 
+            # won't be used at all, since reaction events are taken care of 
+            # before escape events in fireSingle.
             return min( ( d.drawTime(), EventType.ESCAPE, d )
                         for d in self.domains )
 
 
-    '''
-    Returns a ( reactionTime, eventType, activeDomain=None )-tuple.
-    '''
     def drawReactionTime( self ):
+        """Return a ( reactionTime, eventType, activeDomain=None )-tuple.
+
+        """
         if self.k_tot == 0:
             dt = INF
         elif self.k_tot == INF:
@@ -106,15 +105,16 @@ class Single( object ):
 
 
 ##############################################################################
-'''
-1 Particle inside a shell, no other particles around. 
-
-There are 3 types of NonInteractionSingles:
-    * SphericalSingle: spherical shell, 3D movement.
-    * PlanarSurfaceSingle: cylindrical shell, 2D movement.
-    * CylindricalSurfaceSingle: cylindrical shell, 1D movement.
-'''
 class NonInteractionSingle( Single ):
+    """1 Particle inside a shell, no other particles around. 
+
+    There are 3 types of NonInteractionSingles:
+        * SphericalSingle: spherical shell, 3D movement.
+        * PlanarSurfaceSingle: cylindrical shell, 2D movement.
+        * CylindricalSurfaceSingle: cylindrical shell, 1D movement.
+
+    """
+
     def __init__( self, particle, reactionTypes ):
         Single.__init__( self, particle, reactionTypes )
 
@@ -122,7 +122,9 @@ class NonInteractionSingle( Single ):
     def getPos( self ):
         return self.shellList[0].origin
     def setPos( self, pos ):
-        # setPos is called when NonInteractionSingles are updated.
+        """setPos is called when NonInteractionSingles are updated.
+
+        """
         self.shellList[0].origin = pos
         self.particle.pos = pos
     pos = property( getPos, setPos )
@@ -165,15 +167,16 @@ class NonInteractionSingle( Single ):
                self.eventType == EventType.ESCAPE
 
 
-'''
-1 Particle inside a (spherical) shell not on any surface.
-
-    * Particle coordinate inside shell: r, theta, phi.
-    * Domain: radial r.
-    * Initial position: r = 0.
-    * Selected randomly when drawing displacement vector: theta, phi.
-'''
 class SphericalSingle( NonInteractionSingle ):
+    """1 Particle inside a (spherical) shell not on any surface.
+
+        * Particle coordinate inside shell: r, theta, phi.
+        * Domain: radial r.
+        * Initial position: r = 0.
+        * Selected randomly when drawing displacement vector: theta, phi.
+
+    """
+
     def __init__( self, particle, reactionTypes ):
         NonInteractionSingle.__init__( self, particle, reactionTypes )
 
@@ -193,24 +196,24 @@ class SphericalSingle( NonInteractionSingle ):
 
 
 
-'''
-1 Particle inside a (cylindrical) shell on a PlanarSurface. (Hockey pucks).
-
-    * Particle coordinates on surface: x, y.
-    * Domain: radial r. (determines x and y together with theta).
-    * Initial position: r = 0.
-    * Selected randomly when drawing displacement vector: theta.
-'''
 class PlanarSurfaceSingle( NonInteractionSingle ):
+    """1 Particle inside a (cylindrical) shell on a PlanarSurface. (Hockey 
+    pucks).
+
+        * Particle coordinates on surface: x, y.
+        * Domain: radial r. (determines x and y together with theta).
+        * Initial position: r = 0.
+        * Selected randomly when drawing displacement vector: theta.
+
+    """
+
     def __init__( self, particle, reactionTypes ):
         NonInteractionSingle.__init__( self, particle, reactionTypes )
 
-        '''
-        Hockey pucks do not stick out of the surface any more than they have 
-        to (getMinRadius()), so if the particle undergoes an unbinding 
-        reaction we still have to clear the target volume and the move may be 
-        rejected (NoSpace error).
-        '''
+        # Hockey pucks do not stick out of the surface any more than they have 
+        # to (getMinRadius()), so if the particle undergoes an unbinding 
+        # reaction we still have to clear the target volume and the move may 
+        # be rejected (NoSpace error).
         self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), 
                                      self.surface.unitZ, self.getMinRadius() ) ]
 
@@ -229,27 +232,26 @@ class PlanarSurfaceSingle( NonInteractionSingle ):
 
 
 
-'''
-1 Particle inside a (cylindrical) shell on a CylindricalSurface. (Rods).
-
-    * Particle coordinates on surface: z.
-    * Domain: cartesian z.
-    * Initial position: z = 0.
-    * Selected randomly when drawing displacement vector: none.
-'''
 class CylindricalSurfaceSingle( NonInteractionSingle ):
+    """1 Particle inside a (cylindrical) shell on a CylindricalSurface. 
+    (Rods).
+
+        * Particle coordinates on surface: z.
+        * Domain: cartesian z.
+        * Initial position: z = 0.
+        * Selected randomly when drawing displacement vector: none.
+
+    """
     def __init__( self, particle, reactionTypes ):
         NonInteractionSingle.__init__( self, particle, reactionTypes )
 
-        '''
-        The radius of a rod is not more than it has to be (namely 
-        getMinRadius()), so if the particle undergoes an unbinding 
-        reaction we still have to clear the target volume and the move may be 
-        rejected (NoSpace error).
+        # The radius of a rod is not more than it has to be (namely 
+        # getMinRadius()), so if the particle undergoes an unbinding reaction 
+        # we still have to clear the target volume and the move may be 
+        # rejected (NoSpace error).
 
-        Heads up. The cylinder's *size*, not radius, is changed when you 
-        make the cylinder bigger, because of the redefinition of setRadius.
-        '''
+        # Heads up. The cylinder's *size*, not radius, is changed when you 
+        # make the cylinder bigger, because of the redefinition of setRadius.
         self.shellList = [ Cylinder( particle.pos, self.getMinRadius(), 
                                      self.surface.unitZ, self.getMinRadius() ) ]
 
@@ -263,11 +265,11 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         return z * self.shellList[0].unitZ
 
 
-    '''
-    Overloaded methods getRadius and setRadius. Nice trick. property() needs 
-    to be redefined as well.
-    '''
     def getRadius( self ):
+        """Overloaded methods getRadius and setRadius. Nice trick. property() 
+        needs to be redefined as well.
+
+        """
         # Heads up. Return cylinder's size.
         #raise RuntimeError( 'Todo' )
         return self.shellList[0].size
@@ -286,21 +288,21 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
 
 
 ##############################################################################
-'''
-Interactions singles are used when a particle is close to a surface.
-
-There are 2 types of InteractionSingles:
-
-'''
 class InteractionSingle( Single ):
+    """Interactions singles are used when a particle is close to a surface.
+
+    There are 2 types of InteractionSingles:
+
+    """
+
     def __init__( self, particle, surface, reactionTypes, interactionType ):
         self.interactionSurface = surface
         self.interactionType = interactionType
         Single.__init__( self, particle, reactionTypes )
 
 
-    # Interaction singles can not be updated, so no setters.
     def getPos( self ):
+        # Interaction singles can not be updated, so no setters.
         return self.shellList[0].origin
     pos = property( getPos )
 
@@ -319,16 +321,17 @@ class InteractionSingle( Single ):
         raise SystemError( 'Interaction singles should never be reset (reused)' )
 
 
-'''
-1 Particle close to a PlanarSurface, inside a cylindrical shell placed on top 
-of the surface.
-
-    * Particle coordinates inside shell: r, theta, z.
-    * Domains: radial r, cartesian z.
-    * Initial position: r = 0, z = z.
-    * Selected randomly when drawing displacement vector: theta.
-'''
 class PlanarSurfaceInteraction( InteractionSingle ):
+    """1 Particle close to a PlanarSurface, inside a cylindrical shell placed 
+    on top of the surface.
+
+        * Particle coordinates inside shell: r, theta, z.
+        * Domains: radial r, cartesian z.
+        * Initial position: r = 0, z = z.
+        * Selected randomly when drawing displacement vector: theta.
+
+    """
+
     def __init__( self, particle, surface, reactionTypes, interactionType, 
                   origin, radius, orientationVector, size, particleOffset, 
                   projectedPoint = None, sizeOfDomain = None ):
@@ -341,13 +344,11 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         gfr = FirstPassageGreensFunction2D( self.getD() )
         rDomain = RadialDomain( self.getMobilityRadius(), gfr )
 
-        '''
-        Interaction possible in z direction.
+        # Interaction possible in z direction.
 
-        Heads up. sizeOfDomain is different from the size of the cylinder, 
-        because the domain ends where the surface starts, while the 
-        cylinder is continuing into the surface.
-        '''
+        # Heads up. sizeOfDomain is different from the size of the cylinder, 
+        # because the domain ends where the surface starts, while the cylinder 
+        # is continuing into the surface.
         gfz = FirstPassageGreensFunction1DRad( self.getD(), interactionType.k )
         # Cartesian domain of size L. Correction with getMinRadius().
         zDomain = CartesianDomain( particleOffset[1] - self.getMinRadius(), 
@@ -370,15 +371,17 @@ class PlanarSurfaceInteraction( InteractionSingle ):
         return 'PlanarSurfaceInteraction' + Single.__str__( self )
 
 
-'''
-1 Particle close to a CylindricalSurface, inside a cylindrical shell that surrounds the surface.
-
-    * Particle coordinates inside shell: r, theta, z.
-    * Domains: composite r-theta, cartesian z.
-    * Initial position: r = r, theta = 0, z = z.
-    * Selected randomly when drawing displacement vector: none.
-'''
 class CylindricalSurfaceInteraction( InteractionSingle ):
+    """1 Particle close to a CylindricalSurface, inside a cylindrical shell 
+    that surrounds the surface.
+
+        * Particle coordinates inside shell: r, theta, z.
+        * Domains: composite r-theta, cartesian z.
+        * Initial position: r = r, theta = 0, z = z.
+        * Selected randomly when drawing displacement vector: none.
+
+    """
+
     def __init__( self, particle, surface, reactionTypes, interactionType, 
                   origin, radius, orientationVector, size, particleOffset, 
                   projectedPoint, sizeOfDomain=None ):

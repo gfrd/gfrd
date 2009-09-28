@@ -15,8 +15,8 @@ import _gfrd
 
 DEFAULT_DT_FACTOR = 1e-3 # 1e-5
 
-# Todo. Should also depend on reaction rates. dt * k << 1.
 def calculateBDDt( speciesList, factor ):
+    # Todo. Should also depend on reaction rates. dt * k << 1.
     D_list = []
     radius_list = []
     for species in speciesList:
@@ -33,31 +33,31 @@ def calculateBDDt( speciesList, factor ):
     return dt
 
 
-'''
-BDSimulatorCoreBase.
-
-Child classes of BDSimulatorCoreBase are:
-* BDSimulatorCore
-    - Instantiated by BDSimulator as BDSimulator.core.
-    - Uses the particleMatrix from the simulator that instantiates it, that 
-      would be a BDSimulator, for particle detection. BDsimulator derives from 
-      ParticleSimulatorBase, which has declared this particleMatrix.
-* MultiBDCore
-    - Instantiated by Multi as Multi.core.
-    - Uses a self declared particleMatrix for particle detection, which 
-      contains only the particles that are in the Multi, not other particles 
-      that might still be in the EGFRDSimulator.
-
-BDSimulatorCoreBase uses a particle*List* to loop over all particles in each 
-step, and propagate them.
-'''
 class BDSimulatorCoreBase( object ):
-    '''
+    """BDSimulatorCoreBase.
+
+    Child classes of BDSimulatorCoreBase are:
+    * BDSimulatorCore
+        - Instantiated by BDSimulator as BDSimulator.core.
+        - Uses the particleMatrix from the simulator that instantiates it, 
+          that would be a BDSimulator, for particle detection. BDsimulator 
+          derives from ParticleSimulatorBase, which has declared this 
+          particleMatrix.
+    * MultiBDCore
+        - Instantiated by Multi as Multi.core.
+        - Uses a self declared particleMatrix for particle detection, which 
+          contains only the particles that are in the Multi, not other 
+          particles that might still be in the EGFRDSimulator.
+
+    BDSimulatorCoreBase uses a particle*List* to loop over all particles in 
+    each step, and propagate them.
+
     BDSimulatorCoreBase borrows the following from the main simulator:
     - speciesList
     - reactionTypes list, both 1 and 2.
     
-    '''
+    """
+
     def __init__( self, main ):
         # Reference to the main, egfrd, simulator.
         self.main = weakref.proxy( main )
@@ -112,8 +112,8 @@ class BDSimulatorCoreBase( object ):
         self.dt = calculateBDDt( self.speciesList.values(), self.dtFactor )
 
 
-    # Todo. Does this obey detailed balance?
     def getP_acct( self, rt, D, sigma ):
+        # Todo. Does this obey detailed balance?
         try:
             return self.P_acct[rt]
 
@@ -157,9 +157,7 @@ class BDSimulatorCoreBase( object ):
     def propagateParticle( self, particle ):
         species = particle.species
 
-        '''
-        1. Try single reactions first.
-        '''
+        # 1. Try single reactions first.
         rt1 = self.attemptSingleReactions( species )
         if rt1:
             # Todo. Shouldn't we displace the particle first? 
@@ -184,10 +182,8 @@ class BDSimulatorCoreBase( object ):
         neighbors = self.getParticlesWithinRadiusNoSort( newpos, species.radius,
                                                          ignore=[ particle, ] )
 
-        '''
-        2. Try reaction of 2 particles, even if newpos also overlaps with 
-           surface. 
-        '''
+        # 2. Try reaction of 2 particles, even if newpos also overlaps with i 
+        # surface. 
         if neighbors:
             if len( neighbors ) >= 2:
                 log.info( '\t\tcollision two or more particles; move rejected' )
@@ -220,9 +216,7 @@ class BDSimulatorCoreBase( object ):
             # Neighbor is reflecting us. Don't move.
             return
 
-        '''
-        3. Try binding with surface.
-        '''
+        # 3. Try binding with surface.
         surface, distanceToSurface = \
             self.main.getClosestSurfaceWithinRadius( newpos, species.radius,
                                                      ignore=[ particle, ] )
@@ -442,10 +436,11 @@ class BDSimulatorCoreBase( object ):
 
 
 ##########################################################################
-'''
-Used by BDSimulator only.  
-'''
 class BDSimulatorCore( BDSimulatorCoreBase ):
+    """Used by BDSimulator only.  
+
+    """
+
     def __init__( self, main ):
         # main can be a BDSimulator object. 
         BDSimulatorCoreBase.__init__( self, main )
@@ -492,17 +487,19 @@ class BDSimulatorCore( BDSimulatorCoreBase ):
         self.addToParticleList( particle )
 
 
-    # This method is a customization point for implementing
-    # BD in protective domains.
     def clearVolume( self, pos, radius, ignore=[] ):
-        
+        """This method is a customization point for implementing BD in 
+        protective domains.
+
+        """
         pass
 
 
-'''
-Can be used for a Brownian Dynamics simulation.
-'''
 class BDSimulator( ParticleSimulatorBase ):
+    """Can be used for a Brownian Dynamics simulation.
+
+    """
+
     def __init__( self, worldSize ):
         ParticleSimulatorBase.__init__( self, worldSize )
 
