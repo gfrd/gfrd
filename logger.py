@@ -74,7 +74,6 @@ class Logger:
         """Writes the number for all species for the current time.
 
         """
-        print "writeTimecourse"
         data = [ str( i.pool.size ) for i in self.sim.speciesList.values() ]
             
         self.timecourseFile.write( '%g' % self.sim.t + '\t' )
