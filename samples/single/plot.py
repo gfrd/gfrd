@@ -18,6 +18,18 @@ N_A = gfrdbase.N_A
 D = 1e-12
 
 
+def p_free( r, t, D ):
+    Dt4 = D * t * 4.0
+    Pi4Dt = numpy.pi * Dt4
+    rsq = r * r
+    
+    p = math.exp( - rsq / Dt4 ) / math.sqrt( Pi4Dt * Pi4Dt * Pi4Dt )
+
+    jacobian = 4.0 * numpy.pi * rsq
+
+    return p * jacobian
+    
+
 def plot_sol( t, rmax ):
     rmin = 0
     
@@ -25,7 +37,7 @@ def plot_sol( t, rmax ):
     rtick = ( rmax - rmin ) / N
     rarray = numpy.mgrid[rmin:rmax:rtick]
     
-    parray = array( [ gfrdbase.p_free( r, t, D ) for r in rarray ] )
+    parray = array( [ p_free( r, t, D ) for r in rarray ] )
     
     print rarray, parray
 

@@ -18,18 +18,6 @@ from cObjectMatrix import *
 
 from log import *
 
-def p_free( r, t, D ):
-    Dt4 = D * t * 4.0
-    Pi4Dt = numpy.pi * Dt4
-    rsq = r * r
-    
-    p = math.exp( - rsq / Dt4 ) / math.sqrt( Pi4Dt * Pi4Dt * Pi4Dt )
-
-    jacobian = 4.0 * numpy.pi * rsq
-
-    return p * jacobian
-    
-
 class NoSpace( Exception ):
     pass
 
