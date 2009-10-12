@@ -10,7 +10,6 @@ dnl AC_CONFIG_AUX_DIR()
 dnl
 dnl 
 AH_TEMPLATE(HAVE_SINCOS)
-AH_TEMPLATE(HAVE_INLINE)
 dnl 
 dnl
 AC_CANONICAL_TARGET([])
@@ -69,11 +68,6 @@ dnl
 dnl checks for compiler characteristics
 dnl
 dnl
-AC_C_INLINE
-if test "$ac_cv_c_inline" != no ; then
-   AC_DEFINE(HAVE_INLINE,1)
-   AC_SUBST(HAVE_INLINE)
-fi
 dnl
 dnl extract LTDL_SHLIB_EXT
 dnl
