@@ -416,7 +416,7 @@ class ParticleSimulatorBase( object ):
         # This line here is also why worldSize has to be specified in the
         # constructor now, and should not be redefined.
         self.defaultSurface = \
-            CuboidalSurface( [ 0, 0, 0 ], [ worldSize, worldSize, worldSize ], 
+            CuboidalRegion( [ 0, 0, 0 ], [ worldSize, worldSize, worldSize ], 
                              'world' )
 
 
@@ -640,7 +640,7 @@ class ParticleSimulatorBase( object ):
                 # box.
                 if surface == self.defaultSurface or \
                    ( surface != self.defaultSurface and 
-                     isinstance( surface, CuboidalSurface ) ):
+                     isinstance( surface, CuboidalRegion ) ):
                     distance, closestSurface = self.getClosestSurface( position,
                                                                        [] )
                     if ( closestSurface and distance < 

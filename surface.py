@@ -135,20 +135,21 @@ class CylindricalSurface( Surface, Cylinder ):
         return pos + x * self.unitX + y * self.unitY
 
 
-class CuboidalSurface( Surface, Box ):
-    """Surface that is only used for throwing in particles. Those particles 
-    will than later be tagged with surface = defaultSurface, which is an 
-    instance of the World class. See gfrdbase.py.
-
-    If no surface is specified, particles are tagged with an instance of this 
-    one.
+class CuboidalRegion( Surface, Box ):
+    """
+    DO NOT TRY TO ADD THIS AS A SURFACE TO YOUR SIMULATION.
+    
+    A region that is only used for throwing in particles. It is sort of a
+    Surface because particles for which no surface is specified are tagged
+    surface = defaultSurface, which is an instance of this class.
+    See gfrdbase.py.
 
     Movement in 3D.
 
     """
 
-    def __init__( self, origin, size, name='world' ):
-        """origin -- = [ x0, y0, z0 ] is one edge of the cube.
+    def __init__( self, corner, size, name='world' ):
+        """corner -- = [ x0, y0, z0 ] is one corner of the cube.
         size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
         point.
 
@@ -158,7 +159,7 @@ class CuboidalSurface( Surface, Box ):
         Lx = size[0]
         Ly = size[1]
         Lz = size[2]
-        Box.__init__( self, origin + self.size / 2, [ Lx, 0, 0 ], [ 0, Ly, 0 ],
+        Box.__init__( self, corner + self.size / 2, [ Lx, 0, 0 ], [ 0, Ly, 0 ],
                       [ 0, 0, Lz ], Lx / 2, Ly / 2, Lz / 2 ) 
         self.defaultSingle = SphericalSingle
         self.defaultPair = SphericalPair
@@ -176,15 +177,15 @@ class CuboidalSurface( Surface, Box ):
 
     def signedDistanceTo( self, pos ):
         """Overrule signedDistanceTo from Box. 
-        Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
+        Only for CuboidalRegions is cyclicTranspose 'pos' not needed.
 
         """
         raise RuntimeError( 'This method should not be used. Did you '
-                            'accidently add this CuboidalSurface to the '
+                            'accidently add this CuboidalRegion to the '
                             'surfacelist using s.addSurface()?' )
-        edge = self.origin - size / 2
-        dists = numpy.concatenate( ( edge - pos,
-                                     edge + self.size - pos ) )
+        corner = self.origin - size / 2
+        dists = numpy.concatenate( ( corner - pos,
+                                     corner + self.size - pos ) )
         absdists = numpy.abs( dists )
         i = numpy.argmin( absdists )
         return dists[i]
@@ -196,9 +197,9 @@ class CuboidalSurface( Surface, Box ):
         See also signedDistanceTo().
 
         """
-        edge = self.origin - self.size / 2
-        return numpy.array( [ random.uniform( edge[0], self.size[0] ),
-                              random.uniform( edge[1], self.size[1] ),
-                              random.uniform( edge[2], self.size[2] ) ] )
+        corner = self.origin - self.size / 2
+        return numpy.array( [ random.uniform( corner[0], self.size[0] ),
+                              random.uniform( corner[1], self.size[1] ),
+                              random.uniform( corner[2], self.size[2] ) ] )
 
 
