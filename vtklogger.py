@@ -55,11 +55,19 @@ class VTKLogger:
     But you shouldn't have to worry about that, just select 'colors' to color 
     the Glyph.
 
+    When doing Brownian Dynamics, don't show shells.
+    Todo. Doesn't work anymore.
+
+    extraParticleStep=True means that for each timestep an extra step is  
+    recorded where only the active particle has been updated (it's shell
+    stays unchanged).
+
     """
 
-    def __init__( self, sim, name, bufferSize=None, brownian=False ):
+    def __init__( self, sim, name, bufferSize=None, brownian=False, extraParticleStep=True ):
         self.sim = sim
         self.brownian = brownian
+        self.extraParticleStep = extraParticleStep
 
         self.vtk_writer = VTK_XML_Serial_Unstructured()
         self.bufferSize = bufferSize
@@ -98,11 +106,6 @@ class VTKLogger:
         particles = self.getParticleData()
         if not self.brownian:
             spheres, cylinders = self.getShellDataFromScheduler( )
-            #cylinders = self.getCylindricalShellData( )
-
-            if self.i == 0:
-                self.previousShells = spheres
-                self.previousCylinders = cylinders
         else:
             spheres, cylinders = [], []
 
@@ -123,11 +126,27 @@ class VTKLogger:
         self.lastTime = time
 
 
-    def writelog( self, time, index, ( particles, spheres, cylinders ) ):
+    def writelog( self, time, index, ( particles, spheres, cylinders )  ):
+        if index == 0:
+            self.previousSpheres = spheres
+            self.previousCylinders = cylinders
+
+        if not self.brownian and self.extraParticleStep:
+            # Show step where only particles have been updated.
+            index *= 2;
+            self.makeSnapshot( 'particles', particles, index, time )
+            self.makeSnapshot( 'spheres', self.previousSpheres, index, time )
+            self.makeSnapshot( 'cylinders', self.previousCylinders, index, time )
+
+            time += self.deltaT
+            index += 1
+
         self.makeSnapshot( 'particles', particles, index, time )
-        if not self.brownian:
-            self.makeSnapshot( 'spheres', spheres, index, time )
-            self.makeSnapshot( 'cylinders', cylinders, index, time )
+        self.makeSnapshot( 'spheres', spheres, index, time )
+        self.makeSnapshot( 'cylinders', cylinders, index, time )
+
+        self.previousSpheres = spheres
+        self.previousCylinders = cylinders
 
 
     def makeSnapshot( self, type, data, index='', time=None ):
@@ -202,13 +221,6 @@ class VTKLogger:
 
         return ( posList, radiusList, typeList, [] ), \
                self.processCylinders( cylinders, cylinderTypeList )
-
-
-    def getCylindricalShellData( self ):
-        # Get data from object matrix.
-        keys = self.sim.cylinderMatrix.getAll( )
-        cylinders = [ key[0].shellList[0] for key in keys ]
-        return self.processCylinders( cylinders )
 
 
     def getCuboidalSurfaceData( self ):
@@ -322,4 +334,5 @@ class DummyBox( Box ):
     def __init__( self ):
         Box.__init__( self, [ 0, 0, 0], [ 1, 0, 0], [ 0, 1, 0 ], [ 0, 0, 1 ], 
                       1e-20, 1e-20, 1e-20 ) 
+
 
