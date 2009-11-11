@@ -19,6 +19,14 @@ from log import *
 Returning a dt to the scheduler reschedules the event, -INF removes it.
 '''
 class EGFRDSimulator( ParticleSimulatorBase ):
+    """
+    Return a eGFRD simulator which contains the geometry and particles and 
+    carries out the simulation.
+
+    A cubic simulation unit cell from [0,0,0] to [L,L,L] is created, if L is 
+    the argument. 
+    """
+
     def __init__( self, worldSize ):
         self.sphereMatrix = SphereMatrix()
         self.cylinderMatrix = CylinderMatrix()
