@@ -68,7 +68,8 @@ class ReactionType( object ):
 
 
     def __str__( self ):
-        s = ''
+        s = 'k=' + str( self.k ) + ': '
+
         for i in self.reactants:
             if isinstance( i, Surface ):
                 s += str( i )
@@ -81,6 +82,7 @@ class ReactionType( object ):
         for i in self.products:
             s += i.id
             s += ' '
+
 
         return s[:-1]
 
@@ -241,7 +243,7 @@ class Particle( object ):
     def posString( self ):
         factor = 1
         return '(%.3g %.3g %.3g)' % \
-               ( self.getPos()[0 ] * factor, self.getPos()[1] * factor, 
+               ( self.getPos()[0] * factor, self.getPos()[1] * factor, 
                  self.getPos()[2] * factor ) 
 
 
@@ -845,4 +847,18 @@ class ParticleSimulatorBase( object ):
         for species in self.speciesList.values():
             buf += species.id + ':' + str( species.pool.size ) + '\t'
 
+        return buf
+
+    def dumpReactions( self ):
+        buf = 'Monomolecular reactions:\n'
+        for reaction in self.reactionTypeMap1.itervalues():
+            buf += str( reaction[0] ) + '\n'
+        buf += '\nReactions of 2 particles:\n'
+        for reaction in self.reactionTypeMap2.itervalues():
+            if reaction.products:
+                buf += str( reaction ) + '\n'
+        buf += '\nInteractions between a particle and a surface:\n'
+        for interaction in self.interactionTypeMap.itervalues():
+            if interaction.products:
+                buf += str( interaction ) + '\n'
         return buf
