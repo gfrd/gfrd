@@ -43,8 +43,22 @@ class PlanarSurface( Surface, Box ):
 
     """
 
-    def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, 
+    def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=0, 
                   name="PlanarSurface" ):
+        """Constructor.
+        
+        !origin! -- [ x0, y0, z0 ] is the center of the planar surface.
+        vectorX -- [ x1, y1, z1 ] and
+        vectorY -- [ x2, y2, z2 ] are 2 perpendicular vectors that don't have 
+        to be normalized that span the plane. For example [1,0,0] and [0,1,0]
+        for a plane at z=0.
+
+        !Lx! -- lx and 
+        !Ly! -- ly are the distances from the origin of the plane along vectorX 
+            or vectorY to an edge of the plane. PlanarSurfaces are finite.
+        Lz = dz, the thickness of the planar surface, can be omitted for Lz=0.
+
+        """
         Surface.__init__( self, name )
 
         assert numpy.dot( vectorX, vectorY ) == 0.0
@@ -99,6 +113,18 @@ class CylindricalSurface( Surface, Cylinder ):
 
     def __init__( self, origin, radius, orientation, size, 
                   name="CylindricalSurface" ):
+        """Constructor.
+        
+        !origin! -- [ x0, y0, z0 ] is the center of the cylindrical surface.
+        radius -- r is the radis of the cylinder.
+        orientation -- [ x1, y1, z1 ] is a vector that doesn't have to
+            normalized that defines the orienation of the cylinder. For 
+            example [0,0,1] for a for a cylinder along the z-axis.
+        !size! -- lz is the distances from the origin of the cylinder along 
+            the oriention vector to the end of the cylinder. So effectively
+            the half-length. CylindricalSurfaces are finite.
+
+        """
         Surface.__init__( self, name )
         Cylinder.__init__( self, origin, radius, orientation, size )
         self.defaultSingle = CylindricalSurfaceSingle
@@ -149,8 +175,10 @@ class CuboidalRegion( Surface, Box ):
     """
 
     def __init__( self, corner, size, name='world' ):
-        """corner -- = [ x0, y0, z0 ] is one corner of the cube.
-        size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
+        """ Constructor. Don't call from user script.
+
+        corner -- [ x0, y0, z0 ] is one corner of the cube.
+        size -- [ sx, sy, sz ] is the vector from the origin to the diagonal
         point.
 
         """
