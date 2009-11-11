@@ -421,7 +421,16 @@ class ParticleSimulatorBase( object ):
 
 
     def initialize( self ):
-        pass
+        # Check if user specified a surface for each species that is a product 
+        # of an interaction.
+        for interaction in self.interactionTypeMap.itervalues():
+            product = interaction.products[0]
+            if product.surface == self.defaultSurface:
+                    raise RuntimeError( 'Use addSpecies(' + product.id + 
+                                        ', someSurface), because ' +
+                                        product.id + ' seems to be ' +
+                                        'the product of interaction: ' +
+                                        str( interaction ) )
 
 
     def getClosestSurface( self, pos, ignore ):
