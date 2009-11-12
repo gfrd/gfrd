@@ -553,6 +553,10 @@ class ParticleSimulatorBase( object ):
 
 
     def addSurface( self, surface ):
+        if ( not isinstance( surface, Surface ) or
+             isinstance( surface, CuboidalRegion ) ):
+            raise RuntimeError( str( surface ) + ' is not a surface.' )
+
         self.surfaceList.append( surface )
 
 

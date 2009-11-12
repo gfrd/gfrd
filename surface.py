@@ -163,19 +163,20 @@ class CylindricalSurface( Surface, Cylinder ):
 
 class CuboidalRegion( Surface, Box ):
     """
-    DO NOT TRY TO ADD THIS AS A SURFACE TO YOUR SIMULATION.
-    
-    A region that is only used for throwing in particles. It is sort of a
-    Surface because particles for which no surface is specified are tagged
-    surface = defaultSurface, which is an instance of this class.
-    See gfrdbase.py.
+    A region that is (and can be) used for throwing in particles.
+
+    Do not try to add this as a surface to your simulator, it won't work.
+
+    It is also a Surface because particles for which no surface is 
+    specified are tagged surface = defaultSurface, which is an instance of 
+    this class. See gfrdbase.py.
 
     Movement in 3D.
 
     """
 
     def __init__( self, corner, size, name='world' ):
-        """ Constructor. Don't call from user script.
+        """ Constructor.
 
         corner -- [ x0, y0, z0 ] is one corner of the cube.
         size -- [ sx, sy, sz ] is the vector from the origin to the diagonal
