@@ -218,7 +218,7 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 // op tijdstip t
 const Real FirstPassageGreensFunction1DRad::flux_rad (const Real t) const
 {
-	return k*prob_r(0, t);
+	return this->getk()*prob_r(0, t);
 }
 
 // Berekent de flux door de radiating boundary condition als fractie van de totale flux
