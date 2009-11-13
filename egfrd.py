@@ -128,8 +128,11 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         log.info( '\n\n\t%d: t=%.3g dt=%.3g\n\tevent=%s.\n\tReactions=%d, unbindings=%d, bindings=%d, rejectedmoves=%d, errors=%d.' 
                       % ( self.stepCounter, self.t, self.dt, self.lastEvent, 
                           self.reactionEvents, self.unbindingEvents, self.bindingEvents, self.rejectedMoves, self.errors ) )
-        
+
         self.scheduler.step()
+
+        if self.particleMatrix.size == 0:
+            raise Stop( '0 particles left' )
 
         nextTime = self.scheduler.getTopTime()
         self.dt = nextTime - self.t

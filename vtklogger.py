@@ -196,8 +196,11 @@ class VTKLogger:
         posList, radiusList, typeList = [], [], []
         cylinders, cylinderTypeList = [], []
 
-        topTime = self.sim.scheduler.getTopTime()
-        for eventIndex in range( self.sim.scheduler.getSize() ):
+        numberOfShells = self.sim.scheduler.getSize()
+        if numberOfShells > 0:
+            topTime = self.sim.scheduler.getTopTime()
+
+        for eventIndex in range( numberOfShells ):
             # Get event
             event = self.sim.scheduler.getEventByIndex( eventIndex )
             object = event.getArg()
