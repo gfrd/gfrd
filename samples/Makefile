@@ -49,7 +49,8 @@ pushpull:
 .PHONY: rebind
 rebind:
 	echo
-	cd rebind && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python run.py 1 20 0 1
+	#Todo.
+	#cd rebind && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH}:../../ python run.py 1 20 0 1
 
 .PHONY: reversible
 reversible:
