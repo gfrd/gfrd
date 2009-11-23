@@ -131,6 +131,9 @@ class UnbindingReactionType( ReactionType ):
 class RepulsionReactionType( ReactionType ):
     """A + B is repulsive.
 
+    All combinations of species for which no BindingReactionType is defined 
+    are repulsive by default.
+
     """
 
     def __init__( self, s1, s2 ):
@@ -161,6 +164,8 @@ class SurfaceDirectBindingInteractionType( ReactionType ):
     """A + B_on_Surface + Surface -> C_on_Surface
     A + Surface should be repulsive.
 
+    Not yet implemented.
+
     """
 
     def __init__( self, reactantSpecies1, reactantSpecies2, 
@@ -172,6 +177,8 @@ class SurfaceDirectBindingInteractionType( ReactionType ):
 class SurfaceRepulsionInteractionType( ReactionType ):
     """A + Surface is repulsive.
 
+    When no SurfaceBindingInteractionType is defined for a combination of 
+    species and surface, they are repulsive by default.
     """
 
     def __init__( self, species, surface ):
@@ -201,6 +208,9 @@ class SurfaceDirectUnbindingReactionType( ReactionType ):
 
     After unbinding from a surface, particle2 always ends up on the 
     defaultSurface (world), and particle1 stays on the surface it was on.
+
+    Not yet implemented.
+
     """
 
     def __init__( self, reactantSpecies, productSpecies1, productSpecies2, k ):
