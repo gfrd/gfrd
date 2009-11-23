@@ -1,7 +1,7 @@
 #/usr/bin/bash
 
 .PHONY: all
-all : bd gfrd hardbody irreversible mapk pushpull rebind reversible tf
+all : bd dimer gfrd hardbody irreversible mapk membrane pushpull rebind reversible single surfaces tf
 
 DATA=data/run/files.pvd data/run/static.pvd data/run/files/
 PYTHONPATH_NEW=${PYTHONPATH}:../../
@@ -11,16 +11,15 @@ bd:
 	echo
 	cd bd_test && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH_NEW} python irr.py data/output.out 0.000001 10
 
-.PHONY: cylinders
-cylinders:
+.PHONY: dimer
 	echo
-	cd cylinders && rm -rf $(DATA) && LOGLEVEL=DEBUG PYTHONPATH=$(PYTHONPATH_NEW) python run.py
+	#Todo.
 
 .PHONY: gfrd
 gfrd:
 	echo
-	# cd gfrd && rm -rf $(DATA) && LOGLEVEL=ERROR  
-	# PYTHONPATH=$PYTHONPATH_NEW python single-gfrd.py
+	#Todo.
+	#cd gfrd && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=$PYTHONPATH_NEW python single-gfrd.py
 
 .PHONY: hardbody
 hardbody:
@@ -40,7 +39,8 @@ mapk:
 .PHONY: membrane
 membrane:
 	echo
-	cd membrane && rm -rf $(DATA) && LOGLEVEL=DEBUG PYTHONPATH=${PYTHONPATH_NEW} python run.py
+	#Todo.
+	#cd membrane && rm -rf $(DATA) && LOGLEVEL=DEBUG PYTHONPATH=${PYTHONPATH_NEW} python run.py
 
 .PHONY: pushpull
 pushpull:
@@ -63,6 +63,12 @@ reversible:
 single:
 	echo
 	cd single && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH_NEW} python run.py single.0.out 5e-4 3e-8 100
+
+
+.PHONY: surfaces
+cylinders:
+	echo
+	cd cylinders && rm -rf $(DATA) && LOGLEVEL=DEBUG PYTHONPATH=$(PYTHONPATH_NEW) python run.py
 
 
 .PHONY: tf
