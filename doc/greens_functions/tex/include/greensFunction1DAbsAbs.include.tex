@@ -1,0 +1,24 @@
+
+\subsection{1D Abs Abs}
+
+\paragraph{Green's function}
+\begin{align}
+  v(z,t|z',t'=0) = \frac{2}{L}\sum_{n=1}^{\infty}
+  e^{-D_1n^2\pi^2t/L^2} \sin\frac{n\pi z}{L} \sin\frac{n\pi z'}{L}.
+\end{align}
+
+\paragraph{Survival probability}
+\begin{align}
+  S_z(t) = \int_0^L v dz = \frac{4}{\pi} \sum_{m=0}^{\infty} \frac{1}{2m+1}
+  e^{-D_1(2m+1)^2\pi^2t/L^2} \sin\frac{(2m+1)\pi z'}{L}.
+\end{align}
+
+\paragraph{Propensity function}
+\begin{align}
+  q_{z=0}(t) &= \left.D_1 \pd{v}{z}\right|_{z=0} = \frac{2\pi D_1}{L^2} 
+  \sum_{n=1}^{\infty} e^{-D_1n^2\pi^2t/L^2} n \sin\frac{n\pi z'}{L},\\
+  q_{z=L}(t) &= \left.- D_1 \pd{v}{z}\right|_{z=L} = \frac{2\pi D_1}{L^2} 
+  \sum_{n=1}^{\infty} e^{-D_1n^2\pi^2t/L^2} (-1)^{n+1} n \sin\frac{n\pi 
+  z'}{L}.
+\end{align}
+

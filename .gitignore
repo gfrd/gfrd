@@ -46,3 +46,5 @@ lib
 *.png
 *.jpg
 *.jpeg
+*.aux
+*.pdf
