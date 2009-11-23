@@ -218,8 +218,6 @@ class SurfaceDirectUnbindingReactionType( ReactionType ):
                                [ productSpecies1, productSpecies2 ], k )
 
 
-##############################################################################
-
 class Reaction:
     def __init__( self, type, reactants, products ):
         self.type = type
@@ -252,13 +250,13 @@ class Particle( object ):
 
     def posString( self ):
         factor = 1
-        return '(%.3g %.3g %.3g)' % \
+        return '(%.2g %.2g %.2g)' % \
                ( self.getPos()[0] * factor, self.getPos()[1] * factor, 
-                 self.getPos()[2] * factor ) 
+                       self.getPos()[2] * factor ) 
 
 
     def __str__( self ):
-        return ( "( '" + self.species.id + "', " + str( self.species.surface ) +
+        return ( "( " + self.species.id + ", " + str( self.species.surface ) +
                  ", " + str( self.serial ) + ' ). pos = ' + self.posString() )
 
 
@@ -444,9 +442,9 @@ class ParticleSimulatorBase( object ):
 
 
     def getClosestSurface( self, pos, ignore ):
-        """Return sorted list of pairs:
-        - distance to surface
-        - surface itself
+        """Return sorted list of tuples with:
+            - distance to surface
+            - surface itself
 
         We can not use objectmatrix, it would miss a surface if the origin of the 
         surface would not be in the same or neighboring cells as pos.
@@ -454,24 +452,30 @@ class ParticleSimulatorBase( object ):
         """
         surfaces = [ None ]
         distances = [ INF ]
+
         ignoreSurfaces = []
         for obj in ignore:
             if isinstance( obj.surface, Surface ):
-                # Ignore surface that particle is currently on.
+                # For example ignore surface that particle is currently on.
                 ignoreSurfaces.append( obj.surface )
+
         for surface in self.surfaceList:
             if surface not in ignoreSurfaces:
                 posTransposed = cyclicTranspose( pos, surface.origin, 
                                                  self.worldSize )
                 distanceToSurface = surface.signedDistanceTo( posTransposed )
-                if distanceToSurface < 0.0:
-                    self.errors += 1
                 distances.append( distanceToSurface )
                 surfaces.append( surface )
+
         return min( zip( distances, surfaces ) )
 
 
     def getClosestSurfaceWithinRadius( self, pos, radius, ignore ):
+        """Return sorted list of tuples with:
+            - distance to surface
+            - surface itself
+
+        """
         distanceToSurface, closestSurface = self.getClosestSurface( pos, 
                                                                     ignore ) 
         if distanceToSurface < radius:
@@ -666,8 +670,9 @@ class ParticleSimulatorBase( object ):
                      isinstance( surface, CuboidalRegion ) ):
                     distance, closestSurface = self.getClosestSurface( position,
                                                                        [] )
-                    if ( closestSurface and distance < 
-                             closestSurface.minimalOffset( species.radius ) ):
+                    if ( closestSurface and
+                         distance < closestSurface.minimalDistanceFromSurface( 
+                                    species.radius ) ):
                         log.info( '\t%d-th particle rejected. To close to '
                                   'surface. I will keep trying.' % i )
                         create = False

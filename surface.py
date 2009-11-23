@@ -90,18 +90,19 @@ class PlanarSurface( Surface, Box ):
                              random.uniform( -1, 1 ) * self.vectorY
 
 
-    def minimalOffset( self, radius ):
+    def minimalDistanceFromSurface( self, radius ):
         """A particle that is not on this surface has to be at least this far 
-        away from the z = 0-plane of the surface.
+        away from the surface (measured from the origin of particle to the z = 
+        0 plane of the surface).
 
         """
-        return (self.Lz + radius) * UNBIND_SAFETY
+        return (self.Lz + radius) * MINIMAL_SEPERATION_FACTOR
 
 
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
         return pos + random.choice( [ -1, 1 ] ) * \
-                     self.minimalOffset( radius )  * self.unitZ
+                     self.minimalDistanceFromSurface( radius )  * self.unitZ
 
 
 class CylindricalSurface( Surface, Cylinder ):
@@ -147,17 +148,18 @@ class CylindricalSurface( Surface, Cylinder ):
         return self.origin + random.uniform( -1, 1 ) * self.vectorZ
 
 
-    def minimalOffset( self, radius ):
+    def minimalDistanceFromSurface( self, radius ):
         """A particle that is not on this surface has to be at least this far 
-        away from the central axis of the surface.
+        away from the surface (measured from the origin of the particle to the 
+        the central axis of the surface.
 
         """
-        return ( self.radius + radius ) * UNBIND_SAFETY
+        return ( self.radius + radius ) * MINIMAL_SEPERATION_FACTOR
 
 
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
-        x, y = randomVector2D( self.minimalOffset( radius ) )
+        x, y = randomVector2D( self.minimalDistanceFromSurface( radius ) )
         return pos + x * self.unitX + y * self.unitY
 
 

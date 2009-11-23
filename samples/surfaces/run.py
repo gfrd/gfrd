@@ -127,7 +127,7 @@ def run( ):
         try:
             vtklogger.log()
             s.step()
-        except Stop, message:
+        except Exception, message:
             print message
             break
     vtklogger.stop()
