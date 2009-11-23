@@ -217,7 +217,7 @@ class BDSimulatorCoreBase( object ):
             return
 
         # 3. Try binding with surface.
-        surface, distanceToSurface = \
+        distanceToSurface, surface = \
             self.main.getClosestSurfaceWithinRadius( newpos, species.radius,
                                                      ignore=[ particle, ] )
         if surface:

@@ -475,9 +475,9 @@ class ParticleSimulatorBase( object ):
         distanceToSurface, closestSurface = self.getClosestSurface( pos, 
                                                                     ignore ) 
         if distanceToSurface < radius:
-            return  closestSurface, distanceToSurface
+            return distanceToSurface, closestSurface
         else:
-            return None, INF
+            return INF, None
 
 
     def reconstructParticleMatrix( self ):
