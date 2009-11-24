@@ -1,24 +1,28 @@
+GFRD Simulator
 
-:author: Koichi Takahashi
-
-
-E-Cell Particle Dynamics Prototype
-Written by Koichi Takahashi
+Original code by Koichi Takahashi.
+Adapted by Thomas Miedema and Laurens Bossen.
 
 Copyright (C) 2005-2008 The E-Cell Project
+Copyright (C) 2009 Fom Institute Amolf, The Netherlands.
 
 
 
 About this package
 ========================
 
-This package is tantatively named E-Cell Particle Dynamics Prototype
-(EPDP).  It currently implements the enhanced Greens Function Reaction
-Dynamics (eGFRD) and brute-force Brownian Dynamics (BD) simulation
-algorithms.  Implementation of the original version of GFRD will possibly
-be added in future.  The code is implemented with the hope that it will
-eventually be ported to the E-Cell System Version 4 to become part of
-the multi-algorithm, multi-space simulation platform.
+This package is started of from version 0.3 of the E-Cell Particle Dynamics
+Prototype (epdp):
+http://www.e-cell.org/ecell/software/releases/epdp-0.3/epdp-0.3.tar.gz
+
+Just as that package it implements the enhanced Greens Function Reaction
+Dynamics (eGFRD), and brute-force Brownian Dynamics (BD) simulation
+algorithms. Additionaly it support reaction-diffusion on and with 1D
+and 2D surfaces.
+
+The code is implemented with the hope that it will eventually be
+included into the epdp package, and also function as a standalone GFRD
+implementation.
 
 The eGFRD algorithm is used and described in the following paper:
 K. Takahashi, S. Tanase-Nicola, P.R. ten Wolde, 2009 (in preparation).
@@ -61,11 +65,13 @@ code had been largely finished and had been used in simulation experiments
 in study of various biochemical systems including dual-phosphorylation
 pathways[4].
 
-Some features planned to be added are; surfaces, interactions between
-membrane proteins and proteins in solution, optimistic discrete-event
-scheduling for massive parallelization, connection to non-spatial 
-simulation methods such as ODE and Gillespie methods.
+Thomas Miedema and Laurens Bossen, while masters students in the group of
+Pieter Rein ten Wolde at Amolf, added support for reaction-diffusion on
+and with 1D and 2D surfaces. Laurens implemented the 1D and 2D Greens
+functions in C++, Thomas implemented the algorithm in Python.
 
+Some features planned to be added are; interactions between
+membrane proteins and proteins in solution.
 
 [1] Green's-function reaction dynamics: a particle-based approach for
     simulating biochemical networks in time and space; 
