@@ -18,6 +18,10 @@ class Delegate( object ):
         return self.method( self.obj, *arg )
 
 
+def xor( a, b ):
+    return ( ( a and not b ) or ( b and not a ) )
+
+
 ### Float comparison functions. ###
 def feq( a, b, typical=1, tolerance=TOLERANCE ):
     """Return True if a and b are equal, subject to given tolerances. Float 

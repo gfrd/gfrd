@@ -23,7 +23,7 @@ class NoSpace( Exception ):
 
 
 class Species( object ):
-    def __init__( self, id, D, radius, surface ):
+    def __init__( self, id, D=None, radius=None, surface=None ):
         self.id = id
         self.D = D
         self.radius = radius
@@ -89,9 +89,8 @@ class ReactionType( object ):
 
 
 #Reaction Types.
-
 class UnimolecularReactionType( ReactionType ):
-    """A -> B
+    """A -> B. Deprecated.
 
     """
     def __init__( self, s1, p1, k ):
@@ -99,7 +98,7 @@ class UnimolecularReactionType( ReactionType ):
 
 
 class DecayReactionType( ReactionType ):
-    """A -> None
+    """A -> None. Deprecated.
 
     """
     def __init__( self, s1, k ):
@@ -107,23 +106,23 @@ class DecayReactionType( ReactionType ):
 
 
 class BindingReactionType( ReactionType ):
-    """A + B -> C
+    """A + B -> C. Deprecated.
 
     """
     def __init__( self, s1, s2, p1, k ):
         ReactionType.__init__( self, [ s1, s2 ], [ p1, ], k )
-        # Todo. These are not used.
-        D = s1.D + s2.D
-        sigma = s1.radius + s2.radius
+        # Todo. These were not used, were they?
+        #D = s1.D + s2.D
+        #sigma = s1.radius + s2.radius
 
 
 class UnbindingReactionType( ReactionType ):
-    """C -> A + B
+    """C -> A + B. Deprecated.
 
     """
     def __init__( self, s1, p1, p2, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, p2 ], k )
- 
+
 
 class RepulsionReactionType( ReactionType ):
     """A + B is repulsive.
@@ -134,15 +133,13 @@ class RepulsionReactionType( ReactionType ):
     """
     def __init__( self, s1, s2 ):
         ReactionType.__init__( self, [ s1, s2 ], [], 0.0 )
-        # Todo. These are not used.
-        D = s1.D + s2.D
-        sigma = s1.radius + s2.radius
+        # Todo. These were not used, were they?
+        #D = s1.D + s2.D
+        #sigma = s1.radius + s2.radius
 
 
 class SurfaceBindingReactionType( ReactionType ):
-    """Surface binding.
-
-    A + Surface -> B_on_Surface
+    """A + Surface -> B_on_Surface. Deprecated.
 
     """
     def __init__( self, reactantSpecies, productSpecies,  k ):
@@ -153,7 +150,8 @@ class SurfaceBindingReactionType( ReactionType ):
 
 
 class SurfaceDirectBindingReactionType( ReactionType ):
-    """A + B_on_Surface + Surface -> C_on_Surface
+    """A + B_on_Surface + Surface -> C_on_Surface. Deprecated.
+
     A + Surface should be repulsive.
 
     Not yet implemented.
@@ -177,7 +175,7 @@ class SurfaceRepulsionReactionType( ReactionType ):
 
 
 class SurfaceUnbindingReactionType( ReactionType ):
-    """A_on_Surface -> B
+    """A_on_Surface -> B. Deprecated.
     
     Surface unbinding. Poisson process.
 
@@ -191,7 +189,7 @@ class SurfaceUnbindingReactionType( ReactionType ):
 
 
 class SurfaceDirectUnbindingReactionType( ReactionType ):
-    """A_on_Surface -> B_on_Surface + C
+    """A_on_Surface -> B_on_Surface + C. Deprecated.
 
     After unbinding from a surface, particle2 always ends up on the 
     defaultSurface (world), and particle1 stays on the surface it was on.
@@ -599,7 +597,7 @@ class ParticleSimulatorBase( object ):
         return surface
 
 
-    def addSpecies( self, id, D, radius, surface=None ):
+    def addSpecies( self, id, D=None, radius=None, surface=None ):
         """ Add a new species. A species is a type of particles.
 
         id      -- a unique name.
@@ -608,18 +606,22 @@ class ParticleSimulatorBase( object ):
         surface -- the only surface this species can exist on.
 
         """
-        if isinstance( id, Species ):
-            # Backward compatibility. Remove eventually. addSpecies used to 
-            # be: def addSpecies( self, species ):
-            species = id
+        if surface == None:
+            # It has to be known on which surface this species can live.  
+            # If no surface specified, it can only live in the cytosol.
+            surface = self.defaultSurface
         else:
-            if surface == None:
-                # It has to be known on which surface this species can live.  
-                # If no surface specified, it can only live in the cytosol.
-                surface = self.defaultSurface
-            else:
-                assert any( surface == s for s in self.surfaceList ), \
-                       '%s not in surfaceList.' % ( surface )
+            assert any( surface == s for s in self.surfaceList ), \
+                   '%s not in surfaceList.' % ( surface )
+
+        if isinstance( id, Species ):
+            # Backward compatibility. Remove eventually, those default 
+            # arguments for D and radius and using id as a species is really 
+            # ugly.  This method used to be: def addSpecies( self, species ):
+            species = id
+            species.surface = surface
+        else:
+            assert D and radius
             species = Species( id, D, radius, surface ) 
 
         assert not self.speciesList.has_key( species.id ), \
@@ -630,17 +632,57 @@ class ParticleSimulatorBase( object ):
         return species
 
 
-    def addReactionType( self, rt ):
+    def isSurfaceBindingReaction( self, rt ):
+        currentSurface = rt.reactants[0].surface
+        targetSurface = rt.products[0].surface
 
+        return( currentSurface == self.defaultSurface and
+                targetSurface != self.defaultSurface )
+
+
+    def isSurfaceUnbindingReaction( self, rt ):
+        currentSurface = rt.reactants[0].surface
+        targetSurface = rt.products[0].surface
+
+        return ( currentSurface != self.defaultSurface and
+                 targetSurface == self.defaultSurface )
+
+
+    def isDirectSurfaceBindingReaction( self, rt ):
+        currentSurface = rt.reactants[0].surface
+        targetSurface1 = rt.products[0].surface
+        targetSurface2 = rt.products[1].surface
+
+        return( currentSurface == self.defaultSurface and
+                xor( targetSurface1 != self.defaultSurface,
+                     targetSurface2 != self.defaultSurface ) )
+
+
+    def isDirectSurfaceUnbindingReaction( self, rt ):
+        currentSurface = rt.reactants[0].surface
+        targetSurface1 = rt.products[0].surface
+        targetSurface2 = rt.products[1].surface
+
+        return( currentSurface != self.defaultSurface and
+                xor( targetSurface1 == self.defaultSurface,
+                     targetSurface2 == self.defaultSurface ) )
+
+
+    def addReaction( self, reactants, products, k ): 
+        self.addReactionType( ReactionType( reactants, products, k ) )
+
+
+    def addReactionType( self, rt ):
         numReactants = len( rt.reactants )
-        species1 = rt.reactants[0]
 
         if numReactants == 1:
+            species1 = rt.reactants[0]
+
             if len( rt.products ) == 1:
-                if( isinstance( rt, SurfaceBindingReactionType ) ):
+                if( self.isSurfaceBindingReaction( rt ) ):
                     # Surface binding is not a Poisson process, so this 
-                    # reaction should not be added to the reaction list but 
-                    # added to the interaction list.
+                    # reaction should not be added to the reaction list but to 
+                    # the interaction list.
                     surface = rt.products[0].surface
                     self.interactionTypeMap[( species1, surface )] = rt
                     return

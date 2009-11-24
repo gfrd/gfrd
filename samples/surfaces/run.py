@@ -48,17 +48,29 @@ def run( ):
     DNA = True
 
     if MEMBRANE:
-        membrane = s.addPlanarSurface( [L/2,L/2,2*L/10], [1,0,0], [0,1,0],
-                                       L/2, L/2, radius, 'membrane' )
+        membrane = s.addPlanarSurface( origin=[ L / 2, L / 2, 2 * L / 10 ],
+                                       vectorX=[ 1, 0, 0 ],
+                                       vectorY=[ 0, 1, 0 ],
+                                       Lx=(L / 2),
+                                       Ly=(L / 2),
+                                       Lz=radius,
+                                       name='membrane' )
 
     if MEMBRANE2:
-        membrane2 = s.addPlanarSurface( [L/2,L/2,8*L/10], [1,0,0], [0,1,0],
-                                        L/2, L/2, radius, 'membrane2' )
+        membrane2 = s.addPlanarSurface( origin=[ L / 2, L / 2, 8 * L / 10 ],
+                                        vectorX=[ 1, 0, 0 ], 
+                                        vectorY=[ 0, 1, 0 ],
+                                        Lx=(L / 2),
+                                        Ly=(L / 2),
+                                        Lz=radius,
+                                        name='membrane2' )
 
     if DNA:
-        dna = s.addCylindricalSurface( [L/2,L/2,L/2], 2*radius, [0,1,0], L/2,
-                                       'dna')
-
+        dna = s.addCylindricalSurface( origin=[ L / 2, L / 2, L / 2 ],
+                                       radius=radius,
+                                       orientation=[ 0, 1, 0 ],
+                                       size=(L / 2),
+                                       name='dna' )
 
     ''' Species.
 
@@ -106,75 +118,69 @@ def run( ):
     ''' Reactions.
 
     Usage:
-        s.addReactionType( SomeReactionType( arguments ) )
+        s.addReaction( [reactants], [products], rate )
 
-    Options (see ReactionTypes in gfrdbase.py):
-        - UnimolecularReactionType( reactant, product, k )
-        - DecayReactionType( reactant, k )
-        - BindingReactionType( reactant1, reactant2, product, k )
-        - UnbindingReactionType( reactant, product1, product2, k )
+    The reactant and product species for every Reaction should be on the same 
+    surface.
 
-    The reactant and product species for every ReactionType should be on the 
-    same surface.
-
-    Combinations of species for which no BindingReactionType is defined are 
-    repulsive by default.
+    Combinations of species which do not appear together as reactants in any 
+    reaction are made repulsive by default.
 
     '''
     kf = 1e2
     kb = 1e2
 
     if WORLD:
-        s.addReactionType( BindingReactionType( Aw, Aw, Bw, kf ) )
-        s.addReactionType( UnbindingReactionType( Bw, Aw, Aw, kb ) )
+        s.addReaction( [ Aw, Aw ],   [ Bw ],       kf )
+        s.addReaction( [ Bw ],       [ Aw, Aw ],   kb )
 
     if MEMBRANE:
-        s.addReactionType( BindingReactionType( Am, Am, Bm, kf ) )
-        s.addReactionType( UnbindingReactionType( Bm, Am, Am, kb ) )
+        s.addReaction( [ Am, Am ],   [ Bm ],       kf )
+        s.addReaction( [ Bm ],       [ Am, Am ],   kb )
 
     if MEMBRANE2:
-        s.addReactionType( BindingReactionType( Am2, Am2, Bm2, kf ) )
-        s.addReactionType( UnbindingReactionType( Bm2, Am2, Am2, kb ) )
+        s.addReaction( [ Am2, Am2 ], [ Bm2 ],      kf )
+        s.addReaction( [ Bm2 ],      [ Am2, Am2 ], kb )
 
     if DNA:
-        s.addReactionType( BindingReactionType( Ad, Ad, Bd, kf ) )
-        s.addReactionType( UnbindingReactionType( Bd, Ad, Ad, kb ) )
+        s.addReaction( [ Ad, Ad ],   [ Bd ],       kf )
+        s.addReaction( [ Bd ],       [ Ad, Ad ],   kb )
 
 
-    ''' Surface binding interactions.
+    ''' Surface binding reactions.
 
     Usage:
-        s.addReactionType( SurfaceBindingReactionType( reactant, product, k ) )
+        s.addReaction( [reactant], [product], rate ) )
 
-    The reactant species for every SurfaceBindingInteractionType should be a 
+    The reactant species for every surface binding reaction should be a 
     species that can only exist in the 'world'. The product species should 
     have been added to the simulator with a second argument defining the 
     surface it can live on.
 
-    When no SurfaceBindingInteractionType is defined for a combination of 
-    species and surface, they are repulsive by default.
+    When no surface binding reaction is defined for a combination of a species 
+    and a surface, they are made repulsive by default.
 
     '''
     kon = 1e2
     koff = 1e2
 
     if MEMBRANE and WORLD:
-        s.addReactionType( SurfaceBindingReactionType( Aw, Am, kon ) )
-        s.addReactionType( SurfaceBindingReactionType( Bw, Bm, kon ) )
+        s.addReaction( [ Aw ],  [ Am ],  kon )
+        s.addReaction( [ Bw ],  [ Bm ],  kon )
 
     if MEMBRANE2 and WORLD:
-        s.addReactionType( SurfaceBindingReactionType( Aw, Am2, kon ) )
-        s.addReactionType( SurfaceBindingReactionType( Bw, Bm2, kon ) )
+        s.addReaction( [ Am2 ], [ Am2 ], kon )
+        s.addReaction( [ Bm2 ], [ Bm2 ], kon )
 
     if DNA and WORLD:
-        s.addReactionType( SurfaceBindingReactionType( Aw, Ad, kon ) )
-        s.addReactionType( SurfaceBindingReactionType( Bw, Bd, kon ) )
+        s.addReaction( [ Aw ],  [ Ad ],  kon )
+        s.addReaction( [ Bw ],  [ Bd ],  kon )
 
 
     ''' Surface unbinding reactions.
 
     Usage:
-        s.addReactionType( SurfaceUnBindingReactionType( reactant, product, k ) )
+        s.addReaction( [reactant], [product], k ) )
 
     Unbinding is a Poissonian reaction, from a surface to the 'world'.
 
@@ -184,14 +190,14 @@ def run( ):
 
     '''
     if MEMBRANE and WORLD:
-        s.addReactionType( SurfaceUnbindingReactionType( Am, Aw, koff ) )
-        s.addReactionType( SurfaceUnbindingReactionType( Bm, Bw, koff ) )
+        s.addReaction( [ Am ], [ Aw ], koff )
+        s.addReaction( [ Bm ], [ Bw ], koff )
     if MEMBRANE2 and WORLD:
-        s.addReactionType( SurfaceUnbindingReactionType( Am2, Aw, koff ) )
-        s.addReactionType( SurfaceUnbindingReactionType( Bm2, Bw, koff ) )
+        s.addReaction( [ Am2 ], [ Aw ], koff )
+        s.addReaction( [ Bm2 ], [ Bw ], koff )
     if DNA and WORLD:
-        s.addReactionType( SurfaceUnbindingReactionType( Ad, Aw, koff ) )
-        s.addReactionType( SurfaceUnbindingReactionType( Bd, Bw, koff ) )
+        s.addReaction( [ Ad ], [ Aw ], koff )
+        s.addReaction( [ Bd ], [ Bw ], koff )
 
 
     '''
@@ -202,7 +208,7 @@ def run( ):
         if MEMBRANE and MEMBRANE2:
             # Add world particles inside the two planes.
             # Note that a CuboidalRegion is defined by 2 corners.
-            box1 = CuboidalRegion( [0,0,L*2/10], [L,L,L*8/10] )
+            box1 = CuboidalRegion( [ 0, 0, 2 * L / 10 ], [ L, L, 8 * L / 10 ] )
             s.throwInParticles( Bw, 2, box1 )
         else:
             # Particles are added to world (3D) by default.
@@ -227,7 +233,6 @@ def run( ):
     for i in range( 200 ):
         try:
             vtklogger.log()
-            print i
             s.step()
         except RuntimeError, message:
             print message

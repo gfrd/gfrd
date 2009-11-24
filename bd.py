@@ -182,7 +182,7 @@ class BDSimulatorCoreBase( object ):
         neighbors = self.getParticlesWithinRadiusNoSort( newpos, species.radius,
                                                          ignore=[ particle, ] )
 
-        # 2. Try reaction of 2 particles, even if newpos also overlaps with i 
+        # 2. Try reaction of 2 particles, even if newpos also overlaps with 
         # surface. 
         if neighbors:
             if len( neighbors ) >= 2:
@@ -294,9 +294,10 @@ class BDSimulatorCoreBase( object ):
             productSpecies = rt.products[0]
             radius = productSpecies.radius
     
-            if isinstance( rt, SurfaceUnbindingReactionType ):
+            if( self.main.isSurfaceUnbindingReaction( rt, currentSurface ) ):
                 newpos = currentSurface.randomUnbindingSite( oldpos, radius )
-            elif isinstance( rt, SurfaceBindingInteractionType ):
+
+            elif( self.main.isSurfaceBindingReaction( rt, currentSurface ) ):
                 # Todo. Does this obey detailed balance?
                 # Select position on surface with z = 0.
                 newpos, _ = productSpecies.surface.projectedPoint( oldpos )
@@ -333,8 +334,7 @@ class BDSimulatorCoreBase( object ):
                 rnd = numpy.random.uniform()
                 pairDistance = drawR_gbd( rnd, radius12, self.dt, D12 )
 
-                if isinstance( rt, SurfaceDirectUnbindingReactionType ):
-                    # Direct unbinding.
+                if( self.main.isDirectSurfaceUnbindingReaction( rt ) ):
                     newpos1 = oldpos
                     # Particle2 ends up in world (defaultSurface).
                     # Todo. Does this obey detailed balance?
@@ -383,7 +383,9 @@ class BDSimulatorCoreBase( object ):
 
 
     def fireReaction2( self, particle1, particle2, rt ):
-        # Todo. Direct binding.
+        #if( self.main.isDirectSurfaceBindingReaction( rt ) ):
+            # Todo. Direct binding.
+
         assert particle1.surface == particle2.surface
 
         pos1 = particle1.pos.copy()

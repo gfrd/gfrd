@@ -1269,7 +1269,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         elif len( rt.products ) == 1:
             productSpecies = rt.products[0]
 
-            if isinstance( rt, SurfaceUnbindingReactionType ):
+            if ( self.isSurfaceUnbindingReaction( rt ) ):
                 newpos = \
                     currentSurface.randomUnbindingSite( oldpos, 
                                                         productSpecies.radius )
@@ -1281,9 +1281,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 # After unbinding, always clear target volume. 
                 self.clearVolume( newpos, productSpecies.radius )
             else:
-                if isinstance( rt, SurfaceBindingReactionType ):
+                if( self.isSurfaceBindingReaction( rt ) ):
                     # Todo. Does this obey detailed balance?
-                    newpos, _ = rt.products[0].surface.projectedPoint( oldpos )
+                    newpos, _ = productSpecies.surface.projectedPoint( oldpos )
 
                     # Because we do +1 at end of this method.
                     self.reactionEvents -= 1
