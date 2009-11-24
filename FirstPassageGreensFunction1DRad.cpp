@@ -33,7 +33,7 @@ double FirstPassageGreensFunction1DRad::tan_f (double x, void *p)
 	}
 }
 
-// Berekent de wortels van tan(aL)=-a*D/k
+// Calculates the roots of tan(aL)=-ak/h
 const Real FirstPassageGreensFunction1DRad::a_n(const int n) const
 {
 	const Real L(this->getL());			// L=length of domain=2*a
@@ -41,8 +41,8 @@ const Real FirstPassageGreensFunction1DRad::a_n(const int n) const
 	Real upper, lower;
 
 	if ( h*L < 1 )
-	{	lower = (n-1)*M_PI + 1E-10;	// 0.001 om ervoor te zorgen dat hij niet precies
-		upper =  n   *M_PI - 1E-10;	// de overgang van -oneindig naar +oneindig meeneemt
+	{	lower = (n-1)*M_PI + 1E-10;	// 1E-10 to make sure that he doesn't include the transition
+		upper =  n   *M_PI - 1E-10;	// (asymptotic) from infinity to -infinity
 	}
 	else
 	{	lower = (n-1)*M_PI + M_PI_2 + 1E-10;
@@ -95,8 +95,8 @@ const Real FirstPassageGreensFunction1DRad::Cn (const Real a_n, const Real t) co
 	return std::exp(-D*a_n*a_n*t);
 }
 
-// Berekent de kans dat het deeltje zich nog in het domein bevindt op tijdstip t, de survival probability
-// Het domein is van -r to r (r0 zit hier dus tussen!!)
+// Calculates the probability of finding the particle inside the domain at time t, the survival probability
+// The domein is from -r to r (r0 is in between!!)
 const Real FirstPassageGreensFunction1DRad::p_survival (const Real t) const
 {
 	const Real D(this->getD());
@@ -128,7 +128,7 @@ const Real FirstPassageGreensFunction1DRad::p_survival (const Real t) const
 }
 
 
-// Berekent de kansdichtheid om het deeltje op plaats z te vinden op tijdstip t
+// Calculates the probability density of finding the particle at location r at time t.
 const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) const
 {
 	const Real L(this->getL());
@@ -179,15 +179,15 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 	return 2.0*sum;
 }
 
-// Berekent de kans om het deeltje op plaats z te vinden op tijdstip t, gegeven dat het deeltje
-// zich nog in het domein bevindt.
+// Calculates the probability density of finding the particle at location z at timepoint t, given
+// that the particle is still in the domain.
 const Real FirstPassageGreensFunction1DRad::calcpcum (const Real r, const Real t) const
 {
 	const Real r_corr(r/this->l_scale);		// BEWARE: HERE THERE IS SCALING OF R!
-	return prob_r (r_corr, t)/p_survival (t);
+	return prob_r (r_corr, t)/p_survival (t);	// p_survival is unscaled!
 }
 
-// Berekent de totale kansflux die het systeem verlaat op tijdstip t
+// Calculates the total probability flux leaving the domain at time t
 const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 {	Real An;
 	double sum = 0, term = 0, prev_term = 0;
@@ -214,20 +214,21 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 	return sum*2.0*D;
 }
 
-// Berekent de kansflux die het systeem verlaat door de radiating boundary condition op x=0
-// op tijdstip t
+// Calculates the probability flux leaving the domain through the radiative boundary at time t
 const Real FirstPassageGreensFunction1DRad::flux_rad (const Real t) const
 {
 	return k*prob_r(0, t);
 }
 
-// Berekent de flux door de radiating boundary condition als fractie van de totale flux
-// Hiermee kunnen we de relatieve kans bepalen dat het deeltje het systeem heeft verlaten door
-// de radiating boundary en niet door de absorbing boundary.
+// Calculates the flux leaving the domain through the radiative boundary as a fraction of the
+// total flux. This is the probability that the particle left the domain through the radiative
+// boundary instead of the absorbing boundary.
 const Real FirstPassageGreensFunction1DRad::fluxRatioRadTot (const Real t) const
 {	return flux_rad (t)/flux_tot (t);
 }
 
+// Determine which event has occured, an escape or a reaction. Based on the fluxes through the
+// boundaries at the given time. Beware: if t is not a first passage time you still get an answer!
 const EventType
 FirstPassageGreensFunction1DRad::drawEventType( const Real rnd, const Real t ) const
 {
@@ -276,10 +277,10 @@ double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
                 fabs(prev_term/sum) > EPSILON*1.0 ||
                 n <= MIN_TERMEN );	
 
-	return 1.0 - 2.0*sum - params->rnd;		// het snijpunt vinden met het random getal
+	return 1.0 - 2.0*sum - params->rnd;		// find the intersection with the random number
 }
 
-// Trekt een tijd uit de propensity function, een first passage time.
+// Draws the first passage time from the propendity function
 const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 {
 	const Real L(this->getL());
@@ -307,6 +308,7 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 
 
 	// produce the coefficients and the terms in the exponent and put them in the params structure
+	// This is not very efficient at this point, coefficients should be calculated on demand->TODO
 	for (int n=0; n<MAX_TERMEN; n++)
 	{
 		An = a_n (n+1);			// get the n-th root of tan(alfa*L)=alfa/-k
@@ -338,9 +340,6 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
         Real low( t_guess );
         Real high( t_guess );
 
-//std::cout << " t_guess: " << t_guess <<
-//	     " value: " << value <<
-//	     std::endl;
 
         // scale the interval around the guess such that the function straddles
         if( value < 0.0 )               // if the guess was too low
@@ -476,15 +475,3 @@ const Real FirstPassageGreensFunction1DRad::drawR (const Real rnd, const Real t)
 	return z*this->l_scale;				// return the drawn place
 }
 
-/*
-p = S(t) = intergral (0,l) v(z,t) uitrekenen
-first passage tijd trekken uit 1-S(t)
-
-p = v(z,t) uitrekenen (kans om deeltje op z te vinden op tijdstip t)
-p = v(z,t)/S(t) uitrekenen (kans om deeltje op z te vinden wetende dat hij nog in het domein zit)
-plaats trekken uit pc om deeltje daar te vinden op tijdstip t
-
-q = q(t) = -dS(t)/dt uitrekenen (totale flux uit het systeem op tijdstip t)
-q = q(t,0) uitrekenen (flux door boundary z=0)
-relatieve flux uitrekenen
-*/

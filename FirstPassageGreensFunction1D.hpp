@@ -24,13 +24,13 @@
 class FirstPassageGreensFunction1D
 {
 private:
-	static const Real L_TYPICAL = 1E-8; // measure of 'sameness' when comparing floating points numbers
-	static const Real T_TYPICAL = 1E-6; // This is a typical length scale of the system, may not be true!
-	static const Real EPSILON = 1E-12;  // The typical timescale of the system, may also not be true!!
-	static const Real PDENS_TYPICAL = 1; // Is 1E3 a good measure for the probability density?!
+	static const Real L_TYPICAL = 1E-8;  // This is a typical length scale of the system, may not be true!
+	static const Real T_TYPICAL = 1E-6;  // The typical timescale of the system, may also not be true!!
+	static const Real EPSILON = 1E-12;   // measure of 'sameness' when comparing floating points numbers
+	static const Real PDENS_TYPICAL = 1;//E3; // Is 1E3 a good measure for the probability density?!
 
-	static const int MAX_TERMEN = 500;
-	static const int MIN_TERMEN = 20;
+	static const int MAX_TERMEN = 500;   // The maximum number of terms in the sum
+	static const int MIN_TERMEN = 20;    // The minimum
 
 public:
         FirstPassageGreensFunction1D(const Real D)
@@ -80,11 +80,11 @@ public:
 	{	return this->r0/l_scale;
 	}
 
-	// Trekt een tijd uit de propensity function, een first passage time.
+	// Draws the first passage time from the propensity function
 	const Real drawTime (const Real rnd) const;
 
-	// Berekent een positie gegeven dat het deeltje zich nog in het domein bevindt en er twee absorbing
-	// boundary conditions gelden
+	// Draws the position of the particle at a given time, assuming that the particle is still in the
+	// domain
 	const Real drawR (const Real rnd, const Real t) const;
 
 	// Calculates the amount of flux leaving the left boundary at time t
@@ -96,12 +96,12 @@ public:
 	// Determines based on the flux ratios if the particle left the left or right boundary
 	const EventType drawEventType( const Real rnd, const Real t ) const;
 
-	// Berekent de kans dat het deeltje zich nog in het domein bevindt op tijdstip t,
-	// de survival probability
+	// Calculates the probability of finding the particle inside the domain at time t
+	// so, the survival probability
 	const Real p_survival (const Real t) const;
 
-	// Berekent de kans om het deeltje op plaats z te vinden op tijdstip t, gegeven dat het deeltje
-	// zich nog in het domein bevindt.
+	// Calculates the probability density of finding the particle at location z at timepoint t, given
+        // that the particle is still in the domain.
 	const Real calcpcum (const Real r, const Real t) const;
 
 private:
@@ -124,7 +124,7 @@ private:
 
 	static double drawR_f (double z, void *p);
 
-	// Berekent de kans om het deeltje op plaats x of y te vinden op tijdstip t
+	// Calculates the probability density of finding the particle at location r at time t.
 	const Real prob_r (const Real r, const Real t) const;
 
 private:

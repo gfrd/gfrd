@@ -20,7 +20,7 @@
 #include "Defs.hpp"
 
 
-// Berekent de kans dat het deeltje zich nog in het domein bevindt op tijdstip t, de survival probability
+// Calculates the probability of finding the particle inside the domain at time t
 const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 {
 	THROW_UNLESS( std::invalid_argument, t >= 0.0 );
@@ -59,7 +59,7 @@ const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 	return sum*2.0;
 }
 
-// Berekent de kans om het deeltje op plaats x of y te vinden op tijdstip t
+// Calculates the probability density of finding the particle at location r at time t.
 const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) const
 {
 	const Real L(this->getL());
@@ -108,14 +108,14 @@ const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) con
 	return sum*2.0/L;
 }
 
-// Berekent de kans om het deeltje op plaats z te vinden op tijdstip t, gegeven dat het deeltje
-// zich nog in het domein bevindt.
+// Calculates the probability density of finding the particle at location z at timepoint t, given
+// that the particle is still in the domain.
 const Real FirstPassageGreensFunction1D::calcpcum (const Real r, const Real t) const
 {	return prob_r (r, t)/p_survival (t);
 }
 
 double FirstPassageGreensFunction1D::drawT_f (double t, void *p)
-{	struct drawT_params *params = (struct drawT_params *)p;// casts p naar type 'struct drawT_params *'
+{	struct drawT_params *params = (struct drawT_params *)p;// casts p to type 'struct drawT_params *'
 	Real sum = 0, term = 0, prev_term = 0;
 	Real Xn, exponent;
 	int    terms = params->terms;		// the maximum number of terms in the params table
@@ -139,9 +139,10 @@ double FirstPassageGreensFunction1D::drawT_f (double t, void *p)
                 fabs(prev_term/sum) > EPSILON*tscale ||
                 n <= MIN_TERMEN );
 
-	return 1.0 - 2.0*sum - params->rnd;		// het snijpunt vinden met het random getal
+	return 1.0 - 2.0*sum - params->rnd;		// the intersection with the random number
 }
 
+// Calculates the amount of flux leaving the left boundary at time t
 const Real FirstPassageGreensFunction1D::leaves(const Real t) const
 {
         THROW_UNLESS( std::invalid_argument, t >= 0.0 );
@@ -186,6 +187,7 @@ const Real FirstPassageGreensFunction1D::leaves(const Real t) const
         return D_L_sq*2.0*M_PI*sum;
 }
 
+// Calculates the amount of flux leaving the right boundary at time t
 const Real FirstPassageGreensFunction1D::leavea(const Real t) const
 {
         THROW_UNLESS( std::invalid_argument, t >= 0.0 );
@@ -261,7 +263,7 @@ const EventType FirstPassageGreensFunction1D::drawEventType( const Real rnd, con
         }
 }
 
-// Trekt een tijd uit de propensity function, een first passage time.
+// Draws the first passage time from the propensity function
 const Real FirstPassageGreensFunction1D::drawTime (const Real rnd) const
 {
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
@@ -302,6 +304,7 @@ const Real FirstPassageGreensFunction1D::drawTime (const Real rnd) const
 	parameters.terms = MAX_TERMEN;		// store the number of terms used
 	parameters.tscale = this->t_scale;
 
+//debugging
 /*
 for (double t=0; t<0.1; t += 0.0001)
 {
@@ -396,11 +399,11 @@ double FirstPassageGreensFunction1D::drawR_f (double z, void *p)
                 fabs(prev_term/sum) > EPSILON ||
                 n <= MIN_TERMEN );
 
-	return sum - params->rnd;		// het snijpunt vinden met het random getal
+	return sum - params->rnd;		// find the intersection with the random number
 }
 
-// Berekent een positie gegeven dat het deeltje zich nog in het domein bevindt en er twee absorbing
-// boundary conditions gelden
+// Draws the position of the particle at a given time, assuming that the particle is still in the
+// domain
 const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) const
 {
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
@@ -432,6 +435,7 @@ const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) co
 	const Real r0_L(r0/L);
 
 //std::cout << S << std::endl;
+
 	// produce the coefficients and the terms in the exponent and put them in the params structure
 	do
 	{
@@ -468,15 +472,3 @@ for (double x=0; x<2*a; x += 2*a/100)
 	return r*(this->l_scale);		// return the drawn time
 }
 
-/*
-p = S(t) = intergral (0,l) v(z,t) uitrekenen
-first passage tijd trekken uit 1-S(t)
-
-p = v(z,t) uitrekenen (kans om deeltje op z te vinden op tijdstip t)
-p = v(z,t)/S(t) uitrekenen (kans om deeltje op z te vinden wetende dat hij nog in het domein zit)
-plaats trekken uit pc om deeltje daar te vinden op tijdstip t
-
-q = q(t) = -dS(t)/dt uitrekenen (totale flux uit het systeem op tijdstip t)
-q = q(t,0) uitrekenen (flux door boundary z=0)
-relatieve flux uitrekenen
-*/
