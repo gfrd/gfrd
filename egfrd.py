@@ -414,9 +414,11 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         closestDistance = INF
 
         for objectMatrix in self.objectMatrices:
-            keys, distances = objectMatrix.getNeighbors( pos )
+            # Don't name this distances, it's already defined.
+            keys, dists = objectMatrix.getNeighbors( pos )
 
             for i, key in enumerate( keys ):
+                distance = dists[i]
                 object = key[0]
                 if object.dt == 0:
                     # Make bursted singles look bigger. Right now the size of 
@@ -425,7 +427,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                     # the simulation might to come to a halt. Single 1 bursts 
                     # single 2 and forms a shell, next step single 2 bursts 
                     # single 1 and forms a shell, etc.
-                    distances[i] *= MINIMAL_SINGLE_RADIUS_FACTOR
+                    distance -= object.radius * \
+                                ( MINIMAL_SINGLE_RADIUS_FACTOR - 1 )
 
                 if not object in seen:
                     # Since an object can have more than 1 shell (multis for 
@@ -439,16 +442,16 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                     #
                     # Any value other then 'None' would be fine here also.
                     seen[ object ] = None
-                    if distances[i] > radius:
+                    if distance > radius:
                         # This is an object (the first for this objectMatrix) 
                         # that has a shell that is more than radius away from 
                         # pos. If it is closer than the closest such one we 
                         # found so far: store it. Always break out of the 
                         # inner for loop now and check the other 
                         # objectMatrices.
-                        if  distances[i] < closestDistance:
+                        if  distance < closestDistance:
                             closestObject = object
-                            closestDistance = distances[i]
+                            closestDistance = distance
                             break
                         else:
                             break # Just to be sure you get the point.
@@ -456,7 +459,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                         # This is an object that has a shell that is within 
                         # 'radius' of pos, so add it to the neighbors list.
                         neighbors.append( object )
-                        distances.append( distances[i] )
+                        distances.append( distance )
 
         # Surface detection.
         distanceToSurface, closestSurface = self.getClosestSurface( pos, 
