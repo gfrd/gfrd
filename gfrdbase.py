@@ -23,10 +23,11 @@ class NoSpace( Exception ):
 
 
 class Species( object ):
-    def __init__( self, id, D, radius ):
+    def __init__( self, id, D, radius, surface ):
         self.id = id
         self.D = D
         self.radius = radius
+        self.surface = surface
         self.pool = ParticlePool() # Stores positions only.
 
 
@@ -93,7 +94,6 @@ class UnimolecularReactionType( ReactionType ):
     """A -> B
 
     """
-
     def __init__( self, s1, p1, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, ], k )
 
@@ -102,7 +102,6 @@ class DecayReactionType( ReactionType ):
     """A -> None
 
     """
-
     def __init__( self, s1, k ):
         ReactionType.__init__( self, [ s1, ], [], k )
 
@@ -111,7 +110,6 @@ class BindingReactionType( ReactionType ):
     """A + B -> C
 
     """
-
     def __init__( self, s1, s2, p1, k ):
         ReactionType.__init__( self, [ s1, s2 ], [ p1, ], k )
         # Todo. These are not used.
@@ -123,7 +121,6 @@ class UnbindingReactionType( ReactionType ):
     """C -> A + B
 
     """
-
     def __init__( self, s1, p1, p2, k ):
         ReactionType.__init__( self, [ s1, ], [ p1, p2 ], k )
  
@@ -135,7 +132,6 @@ class RepulsionReactionType( ReactionType ):
     are repulsive by default.
 
     """
-
     def __init__( self, s1, s2 ):
         ReactionType.__init__( self, [ s1, s2 ], [], 0.0 )
         # Todo. These are not used.
@@ -143,44 +139,39 @@ class RepulsionReactionType( ReactionType ):
         sigma = s1.radius + s2.radius
 
 
-class SurfaceBindingInteractionType( ReactionType ):
+class SurfaceBindingReactionType( ReactionType ):
     """Surface binding.
-
-    Surface binding is not a Poisson process, so interactions should not be 
-    added to the reaction list using addReactionType but added to the 
-    interaction list using addInteractionType.
 
     A + Surface -> B_on_Surface
 
     """
-
     def __init__( self, reactantSpecies, productSpecies,  k ):
+        # Todo. Do some checks on surface here.
         ReactionType.__init__( self, [ reactantSpecies ], 
                                [ productSpecies, ], k )
 
 
 
-class SurfaceDirectBindingInteractionType( ReactionType ):
+class SurfaceDirectBindingReactionType( ReactionType ):
     """A + B_on_Surface + Surface -> C_on_Surface
     A + Surface should be repulsive.
 
     Not yet implemented.
 
     """
-
     def __init__( self, reactantSpecies1, reactantSpecies2, 
                   productSpecies,  k ):
         ReactionType.__init__( self, [ reactantSpecies1, reactantSpecies2 ],
                                [ productSpecies, ], k )
 
 
-class SurfaceRepulsionInteractionType( ReactionType ):
+class SurfaceRepulsionReactionType( ReactionType ):
     """A + Surface is repulsive.
 
-    When no SurfaceBindingInteractionType is defined for a combination of 
+    When no SurfaceBindingReactionType is defined for a combination of 
     species and surface, they are repulsive by default.
-    """
 
+    """
     def __init__( self, species, surface ):
         ReactionType.__init__( self, [ species, surface ], [], 0.0 )
 
@@ -188,16 +179,12 @@ class SurfaceRepulsionInteractionType( ReactionType ):
 class SurfaceUnbindingReactionType( ReactionType ):
     """A_on_Surface -> B
     
-    Surface unbinding.
-
-    Surface unbinding is a Poisson process, so these reactions can be added to 
-    the reaction list by using addReactionType.
+    Surface unbinding. Poisson process.
 
     After unbinding from a surface the particle always ends up on the 
     defaultSurface (world) for now.
 
     """
-
     def __init__( self, reactantSpecies, productSpecies, k ):
         ReactionType.__init__( self, [ reactantSpecies ],
                                [ productSpecies, ], k )
@@ -212,7 +199,6 @@ class SurfaceDirectUnbindingReactionType( ReactionType ):
     Not yet implemented.
 
     """
-
     def __init__( self, reactantSpecies, productSpecies1, productSpecies2, k ):
         ReactionType.__init__( self, [ reactantSpecies ], 
                                [ productSpecies1, productSpecies2 ], k )
@@ -318,7 +304,6 @@ class ParticlePool( object ):
     Stores positions only.
 
     """
-
     def __init__( self ):
         self.indexMap = {}
         self.serialCounter = 0
@@ -566,41 +551,104 @@ class ParticleSimulatorBase( object ):
         return numpy.sqrt( self.distanceSqArray( position1, positions ) )
 
 
+    def addPlanarSurface( self, origin, vectorX, vectorY, Lx, Ly, Lz=0, 
+                          name="PlanarSurface" ):
+        """Add a planar surface.
+
+        origin -- [ x0, y0, z0 ] is the *center* of the planar surface.
+        vectorX -- [ x1, y1, z1 ] and
+        vectorY -- [ x2, y2, z2 ] are 2 perpendicular vectors that don't have 
+        to be normalized that span the plane. For example [1,0,0] and [0,1,0]
+        for a plane at z=0.
+
+        Lx -- lx and 
+        Ly -- ly are the distances from the origin of the plane along vectorX 
+            or vectorY *to an edge* of the plane. PlanarSurfaces are finite.
+        Lz -- dz, the thickness of the planar surface, can be omitted for Lz=0.
+        name -- a descriptive name, only for nicer output.
+
+        """
+        return self.addSurface( PlanarSurface( origin, vectorX, vectorY, Lx, 
+                                               Ly, Lz, name ) )
+
+    def addCylindricalSurface( self, origin, radius, orientation, size, 
+                               name="CylindricalSurface" ):
+        """Add a cylindrical surface.
+
+        origin -- [ x0, y0, z0 ] is the *center* of the cylindrical surface.
+        radius -- r is the radis of the cylinder.
+        orientation -- [ x1, y1, z1 ] is a vector that doesn't have to
+            normalized that defines the orienation of the cylinder. For 
+            example [0,0,1] for a for a cylinder along the z-axis.
+        size -- lz is the distances from the origin of the cylinder along 
+            the oriention vector to the end of the cylinder. So effectively
+            the *half-length*. CylindricalSurfaces are finite.
+        name -- a descriptive name, only for nicer output.
+
+        """
+        return self.addSurface( CylindricalSurface( origin, radius, 
+                                                    orientation, size, name ) )
+
+
     def addSurface( self, surface ):
         if ( not isinstance( surface, Surface ) or
              isinstance( surface, CuboidalRegion ) ):
             raise RuntimeError( str( surface ) + ' is not a surface.' )
 
         self.surfaceList.append( surface )
+        return surface
 
 
-    def addSpecies( self, species, surface=None ):
-        if surface == None:
-            # It has to be known on which surface this species can live. If no 
-            # surface specified, it can only live in the cytosol.
-            species.surface = self.defaultSurface
+    def addSpecies( self, id, D, radius, surface=None ):
+        """ Add a new species. A species is a type of particles.
+
+        id      -- a unique name.
+        D       -- the diffusion constant of the particles.
+        radius  -- the radii of the particles.
+        surface -- the only surface this species can exist on.
+
+        """
+        if isinstance( id, Species ):
+            # Backward compatibility. Remove eventually. addSpecies used to 
+            # be: def addSpecies( self, species ):
+            species = id
         else:
-            assert any( surface == s for s in self.surfaceList ), \
-                   '%s not in surfaceList.' % ( surface )
-            species.surface = surface
-            
-        #assert not self.speciesList.has_key( species.id ), \
-        #       'Species with id = %s has already been added.' %
-        #       ( species.id )
-        self.speciesList[( species.id, surface )] = species
+            if surface == None:
+                # It has to be known on which surface this species can live.  
+                # If no surface specified, it can only live in the cytosol.
+                surface = self.defaultSurface
+            else:
+                assert any( surface == s for s in self.surfaceList ), \
+                       '%s not in surfaceList.' % ( surface )
+            species = Species( id, D, radius, surface ) 
+
+        assert not self.speciesList.has_key( species.id ), \
+               'Species with id = %s has already been added.' % ( species.id )
+
+        self.speciesList[ species.id ] = species
+
+        return species
 
 
     def addReactionType( self, rt ):
+
         numReactants = len( rt.reactants )
+        species1 = rt.reactants[0]
 
         if numReactants == 1:
-            species1 = rt.reactants[0]
-
             if len( rt.products ) == 1:
-                ### why this check, and why *2 here?
-                if species1.radius * 2 < rt.products[0].radius:
-                    raise RuntimeError( 'radius of product must be smaller '
-                                        'than radius of reactant.' )
+                if( isinstance( rt, SurfaceBindingReactionType ) ):
+                    # Surface binding is not a Poisson process, so this 
+                    # reaction should not be added to the reaction list but 
+                    # added to the interaction list.
+                    surface = rt.products[0].surface
+                    self.interactionTypeMap[( species1, surface )] = rt
+                    return
+                else:
+                    # Todo. Why this check, and why *2 here?
+                    if species1.radius * 2 < rt.products[0].radius:
+                        raise RuntimeError( 'radius of product must be smaller '
+                                            'than radius of reactant.' )
             elif len( rt.products ) == 2:
                 if ( species1.radius < rt.products[0].radius or
                      species1.radius < rt.products[1].radius ):
@@ -623,12 +671,6 @@ class ParticleSimulatorBase( object ):
             raise RuntimeError( 'Invalid ReactionType.' )
 
 
-    def addInteractionType( self, it ):
-        species = it.reactants[0]
-        interactionSurface = it.products[0].surface
-        self.interactionTypeMap[( species, interactionSurface )] = it
-
-
     def setAllRepulsive( self ):
         for species1 in self.speciesList.values():
             for species2 in self.speciesList.values():
@@ -644,7 +686,7 @@ class ParticleSimulatorBase( object ):
                     _ = self.interactionTypeMap[( species, surface )]
                 except:
                     self.interactionTypeMap[( species, surface )] = \
-                        SurfaceRepulsionInteractionType( species, surface )
+                        SurfaceRepulsionReactionType( species, surface )
         
 
     def throwInParticles( self, species, n, surface=None ):
@@ -733,6 +775,7 @@ class ParticleSimulatorBase( object ):
 
         In subSpaceSimulator called from: fireSingleReaction. Asserts in:
         propagateSingle, firePair, burstSingle, breakUpPair.
+
         """
         particles, _ = \
             self.particleMatrix.getNeighborsWithinRadiusNoSort( pos, radius )

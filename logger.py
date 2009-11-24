@@ -60,7 +60,7 @@ class Logger:
         self.writeTimecourseComment( comment )
 
         speciesNameList = '\'' + \
-            "\', \'".join( [ key[0] for key in self.sim.speciesList.keys() ] ) \
+            "\', \'".join( [ key for key in self.sim.speciesList.keys() ] ) \
             + '\''
         columns = '[ \'t\', ' + speciesNameList + ']'
         self.writeTimecourseComment( '@ columns= ' + columns )
@@ -97,7 +97,7 @@ class Logger:
             species = self.sim.speciesList[ speciesName ]
             for i in species.pool.positions:
                 file.write( '%s\t%20.14g %20.14g %20.14g %.15g\n' % 
-                            ( speciesName[0], i[0], i[1], i[2], 
+                            ( speciesName, i[0], i[1], i[2], 
                               species.radius ) )
 
             file.write( '#\n' )

@@ -1,4 +1,3 @@
-#/usr/bin/bash
 
 .PHONY: all
 all : bd dimer gfrd hardbody irreversible mapk membrane pushpull rebind reversible single surfaces tf
@@ -66,9 +65,9 @@ single:
 
 
 .PHONY: surfaces
-cylinders:
+surfaces:
 	echo
-	cd cylinders && rm -rf $(DATA) && LOGLEVEL=DEBUG PYTHONPATH=$(PYTHONPATH_NEW) python run.py
+	cd surfaces && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=$(PYTHONPATH_NEW) python run.py
 
 
 .PHONY: tf
