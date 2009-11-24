@@ -16,7 +16,7 @@ L = 3e-7
 s.setWorldSize( L )
 s.setMatrixSize( 20 )
 
-box1 = CuboidalSurface( [0,0,0], [L,L,L] )
+box1 = CuboidalRegion( [0,0,0], [L,L,L] )
 # not supported yet
 #s.addSurface( box1 )
 

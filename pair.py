@@ -128,11 +128,7 @@ class Pair( object ):
     def determineRadii( self ):
         """Determine a_r and a_R.
 
-        Todo. Check all this and make sure the radius of the largest particle 
-        is subtracted from a_r and a_R to get values of the same type as 
-        getMobilityRadius() for singles. 
-        
-        Todo. Make dimension specific.
+        Todo. Check all this and make dimension specific maybe.
 
         """
         single1 = self.single1
@@ -181,6 +177,7 @@ class Pair( object ):
             assert a_R_1 + a_r_1 * D1_factor + radius1 >= \
                    a_R_1 + a_r_1 * D2_factor + radius2
 
+            # Check if a_R and a_r are not too big. See drawNewPositions.
             assert abs( a_R_1 + a_r_1 * D1_factor + radius1 - shellSize ) < \
                    1e-12 * shellSize
 
@@ -199,6 +196,7 @@ class Pair( object ):
             assert a_R_2 + a_r_2 * D2_factor + radius2 >= \
                    a_R_2 + a_r_2 * D1_factor + radius1
 
+            # Check if a_R and a_r are not too big. See drawNewPositions.
             assert abs( a_R_2 + a_r_2 * D2_factor + radius2 - shellSize ) < \
                    1e-12 * shellSize
 

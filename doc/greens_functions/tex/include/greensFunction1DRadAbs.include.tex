@@ -1,0 +1,36 @@
+
+\subsection{1D Rad Abs}
+
+\paragraph{Green's function}
+\begin{align}
+  v(z,t|z',t'=0) &= 2\sum_{n=0}^{\infty}
+  e^{-D_1\an^2t} \frac
+  { F_n(z')F_n(z) }
+  {h + (\an^2 + h^2)L}, \\
+  h &= k_+ / D_1, \\
+  F_n(z) &= h\sin\an z +  \an\cos\an z  , \\
+  \tan\an L &= -\an/h.
+\end{align}
+
+\paragraph{Survival probability}
+\begin{align}
+  S_z(t) = \int_0^Lvdz
+  = 2\sum_{n=0}^{\infty} e^{-D_1\an^2t}
+    \frac{F_n(z')
+[h^2 - (\an^2 + h^2) \cos(\an L)] /h\an }
+  {h + (\an^2 + h^2)L}.
+\end{align}
+
+\paragraph{Propensity function}
+\begin{align}
+  q_{z=0}(t) = k_+ v|_{z=0} = 2hD_1 \sum_{n=0}^{\infty} e^{-D_1\an^2t}
+  \frac{ F_n(z') \an} {h + (\an^2 + h^2)L},
+\end{align}
+\begin{align}
+  q_{z=L}(t) &= \left.- D_1 \pd{v}{z}\right|_{z=L} \\
+  &=  -2D_1 \sum_{n=0}^{\infty} e^{-D_1\an^2t}
+    \frac{F_n(z') (\an^3/h + h\an)\cos(\an L)
+ }
+  {h + (\an^2 + h^2)L}.
+\end{align}
+

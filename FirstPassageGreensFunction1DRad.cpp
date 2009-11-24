@@ -217,7 +217,7 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 // Calculates the probability flux leaving the domain through the radiative boundary at time t
 const Real FirstPassageGreensFunction1DRad::flux_rad (const Real t) const
 {
-	return k*prob_r(0, t);
+	return this->getk()*prob_r(0, t);
 }
 
 // Calculates the flux leaving the domain through the radiative boundary as a fraction of the

@@ -2,27 +2,14 @@ import weakref
 import math
 import numpy
 import scipy
+from constants import *
 
 import _gfrd
 
-Pi = scipy.pi
-Pi2 = scipy.pi * 2.0
-PiSqrt = math.sqrt( scipy.pi )
-
-N_A = 6.0221367e23
-INF = numpy.inf
-
-ZEROPOS = numpy.array( [ 0., 0., 0. ] )
-NOWHERE = numpy.array( ( INF, INF, INF ) )
-
-# Should be smaller than SINGLE_SHELL_FACTOR.
-SAFETY = 1.0 + 1e-5 #5e-2 is too big! Todo.
-UNBIND_SAFETY = 1.0 + 1e-7
-
-TOLERANCE = 1e-12
-
-
 class Delegate( object ):
+    """Helper.
+
+    """
     def __init__( self, obj, method ):
         self.obj = weakref.proxy( obj )
         self.method = method
@@ -31,9 +18,10 @@ class Delegate( object ):
         return self.method( self.obj, *arg )
 
 
-# Float comparison functions.
+### Float comparison functions. ###
 def feq( a, b, typical=1, tolerance=TOLERANCE ):
-    """Return True if all a and b are equal subject to given tolerances.
+    """Return True if a and b are equal, subject to given tolerances. Float 
+    comparison.
 
     Also see numpy.allclose().
 
@@ -49,38 +37,44 @@ def feq( a, b, typical=1, tolerance=TOLERANCE ):
 
 
 def fgreater( a, b, typical=1, tolerance=TOLERANCE ):
+    """Return True if a is greater than b, subject to given tolerances. Float 
+    comparison.
+
+    """
     return a - b > tolerance * ( typical + min( abs( a ), abs( b ) ) )
 
 
 def fless( a, b, typical=1, tolerance=TOLERANCE ):
+    """Return True if a is less than b, subject to given tolerances. Float 
+    comparison.
+
+    """
     return b - a > tolerance * ( typical + min( abs( a ), abs( b ) ) )
 
 
 def fgeq( a, b, typical=1, tolerance=TOLERANCE ):
+    """Return True if a is greater or equal than b, subject to given 
+    tolerances. Float comparison.
+
+    """
     diff = a - b
     barrier = tolerance * ( typical + min( abs( a ), abs( b ) ) )
+    # Try both 'greater than' and equality.
     return diff > barrier or abs( diff ) < barrier
 
 
 def fleq( a, b, typical=1, tolerance=TOLERANCE ):
+    """Return True if a is less than or equal than b, subject to given 
+    tolerances. Float comparison.
+
+    """
     diff = b - a
     barrier = tolerance * ( typical + min( abs( a ), abs( b ) ) )
+    # Try both 'less than' and equality.
     return diff > barrier or abs( diff ) < barrier
 
 
 class NeverGetHere( Exception ):
-    pass
-
-
-class Stop( Exception ):
-    '''
-    def __init__( self, value ):
-        self.value = value
-
-
-    def __str__( self ):
-        return repr( self.value )
-    '''
     pass
 
 
@@ -96,7 +90,6 @@ def uniq( l ):
     nset = {}
     map( nset.__setitem__, l, [] )
     return nset.keys()
-
 
 
 def cyclicTranspose( pos1, pos2, fsize ):
@@ -141,6 +134,7 @@ def distance( position1, position2, fsize = 0 ):
 '''
 
 
+### Distance functions ###
 # These 4 functions are used if worldsize is a float in 
 # ParticleSimulatorBase.setWorldSize.
 def distanceSq_Simple( position1, position2, fsize = None ):
@@ -167,6 +161,7 @@ def distanceSq_Cyclic( position1, position2, fsize ):
 '''
 
 
+### More distance functions ###
 # These 4 functions are used if worldsize is.. Todo.
 def distanceSq_Cyclic( position1, position2, fsize ):
     return _gfrd.distanceSq_Cyclic( position1, position2, fsize )

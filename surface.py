@@ -43,8 +43,22 @@ class PlanarSurface( Surface, Box ):
 
     """
 
-    def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=None, 
+    def __init__( self, origin, vectorX, vectorY, Lx, Ly, Lz=0, 
                   name="PlanarSurface" ):
+        """Constructor.
+        
+        !origin! -- [ x0, y0, z0 ] is the center of the planar surface.
+        vectorX -- [ x1, y1, z1 ] and
+        vectorY -- [ x2, y2, z2 ] are 2 perpendicular vectors that don't have 
+        to be normalized that span the plane. For example [1,0,0] and [0,1,0]
+        for a plane at z=0.
+
+        !Lx! -- lx and 
+        !Ly! -- ly are the distances from the origin of the plane along vectorX 
+            or vectorY to an edge of the plane. PlanarSurfaces are finite.
+        Lz = dz, the thickness of the planar surface, can be omitted for Lz=0.
+
+        """
         Surface.__init__( self, name )
 
         assert numpy.dot( vectorX, vectorY ) == 0.0
@@ -76,18 +90,19 @@ class PlanarSurface( Surface, Box ):
                              random.uniform( -1, 1 ) * self.vectorY
 
 
-    def minimalOffset( self, radius ):
+    def minimalDistanceFromSurface( self, radius ):
         """A particle that is not on this surface has to be at least this far 
-        away from the z = 0-plane of the surface.
+        away from the surface (measured from the origin of particle to the z = 
+        0 plane of the surface).
 
         """
-        return (self.Lz + radius) * UNBIND_SAFETY
+        return (self.Lz + radius) * MINIMAL_SEPERATION_FACTOR
 
 
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
         return pos + random.choice( [ -1, 1 ] ) * \
-                     self.minimalOffset( radius )  * self.unitZ
+                     self.minimalDistanceFromSurface( radius )  * self.unitZ
 
 
 class CylindricalSurface( Surface, Cylinder ):
@@ -99,6 +114,18 @@ class CylindricalSurface( Surface, Cylinder ):
 
     def __init__( self, origin, radius, orientation, size, 
                   name="CylindricalSurface" ):
+        """Constructor.
+        
+        !origin! -- [ x0, y0, z0 ] is the center of the cylindrical surface.
+        radius -- r is the radis of the cylinder.
+        orientation -- [ x1, y1, z1 ] is a vector that doesn't have to
+            normalized that defines the orienation of the cylinder. For 
+            example [0,0,1] for a for a cylinder along the z-axis.
+        !size! -- lz is the distances from the origin of the cylinder along 
+            the oriention vector to the end of the cylinder. So effectively
+            the half-length. CylindricalSurfaces are finite.
+
+        """
         Surface.__init__( self, name )
         Cylinder.__init__( self, origin, radius, orientation, size )
         self.defaultSingle = CylindricalSurfaceSingle
@@ -121,35 +148,40 @@ class CylindricalSurface( Surface, Cylinder ):
         return self.origin + random.uniform( -1, 1 ) * self.vectorZ
 
 
-    def minimalOffset( self, radius ):
+    def minimalDistanceFromSurface( self, radius ):
         """A particle that is not on this surface has to be at least this far 
-        away from the central axis of the surface.
+        away from the surface (measured from the origin of the particle to the 
+        the central axis of the surface.
 
         """
-        return ( self.radius + radius ) * UNBIND_SAFETY
+        return ( self.radius + radius ) * MINIMAL_SEPERATION_FACTOR
 
 
     def randomUnbindingSite( self, pos, radius ):
         # Todo. SAFETY.
-        x, y = randomVector2D( self.minimalOffset( radius ) )
+        x, y = randomVector2D( self.minimalDistanceFromSurface( radius ) )
         return pos + x * self.unitX + y * self.unitY
 
 
-class CuboidalSurface( Surface, Box ):
-    """Surface that is only used for throwing in particles. Those particles 
-    will than later be tagged with surface = defaultSurface, which is an 
-    instance of the World class. See gfrdbase.py.
+class CuboidalRegion( Surface, Box ):
+    """
+    A region that is (and can be) used for throwing in particles.
 
-    If no surface is specified, particles are tagged with an instance of this 
-    one.
+    Do not try to add this as a surface to your simulator, it won't work.
+
+    It is also a Surface because particles for which no surface is 
+    specified are tagged surface = defaultSurface, which is an instance of 
+    this class. See gfrdbase.py.
 
     Movement in 3D.
 
     """
 
-    def __init__( self, origin, size, name='world' ):
-        """origin -- = [ x0, y0, z0 ] is one edge of the cube.
-        size -- = [ sx, sy, sz ] is the vector from the origin to the diagonal
+    def __init__( self, corner, size, name='world' ):
+        """ Constructor.
+
+        corner -- [ x0, y0, z0 ] is one corner of the cube.
+        size -- [ sx, sy, sz ] is the vector from the origin to the diagonal
         point.
 
         """
@@ -158,7 +190,7 @@ class CuboidalSurface( Surface, Box ):
         Lx = size[0]
         Ly = size[1]
         Lz = size[2]
-        Box.__init__( self, origin + self.size / 2, [ Lx, 0, 0 ], [ 0, Ly, 0 ],
+        Box.__init__( self, corner + self.size / 2, [ Lx, 0, 0 ], [ 0, Ly, 0 ],
                       [ 0, 0, Lz ], Lx / 2, Ly / 2, Lz / 2 ) 
         self.defaultSingle = SphericalSingle
         self.defaultPair = SphericalPair
@@ -176,15 +208,15 @@ class CuboidalSurface( Surface, Box ):
 
     def signedDistanceTo( self, pos ):
         """Overrule signedDistanceTo from Box. 
-        Only for CuboidalSurfaces is cyclicTranspose 'pos' not needed.
+        Only for CuboidalRegions is cyclicTranspose 'pos' not needed.
 
         """
         raise RuntimeError( 'This method should not be used. Did you '
-                            'accidently add this CuboidalSurface to the '
+                            'accidently add this CuboidalRegion to the '
                             'surfacelist using s.addSurface()?' )
-        edge = self.origin - size / 2
-        dists = numpy.concatenate( ( edge - pos,
-                                     edge + self.size - pos ) )
+        corner = self.origin - size / 2
+        dists = numpy.concatenate( ( corner - pos,
+                                     corner + self.size - pos ) )
         absdists = numpy.abs( dists )
         i = numpy.argmin( absdists )
         return dists[i]
@@ -196,9 +228,9 @@ class CuboidalSurface( Surface, Box ):
         See also signedDistanceTo().
 
         """
-        edge = self.origin - self.size / 2
-        return numpy.array( [ random.uniform( edge[0], self.size[0] ),
-                              random.uniform( edge[1], self.size[1] ),
-                              random.uniform( edge[2], self.size[2] ) ] )
+        corner = self.origin - self.size / 2
+        return numpy.array( [ random.uniform( corner[0], self.size[0] ),
+                              random.uniform( corner[1], self.size[1] ),
+                              random.uniform( corner[2], self.size[2] ) ] )
 
 

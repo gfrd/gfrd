@@ -68,7 +68,8 @@ class ReactionType( object ):
 
 
     def __str__( self ):
-        s = ''
+        s = 'k=' + str( self.k ) + ': '
+
         for i in self.reactants:
             if isinstance( i, Surface ):
                 s += str( i )
@@ -81,6 +82,7 @@ class ReactionType( object ):
         for i in self.products:
             s += i.id
             s += ' '
+
 
         return s[:-1]
 
@@ -129,6 +131,9 @@ class UnbindingReactionType( ReactionType ):
 class RepulsionReactionType( ReactionType ):
     """A + B is repulsive.
 
+    All combinations of species for which no BindingReactionType is defined 
+    are repulsive by default.
+
     """
 
     def __init__( self, s1, s2 ):
@@ -159,6 +164,8 @@ class SurfaceDirectBindingInteractionType( ReactionType ):
     """A + B_on_Surface + Surface -> C_on_Surface
     A + Surface should be repulsive.
 
+    Not yet implemented.
+
     """
 
     def __init__( self, reactantSpecies1, reactantSpecies2, 
@@ -170,6 +177,8 @@ class SurfaceDirectBindingInteractionType( ReactionType ):
 class SurfaceRepulsionInteractionType( ReactionType ):
     """A + Surface is repulsive.
 
+    When no SurfaceBindingInteractionType is defined for a combination of 
+    species and surface, they are repulsive by default.
     """
 
     def __init__( self, species, surface ):
@@ -199,14 +208,15 @@ class SurfaceDirectUnbindingReactionType( ReactionType ):
 
     After unbinding from a surface, particle2 always ends up on the 
     defaultSurface (world), and particle1 stays on the surface it was on.
+
+    Not yet implemented.
+
     """
 
     def __init__( self, reactantSpecies, productSpecies1, productSpecies2, k ):
         ReactionType.__init__( self, [ reactantSpecies ], 
                                [ productSpecies1, productSpecies2 ], k )
 
-
-##############################################################################
 
 class Reaction:
     def __init__( self, type, reactants, products ):
@@ -240,13 +250,13 @@ class Particle( object ):
 
     def posString( self ):
         factor = 1
-        return '(%.3g %.3g %.3g)' % \
-               ( self.getPos()[0 ] * factor, self.getPos()[1] * factor, 
-                 self.getPos()[2] * factor ) 
+        return '(%.2g %.2g %.2g)' % \
+               ( self.getPos()[0] * factor, self.getPos()[1] * factor, 
+                       self.getPos()[2] * factor ) 
 
 
     def __str__( self ):
-        return ( "( '" + self.species.id + "', " + str( self.species.surface ) +
+        return ( "( " + self.species.id + ", " + str( self.species.surface ) +
                  ", " + str( self.serial ) + ' ). pos = ' + self.posString() )
 
 
@@ -414,18 +424,27 @@ class ParticleSimulatorBase( object ):
         # This line here is also why worldSize has to be specified in the
         # constructor now, and should not be redefined.
         self.defaultSurface = \
-            CuboidalSurface( [ 0, 0, 0 ], [ worldSize, worldSize, worldSize ], 
+            CuboidalRegion( [ 0, 0, 0 ], [ worldSize, worldSize, worldSize ], 
                              'world' )
 
 
     def initialize( self ):
-        pass
+        # Check if user specified a surface for each species that is a product 
+        # of an interaction.
+        for interaction in self.interactionTypeMap.itervalues():
+            product = interaction.products[0]
+            if product.surface == self.defaultSurface:
+                    raise RuntimeError( 'Use addSpecies(' + product.id + 
+                                        ', someSurface), because ' +
+                                        product.id + ' seems to be ' +
+                                        'the product of interaction: ' +
+                                        str( interaction ) )
 
 
     def getClosestSurface( self, pos, ignore ):
-        """Return sorted list of pairs:
-        - distance to surface
-        - surface itself
+        """Return sorted list of tuples with:
+            - distance to surface
+            - surface itself
 
         We can not use objectmatrix, it would miss a surface if the origin of the 
         surface would not be in the same or neighboring cells as pos.
@@ -433,30 +452,36 @@ class ParticleSimulatorBase( object ):
         """
         surfaces = [ None ]
         distances = [ INF ]
+
         ignoreSurfaces = []
         for obj in ignore:
             if isinstance( obj.surface, Surface ):
-                # Ignore surface that particle is currently on.
+                # For example ignore surface that particle is currently on.
                 ignoreSurfaces.append( obj.surface )
+
         for surface in self.surfaceList:
             if surface not in ignoreSurfaces:
                 posTransposed = cyclicTranspose( pos, surface.origin, 
                                                  self.worldSize )
                 distanceToSurface = surface.signedDistanceTo( posTransposed )
-                if distanceToSurface < 0.0:
-                    self.errors += 1
                 distances.append( distanceToSurface )
                 surfaces.append( surface )
+
         return min( zip( distances, surfaces ) )
 
 
     def getClosestSurfaceWithinRadius( self, pos, radius, ignore ):
+        """Return sorted list of tuples with:
+            - distance to surface
+            - surface itself
+
+        """
         distanceToSurface, closestSurface = self.getClosestSurface( pos, 
                                                                     ignore ) 
         if distanceToSurface < radius:
-            return  closestSurface, distanceToSurface
+            return distanceToSurface, closestSurface
         else:
-            return None, INF
+            return INF, None
 
 
     def reconstructParticleMatrix( self ):
@@ -542,6 +567,10 @@ class ParticleSimulatorBase( object ):
 
 
     def addSurface( self, surface ):
+        if ( not isinstance( surface, Surface ) or
+             isinstance( surface, CuboidalRegion ) ):
+            raise RuntimeError( str( surface ) + ' is not a surface.' )
+
         self.surfaceList.append( surface )
 
 
@@ -638,11 +667,12 @@ class ParticleSimulatorBase( object ):
                 # box.
                 if surface == self.defaultSurface or \
                    ( surface != self.defaultSurface and 
-                     isinstance( surface, CuboidalSurface ) ):
+                     isinstance( surface, CuboidalRegion ) ):
                     distance, closestSurface = self.getClosestSurface( position,
                                                                        [] )
-                    if ( closestSurface and distance < 
-                             closestSurface.minimalOffset( species.radius ) ):
+                    if ( closestSurface and
+                         distance < closestSurface.minimalDistanceFromSurface( 
+                                    species.radius ) ):
                         log.info( '\t%d-th particle rejected. To close to '
                                   'surface. I will keep trying.' % i )
                         create = False
@@ -845,4 +875,23 @@ class ParticleSimulatorBase( object ):
         for species in self.speciesList.values():
             buf += species.id + ':' + str( species.pool.size ) + '\t'
 
+        return buf
+
+
+    def dumpReactions( self ):
+        buf = 'Monomolecular reactions:\n'
+        for reaction in self.reactionTypeMap1.itervalues():
+            buf += str( reaction[0] ) + '\n'
+
+        buf += '\nReactions of 2 particles:\n'
+        # Select unique reactions.
+        reactions = set( self.reactionTypeMap2.itervalues() )
+        for reaction in reactions:
+            if reaction.products:
+                buf += str( reaction ) + '\n'
+
+        buf += '\nInteractions between a particle and a surface:\n'
+        for interaction in self.interactionTypeMap.itervalues():
+            if interaction.products:
+                buf += str( interaction ) + '\n'
         return buf
