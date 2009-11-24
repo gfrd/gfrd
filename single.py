@@ -257,7 +257,11 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
 
         # Create a cartesian domain of size mobilityRadius = 0.
         gf = FirstPassageGreensFunction1D( self.getD() )
-        self.domains = [ CartesianDomain( 0, self.getMobilityRadius(), gf ) ]
+        # Domain extends from 0 to L, not 0 to a, so twice as big.
+        L = 2 * self.getMobilityRadius()
+        # Todo. r0 is always in the middle for now.
+        r0 = L / 2
+        self.domains = [ CartesianDomain( r0, L, gf ) ]
 
 
     def displacement( self, z ):
@@ -269,6 +273,11 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         """Overloaded methods getRadius and setRadius. Nice trick. property() 
         needs to be redefined as well.
 
+        When CartesianDomain still extended from 0 to a, this trick was 
+        usefull because it made handling singles in 1D the same as handling 
+        singles in 2D and 3D. Now that CartesianDomain extends from 0 to L, 
+        maybe it is better to do this differrently?
+
         """
         # Heads up. Return cylinder's size.
         #raise RuntimeError( 'Todo' )
@@ -279,7 +288,10 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         # Heads up. A larger shell means a larger CylindricalSurfaceSingle's 
         # size.
         self.shellList[0].size = size
-        self.domains[0].a = self.getMobilityRadius()
+        # Domain extends from 0 to L, not 0 to a, so twice as big.
+        self.domains[0].L = 2 * self.getMobilityRadius()
+        # Todo. r0 is always in the middle for now.
+        self.domains[0].r0 = self.getMobilityRadius()
     radius = property( getRadius, setRadius )
 
 

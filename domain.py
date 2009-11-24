@@ -1,6 +1,6 @@
 import numpy
 import random
-from _gfrd import EventType
+from _gfrd import EventType, FirstPassageGreensFunction1D
 from log import *
 from utils import *
 
@@ -27,7 +27,6 @@ class Domain( object ):
     All Greens Functions should be called from this file only.
 
     """
-
     def __init__( self, gf, a=None ):
         self.gf = gf         # Green's function.
         if a:
@@ -50,15 +49,24 @@ class Domain( object ):
 
 class CartesianDomain( Domain ):
     """
-    For example the z-domain.
+    For example the z-domain. Extends from 0 to L.
 
     """
-
     def __init__( self, r0, L, gf ):
         Domain.__init__( self, gf )
         self.gf.setr0( r0 )
         self.r0 = r0         # Initial position
         self.L = L
+
+
+    def getr0( self ):
+        return self._r0
+
+    def setr0( self, r0 ):
+        self._r0 = r0
+        # Reset r0 of Greens' function here.
+        self.gf.setr0( r0 )
+    r0 = property( getr0, setr0 )
 
 
     def getL( self ):
@@ -101,9 +109,13 @@ class CartesianDomain( Domain ):
                                 'dt = %g; L = %g' %
                                 ( str( e ), self.r0, dt, self.L ) )
         if eventType == EventType.REACTION:
-            # Interaction.
-            # Todo. If this is 2xabsorbing greens function, eventType should 
-            # always be ESCAPE.
+            if( isinstance( self.gf, FirstPassageGreensFunction1D ) ):
+                # If this is a 2xabsorbing greens function, eventType should 
+                # always be ESCAPE.
+                eventType = EventType.ESCAPE
+            else:
+                # Interaction.
+                pass
             # Return displacement!
             self.newPos = 0 - self.r0
         elif eventType == EventType.ESCAPE:
@@ -142,7 +154,6 @@ class RadialDomain( Domain ):
     should be choosen at random.
 
     """
-
     def __init__( self, a, gf ):
         Domain.__init__( self, gf, a )
 
@@ -191,7 +202,6 @@ class CompositeDomain( Domain ):
     as well as 2D).
 
     """
-
     def __init__( self, sigma, r0, a, gf ):
         self.sigma = sigma              # Inner radius.
         self.r0 = r0                    # Starting position.
@@ -273,10 +283,7 @@ class CompositeDomain( Domain ):
         try:
             rnd = numpy.random.uniform()
             log.debug( '        *Radial2D drawTheta_pair. ' )#+ str( self.gf ) )
-            # Todo. gf.drawTheta() failed; GSL error: endpoints do not 
-            # straddle.
-            #theta = gf.drawTheta( rnd, r, self.r0, dt )
-            theta = 0
+            theta = gf.drawTheta( rnd, r, self.r0, dt )
         except Exception, e:
             raise RuntimeError( 'gf.drawTheta() failed; %s; rnd = %g, r = %g, '
                                 'sigma = %g, r0 = %g, a = %g, dt = %g' %
