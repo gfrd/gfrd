@@ -148,6 +148,12 @@ class SurfaceBindingReactionType( ReactionType ):
                                [ productSpecies, ], k )
 
 
+class SurfaceAbsorptionReactionType( ReactionType ):
+    """A + Surface -> None. Deprecated.
+
+    """
+    pass
+
 
 class SurfaceDirectBindingReactionType( ReactionType ):
     """A + B_on_Surface + Surface -> C_on_Surface. Deprecated.
