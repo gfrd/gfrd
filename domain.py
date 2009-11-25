@@ -90,14 +90,12 @@ class CartesianDomain( Domain ):
     """
     def __init__( self, r0, L, gf ):
         Domain.__init__( self, gf )
-        self.gf.setr0( r0 )
-        self.r0 = r0         # Initial position
         self.L = L
+        self.r0 = r0         # Initial position
 
 
     def getr0( self ):
         return self._r0
-
     def setr0( self, r0 ):
         self._r0 = r0
         # Reset r0 of Greens' function here.

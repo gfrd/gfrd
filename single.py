@@ -286,10 +286,11 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         # size.
         self.shellList[0].size = size
         # Domain extends from 0 to L, not 0 to a, so twice as big.
-        self.domains[0].L = 2 * self.getMobilityRadius()
+        L = 2 * self.getMobilityRadius()
+        self.domains[0].L = L
         # Todo. r0 is always in the middle for now. We could use
         # determineOptimalCylinder. 
-        self.domains[0].r0 = self.getMobilityRadius()
+        self.domains[0].r0 = L / 2
     radius = property( getRadius, setRadius )
 
 
