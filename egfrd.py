@@ -731,9 +731,13 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         burstRadius = single.getMinRadius() * SPHERE_BURST_RADIUS_FACTOR
         # Todo. Maybe make burstRadius dimension (3D/2D/1D) dependent. 
         if isinstance( single.shellList[0], Cylinder ):
-            # Todo. This is quick fix to not get a minimal cylinder to overlap 
+            # Todo. Implement bursting of cylindrical volume using 
+            # CYLINDER_BURST_RADIUS_FACTOR and CYLINDER_BURST_SIZE_FACTOR.
+            # And proper collision detection that can be used by the 
+            # consistency check methods also.
+            # This is quick fix to not get a minimal cylinder to overlap
             # with a nearby sphere.
-            # Need to implement proper collision detection.
+
             burstRadius *= math.sqrt( 2 )
         neighbors = self.getNeighborsWithinRadiusNoSort( single.pos, 
                                                          burstRadius, 
@@ -821,7 +825,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def tryInteraction( self, single, surface ):
-        """Todo: burstVolume.
+        """Todo: bursting of cylindrical volume using 
+        CYLINDER_BURST_RADIUS_FACTOR and CYLINDER_BURST_SIZE_FACTOR.
 
         """
         particle = single.particle
@@ -841,15 +846,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                    ( particle, surface, particleDistance ) )
 
         particleRadius = particle.species.radius
-
-        # Todo. Temporary check. Find bug.
-        minimalDistanceFromSurface = \
-            surface.minimalDistanceFromSurface( particle.radius ) 
-        if fless( particleDistance, minimalDistanceFromSurface, 
-                  typical=particleRadius ):
-            raise RuntimeError( 'particleDistance = %.3g < '
-                                'minimalDistanceFromSurface = %.3g' %
-                                ( particleDistance, minimalDistanceFromSurface ) )
 
 
         # Initialize dr, dzLeft, dzRight to maximum allowed values.
@@ -873,26 +869,22 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             dr = self.getMaxShellSize() # Free diffusion, so like free single.
             dzLeft = self.getMaxShellSize() # Doesn't matter much.
 
-            # Todo. Would be nicer: after an escape there is at least enough 
-            # space to make a spherical single.
-            #
-            # Note that after an unbinding r0 = MINIMAL_SEPERATION_FACTOR * 
-            # (particleRadius + surface.Lz), which is very small.
-            #
-            # For now: allow for a domain that has a size of of r0 + ( 
-            # MAX_DOMAIN_SIZE_FACTOR * r0 ). 
+            # Todo. Note that after an unbinding,
+            # r0 = MINIMAL_SEPERATION_FACTOR * (particleRadius + surface.Lz), 
+            # which is very small. For now: allow for a domain that has a size 
+            # of: r0 + ( MAX_DOMAIN_SIZE_FACTOR * r0 ).
+            # The proper solution is to implement Greens function where either 
+            # boundary is ignored, like in the 3D case.
             r0 = particleDistance - particleRadius - surface.Lz
             dzRight = particleRadius + r0 * MAX_DOMAIN_SIZE_FACTOR
 
             # Make sure the cylinder stays within 1 cell.
-            # Todo. Make sure other surfaces are not too close.
+            # Todo. Assert that other surfaces are not too close.
             dzRight = min( dzRight, 
                            self.getMaxShellSize() * 2 - particleDistance )
 
         elif isinstance( surface, CylindricalSurface ):
-            # Todo. After an escape there is just enough space to make a 
-            # spherical single outside the surface safety zone.
-            # Todo. Make sure other surfaces are not too close.
+            # Todo. Assert that other surfaces are not too close.
             dr = surface.radius + particleRadius * \
                 ( MINIMAL_SINGLE_RADIUS_FACTOR + SURFACE_SAFETY_ZONE ) + \
                 particleRadius * MINIMAL_SEPERATION_FACTOR - particleDistance 
@@ -912,11 +904,17 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             mindr = particleRadius * MINIMAL_SINGLE_RADIUS_FACTOR
             # Leave enough for particle itself.
             mindzLeft = particleRadius * SAFETY
-            # Todo. Fine for now.
+            # Todo. Make sure that after an escape through the z-domain of a 
+            # PlanarSurfaceInteraction there is at least enough space to make 
+            # a spherical single. Use MINIMAL_SINGLE_RADIUS_FACTOR and 
+            # SURFACE_SAFETY_ZONE.
             mindzRight = particleRadius * MINIMAL_SEPERATION_FACTOR
 
         elif isinstance( surface, CylindricalSurface ):
-            # Todo. Fine for now.
+            # Todo. Make sure that after an escape through the r-domain of a 
+            # CylindricalSurfaceInteraction there is at least enough space to 
+            # make a spherical single. Use MINIMAL_SINGLE_RADIUS_FACTOR and 
+            # SURFACE_SAFETY_ZONE.
             mindr = particleRadius * MINIMAL_SEPERATION_FACTOR
             # Free diffusion in z, same as for single.
             mindzLeft = particleRadius * MINIMAL_SINGLE_RADIUS_FACTOR
@@ -935,8 +933,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         # Compute radius and size of new cylinder.
 
-        # Todo. Should we make it even smaller? Like updateSingle: depending 
-        # on diffusion constant etc.
+        # Todo. Let radius and size of cylinder also depend on distance 
+        # towards the closest particle, taking into account the diffusion 
+        # constants like in updateSingle.
         if isinstance( surface, PlanarSurface ):
             radius = dr
             # On the other side (left side) than the particle's side, make 
@@ -1009,7 +1008,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 if object.dt == 0.0 and object.getD() > 0:
                     # This is one of the bursted singles.
                     # Or a particle that just escaped it's multi.
-                    # Todo. Should do it like this also in formPair?
                     objectRadius *= MINIMAL_SINGLE_RADIUS_FACTOR
                     #assert bursted.__contains__( object ), 'bursted = %s does 
                     #not contain %s. radius = %.3g.' % (bursted, object, 
@@ -1149,9 +1147,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         assert not isinstance( single, InteractionSingle )
 
         if isinstance( closest, Single ):
-            # Todo.
-            # and isinstance( closest.shellList[0], Sphere )
-            #
             distanceToClosest = self.distance( single.pos, closest.pos )
             shellSize = self.calculateSingleShellSize( single, closest, 
                                                        distanceToClosest,
@@ -1181,20 +1176,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                   '        distanceToShell = %.3g' %
                   ( single, single.radius, single.dt, closest, 
                     distanceToShell ) )
-
-        ''' Pseudocode from board. Todo.
-        SURFACE_SAFETY_ZONE 
-
-        shellsize = 0.5 * closestParticleDistance
-        shellsize = min( shellsize, distanceToSurface )
-
-        if shellsize < minShellSize:
-            # multi
-        else:
-            shellsize -= safety
-            shellsize = max( shellsize, minshellsize )
-            # Make Single with radius 'shellsize'.
-        '''
 
 
     def calculateSingleShellSize( self, single, closestSingle, 
@@ -1272,7 +1253,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 self.clearVolume( newpos, productSpecies.radius )
             else:
                 if( self.isSurfaceBindingReaction( rt ) ):
-                    # Todo. Does this obey detailed balance?
                     newpos, _ = productSpecies.surface.projectedPoint( oldpos )
 
                     # Because we do +1 at end of this method.
@@ -1297,7 +1277,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             newparticle = self.createParticle( productSpecies, newpos )
             newsingle = self.createSingle( newparticle )
 
-            # Todo. Is lastReaction used anywhere, or is it just logging?
+            # lastReaction is used just for logging?
             self.lastReaction = Reaction( rt, [ single.particle ], 
                                           [ newparticle ] )
             log.info( '    New %s.\n        radius = %.3g. dt = %.3g.' %

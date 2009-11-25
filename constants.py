@@ -40,6 +40,21 @@ INTERACTION_HORIZON_FACTOR = 2
 # zone for the particles on the surface.
 # Todo. Not yet implemented.
 SURFACE_SAFETY_ZONE = 1.1
+''' Pseudocode from board. Todo.
+
+shellsize = calculateSingleShellSize()
+shellsize = min( shellsize, distanceToSurface )
+
+if shellsize < MINIMAL_SINGLE_RADIUS_FACTOR * particleRadius
+    # multi
+    pass
+else:
+    # Reduce shellsize to allow for safety zone.
+    shellsize -= SURFACE_SAFETY_ZONE * particleRadius
+    shellsize = max( shellsize, minshellsize )
+    # Make Single with radius 'shellsize'.
+    pass
+'''
 
 
 ### Bursting
