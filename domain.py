@@ -5,6 +5,42 @@ from log import *
 from utils import *
 
 
+'''
+                radius of                                            radius of
+            (surface) particle                                       particle
+                |       |                                               |
+                V       V                                               v
+cartesian   | - - - |-------|-------------------|-------------------|-------|
+domain            begin     0                   r0                  L      end
+(also for          of                                                      of
+ CoM and IV      shell                                                   shell
+ 1D pairs)
+
+
+
+
+                                                                     radius of
+                                                                     particle
+                                                                        |
+                                                                        V
+radial                      |---------------------------------------|-------|
+domain                    r0=0                                      a      end
+                                                                           of
+                                                                          shell
+
+
+
+                    radii of particles                               radius of
+                  (or particle+surface)                              particle
+                            |                                           |
+                            V                                           v
+composite           |--------------|-------------|------------------|-------|
+domain              0            sigma           r0                 a      end
+(radial part)                                                              of
+                                                                          shell
+'''
+
+
 class Domain( object ):
     """1 coordinate (2 in case of composite domain) of a position vector.
 
