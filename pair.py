@@ -420,7 +420,7 @@ class PlanarSurfacePair( Pair ):
         self.shellList = [ Cylinder( self.CoM, shellSize, self.surface.unitZ, 
                                      self.biggestParticleRadius ) ]
 
-        a_R, self.a_r = self.determineRadii()
+        a_R, a_r = self.determineRadii()
 
         # Green's function for centre of mass inside absorbing sphere.
         sgf = FirstPassageGreensFunction( self.D_geom )
@@ -430,6 +430,8 @@ class PlanarSurfacePair( Pair ):
         # This exact solution is used for drawing times.
         self.pgf = FirstPassagePairGreensFunction2D( self.D_tot, self.rt.k, 
                                                      self.sigma )
+        # Todo.
+        self.a_r = min( a_r, MAX_DOMAIN_SIZE_FACTOR * self.sigma )
         ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, 
                                     self.pgf )
 
@@ -498,18 +500,23 @@ class CylindricalSurfacePair( Pair ):
         # Green's function for centre of mass inside absorbing sphere.
         sgf = FirstPassageGreensFunction1D( self.D_geom )
         # a_R can be used as is for cartesian domain.
-        comDomain = CartesianDomain( 0, a_R, sgf )
+        # Domain extends from 0 to L, not 0 to a, so twice as big. Same as for  
+        # CylindricalSurfaceSingle.
+        L = 2 * self.a_r
+        # Todo. r0 is always in the middle for now. We could use
+        # determineOptimalCylinder. 
+        r0 = L / 2
+        comDomain = CartesianDomain( r0, L, sgf )
 
         # Green's function for interparticle vector.
         self.pgf = FirstPassageGreensFunction1DRad( self.D_tot, self.rt.k )
-        # Calculate a and r0 for a cartesian domain. A bit tricky. Needed 
-        # because normally iv is used with an r-theta domain, and then r goes 
-        # from sigma (radiating boundary) to a_r (absorbing boundary). Now, 
-        # cartesian domain goes from minus a_cartesian (radiating boundary) to 
-        # plus a_cartesian (absorbing boundary).
-        a_cartesian = (self.a_r - self.sigma) / 2
-        r0_cartesian = self.pairDistance - self.sigma - a_cartesian
-        ivDomain = CartesianDomain( r0_cartesian, a_cartesian, self.pgf )
+        # Calculate L and r0 for a cartesian domain. Needed because normally 
+        # iv is used with an r-theta domain, and then r goes from sigma 
+        # (radiating boundary) to a_r (absorbing boundary). Now, cartesian 
+        # domain goes from 0 (radiating boundary) to L (absorbing boundary).
+        r0 = self.pairDistance - self.sigma
+        L = min( self.a_r - self.sigma, MAX_DOMAIN_SIZE_FACTOR * r0 )
+        ivDomain = CartesianDomain( r0, L, self.pgf )
 
         self.domains = [ comDomain, ivDomain ]
 
@@ -522,21 +529,17 @@ class CylindricalSurfacePair( Pair ):
 
 
     def drawNewCoM( self, dt ):
-        # Todo.
         # Cartesian domain returns displacement, not absolute position.
         r_R = self.domains[0].drawPosition( dt )
         return self.CoM + r_R * self.surface.unitZ
 
 
     def drawNewIV( self, dt ):
-        # Todo.
         # Cartesian domain returns displacement, not absolute position.
-        r_cartesian = self.domains[1].drawPosition( dt )
-        # Convert back from cartesian domain (minus a_cartesian to plus 
-        # a_cartesian) to something that can be used for the length of the iv 
-        # vector (sigma to a_r.
-        a_cartesian = self.domains[1].a
-        r = r_cartesian + self.sigma + a_cartesian
+        dr = self.domains[1].drawPosition( dt )
+        # Add to pairDistance, which is the length of the original iv, the 
+        # displacement. This is the length of the new iv.
+        r = self.pairDistance + dr
         assert r > self.sigma and r <= self.a_r
         # Note: using self.surface.unitZ here might accidently interchange the 
         # particles.
