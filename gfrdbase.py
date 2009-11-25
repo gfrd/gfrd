@@ -125,7 +125,7 @@ class UnbindingReactionType( ReactionType ):
 
 
 class RepulsionReactionType( ReactionType ):
-    """A + B is repulsive.
+    """A + B is repulsive. Deprecated.
 
     All combinations of species for which no BindingReactionType is defined 
     are repulsive by default.
@@ -143,7 +143,6 @@ class SurfaceBindingReactionType( ReactionType ):
 
     """
     def __init__( self, reactantSpecies, productSpecies,  k ):
-        # Todo. Do some checks on surface here.
         ReactionType.__init__( self, [ reactantSpecies ], 
                                [ productSpecies, ], k )
 
@@ -160,7 +159,7 @@ class SurfaceDirectBindingReactionType( ReactionType ):
 
     A + Surface should be repulsive.
 
-    Not yet implemented.
+    Todo. Not yet implemented.
 
     """
     def __init__( self, reactantSpecies1, reactantSpecies2, 
@@ -170,7 +169,7 @@ class SurfaceDirectBindingReactionType( ReactionType ):
 
 
 class SurfaceRepulsionReactionType( ReactionType ):
-    """A + Surface is repulsive.
+    """A + Surface is repulsive. Deprecated.
 
     When no SurfaceBindingReactionType is defined for a combination of 
     species and surface, they are repulsive by default.
@@ -200,7 +199,7 @@ class SurfaceDirectUnbindingReactionType( ReactionType ):
     After unbinding from a surface, particle2 always ends up on the 
     defaultSurface (world), and particle1 stays on the surface it was on.
 
-    Not yet implemented.
+    Todo. Not yet implemented.
 
     """
     def __init__( self, reactantSpecies, productSpecies1, productSpecies2, k ):
@@ -730,7 +729,7 @@ class ParticleSimulatorBase( object ):
                     _ = self.reactionTypeMap2[( species1, species2) ]
                 except:
                     self.reactionTypeMap2[( species1, species2 )] = \
-                        RepulsionReactionType( species1, species2 )
+                        ReactionType( [ species1, species2 ], [], 0.0 )
 
         for species in self.speciesList.values():
             for surface in self.surfaceList:
@@ -738,11 +737,11 @@ class ParticleSimulatorBase( object ):
                     _ = self.interactionTypeMap[( species, surface )]
                 except:
                     self.interactionTypeMap[( species, surface )] = \
-                        SurfaceRepulsionReactionType( species, surface )
-        
+                        ReactionType( [ species, surface ], [], 0.0 )
+
 
     def throwInParticles( self, species, n, surface=None ):
-        # Todo. Cleanup.
+        # Todo. Cleanup this method.
         if not surface:
             surface = species.surface
 
