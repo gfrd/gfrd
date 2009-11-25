@@ -64,7 +64,8 @@ class VTKLogger:
 
     """
 
-    def __init__( self, sim, name, bufferSize=None, brownian=False, extraParticleStep=True ):
+    def __init__( self, sim, name, bufferSize=None, brownian=False, 
+                  extraParticleStep=True ):
         self.sim = sim
         self.brownian = brownian
         self.extraParticleStep = extraParticleStep

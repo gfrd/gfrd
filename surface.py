@@ -88,7 +88,6 @@ class PlanarSurface( Surface, Box ):
 
 
     def randomUnbindingSite( self, pos, radius ):
-        # Todo. SAFETY.
         return pos + random.choice( [ -1, 1 ] ) * \
                      self.minimalDistanceFromSurface( radius )  * self.unitZ
 
@@ -138,7 +137,6 @@ class CylindricalSurface( Surface, Cylinder ):
 
 
     def randomUnbindingSite( self, pos, radius ):
-        # Todo. SAFETY.
         x, y = randomVector2D( self.minimalDistanceFromSurface( radius ) )
         return pos + x * self.unitX + y * self.unitY
 

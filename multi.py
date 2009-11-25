@@ -96,7 +96,7 @@ class MultiBDCore( BDSimulatorCoreBase ):
     def clearVolume( self, pos, radius, ignore=[] ):
         """Check if particle has escaped from multi.
 
-        Todo. How does this work.
+        Todo. How does this work?
 
         """
         if not self.withinShell( pos, radius ):

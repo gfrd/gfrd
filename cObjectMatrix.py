@@ -106,8 +106,8 @@ class ObjectMatrix( object ):
     def getAll( self ):
         """Get all objects from all cells in the matrix.
 
-        Calling all_neighbors_array_cyclic once is not sufficient.
-        Ugly! Hack! Todo! Fixme! Now!
+        Calling all_neighbors_array_cyclic once is not sufficient. Only used 
+        during initialization, doesn't matter if it is not efficient.
 
         """
         if not isinstance( self.worldSize, float ): 

@@ -131,10 +131,8 @@ class NonInteractionSingle( Single ):
 
 
     def getRadius( self ):
-        #raise RuntimeError( 'Todo' )
         return self.shellList[0].radius
     def setRadius( self, radius ):
-        #raise RuntimeError( 'Todo' )
         # setRadius is called when NonInteractionSingles are updated.
         assert radius - self.getMinRadius() >= 0.0
         self.shellList[0].radius = radius
@@ -259,7 +257,8 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         gf = FirstPassageGreensFunction1D( self.getD() )
         # Domain extends from 0 to L, not 0 to a, so twice as big.
         L = 2 * self.getMobilityRadius()
-        # Todo. r0 is always in the middle for now.
+        # Todo. r0 is always in the middle for now. We could use
+        # determineOptimalCylinder. 
         r0 = L / 2
         self.domains = [ CartesianDomain( r0, L, gf ) ]
 
@@ -280,17 +279,16 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
 
         """
         # Heads up. Return cylinder's size.
-        #raise RuntimeError( 'Todo' )
         return self.shellList[0].size
     def setRadius( self, size ):
-        #raise RuntimeError( 'Todo' )
         assert size - self.getMinRadius() >= 0.0 # Still fine.
         # Heads up. A larger shell means a larger CylindricalSurfaceSingle's 
         # size.
         self.shellList[0].size = size
         # Domain extends from 0 to L, not 0 to a, so twice as big.
         self.domains[0].L = 2 * self.getMobilityRadius()
-        # Todo. r0 is always in the middle for now.
+        # Todo. r0 is always in the middle for now. We could use
+        # determineOptimalCylinder. 
         self.domains[0].r0 = self.getMobilityRadius()
     radius = property( getRadius, setRadius )
 
@@ -320,7 +318,7 @@ class InteractionSingle( Single ):
 
 
     def getRadius( self ):
-        #raise RuntimeError( 'Todo' )
+        # shellList is set in the constructors.
         return self.shellList[0].radius
     radius = property( getRadius )
 

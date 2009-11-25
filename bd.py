@@ -113,7 +113,8 @@ class BDSimulatorCoreBase( object ):
 
 
     def getP_acct( self, rt, D, sigma ):
-        # Todo. Does this obey detailed balance?
+        # Todo. This does not obey detailed balance yet in 1D and 2D and with 
+        # surfaces.
         try:
             return self.P_acct[rt]
 
@@ -121,13 +122,9 @@ class BDSimulatorCoreBase( object ):
             I = _gfrd.I_bd( sigma, self.dt, D )
             p = rt.k * self.dt / ( I * 4.0 * numpy.pi )
             if not 0.0 <= p < 1.0:
-                # Todo.
-                p = 1
-                '''
-                raise ( RuntimeError,
-                        'Invalid acceptance ratio (%s) for reaction %s. '
-                        'rt.k = %.3g, I = %.3g' % ( p, rt, rt.k, I ) )
-                '''
+                raise RuntimeError( 'Invalid acceptance ratio (%s) for '
+                                    'reaction %s. rt.k = %.3g, I = %.3g' %
+                                    ( p, rt, rt.k, I ) )
             self.P_acct[rt] = p
             return p
 
@@ -298,7 +295,6 @@ class BDSimulatorCoreBase( object ):
                 newpos = currentSurface.randomUnbindingSite( oldpos, radius )
 
             elif( self.main.isSurfaceBindingReaction( rt, currentSurface ) ):
-                # Todo. Does this obey detailed balance?
                 # Select position on surface with z = 0.
                 newpos, _ = productSpecies.surface.projectedPoint( oldpos )
             else:
@@ -337,7 +333,6 @@ class BDSimulatorCoreBase( object ):
                 if( self.main.isDirectSurfaceUnbindingReaction( rt ) ):
                     newpos1 = oldpos
                     # Particle2 ends up in world (defaultSurface).
-                    # Todo. Does this obey detailed balance?
                     newpos2 = currentSurface.randomUnbindingSite( oldpos, 
                                                                   pairDistance )
                 else:
