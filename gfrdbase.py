@@ -239,10 +239,14 @@ class Particle( object ):
 
 
     def posString( self ):
-        factor = 1
-        return '(%.2g %.2g %.2g)' % \
-               ( self.getPos()[0] * factor, self.getPos()[1] * factor, 
-                       self.getPos()[2] * factor ) 
+        # Todo. Try catch block should not be needed.
+        try: 
+            pos = self.getPos()
+            factor = 1
+            return '(%.2g %.2g %.2g)' % \
+                   ( pos[0] * factor, pos[1] * factor, pos[2] * factor ) 
+        except KeyError:
+            return 'None'
 
 
     def __str__( self ):

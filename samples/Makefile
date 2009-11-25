@@ -1,6 +1,11 @@
 
+# This Makefile does not really 'make' anything.
+
+# Running 'make' will run all sample scripts. Used for debugging.
+
+
 .PHONY: all
-all : bd dimer gfrd hardbody irreversible mapk membrane pushpull rebind reversible single surfaces tf
+all : bd dimer gfrd hardbody irreversible mapk pushpull rebind reversible single surfaces tf
 
 DATA=data/run/files.pvd data/run/static.pvd data/run/files/
 PYTHONPATH_NEW=${PYTHONPATH}:../../
@@ -11,14 +16,12 @@ bd:
 	cd bd_test && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH_NEW} python irr.py data/output.out 0.000001 10
 
 .PHONY: dimer
-	echo
-	#Todo.
+dimer:
+	echo 'Old.'
 
 .PHONY: gfrd
 gfrd:
-	echo
-	#Todo.
-	#cd gfrd && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=$PYTHONPATH_NEW python single-gfrd.py
+	echo 'Old.'
 
 .PHONY: hardbody
 hardbody:
@@ -35,12 +38,6 @@ mapk:
 	echo
 	cd mapk && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH_NEW} python mapk.py
 
-.PHONY: membrane
-membrane:
-	echo
-	#Todo.
-	#cd membrane && rm -rf $(DATA) && LOGLEVEL=DEBUG PYTHONPATH=${PYTHONPATH_NEW} python run.py
-
 .PHONY: pushpull
 pushpull:
 	echo
@@ -49,8 +46,7 @@ pushpull:
 .PHONY: rebind
 rebind:
 	echo
-	#Todo.
-	#cd rebind && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH_NEW} python run.py 1 20 0 1
+	cd rebind && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH_NEW} python run.py 1 20 0 1
 
 .PHONY: reversible
 reversible:
