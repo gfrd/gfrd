@@ -48,3 +48,5 @@ lib
 *.jpeg
 *.aux
 *.pdf
+
+html_python
