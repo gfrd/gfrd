@@ -1046,18 +1046,21 @@ class ParticleSimulatorBase( object ):
 
     def dumpReactions( self ):
         buf = 'Monomolecular reactions:\n'
-        for reaction in self.reactionTypeMap1.itervalues():
-            buf += str( reaction[0] ) + '\n'
+        for reactions in self.reactionTypeMap1.itervalues():
+            for reaction in reactions:
+                buf += str( reaction ) + '\n'
 
         buf += '\nReactions of 2 particles:\n'
         # Select unique reactions.
         reactions = set( self.reactionTypeMap2.itervalues() )
         for reaction in reactions:
-            if reaction.products:
+            # Ignore reflecting.
+            if reaction.k > 0:
                 buf += str( reaction ) + '\n'
 
         buf += '\nInteractions between a particle and a surface:\n'
-        for interaction in self.interactionTypeMap.itervalues():
-            if interaction.products:
-                buf += str( interaction ) + '\n'
+        for (_, surface), interaction in self.interactionTypeMap.iteritems():
+            # Ignore reflecting.
+            if interaction.k > 0:
+                buf += str( interaction ) + " (" + str( surface ) + ")" + '\n'
         return buf
