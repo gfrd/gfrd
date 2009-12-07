@@ -44,6 +44,10 @@ class Species( object ):
         self.pool.removeBySerial( serial )
 
 
+    def __str__( self ):
+        return self.id
+
+
 class ReactionType( object ):
     def __init__( self, reactants=[], products=[], k=0.0 ):
         self.reactants = reactants
@@ -249,8 +253,8 @@ class Particle( object ):
 
 
     def __str__( self ):
-        return ( "( " + self.species.id + ", " + str( self.species.surface ) +
-                 ", " + str( self.serial ) + ' ). pos = ' + self.posString() )
+        return ( "( " + self.species.id  + ", " + str( self.serial ) +
+                 ' ). pos = ' + self.posString() )
 
 
     def __repr__( self ):
@@ -606,32 +610,56 @@ class ParticleSimulatorBase( object ):
         return surface
 
 
-    def addSpecies( self, id, D=None, radius=None, surface=None ):
-        """ Add a new species. A species is a type of particles.
+    def addSpecies( self, species, surface=None, D=None, radius=None ):
+        """Add a new species.
 
-        id      -- a unique name.
+        A species is a type of particles. By default the species is added to 
+        the 'world'. If a surface is specified, it is added to that surface. Per 
+        surface a different diffusion constant D and radius can be specified. 
+        By default the ones for the 'world' are used.  
+
+        species -- a species created with Species().
+        surface -- the surface this species can exist on.
         D       -- the diffusion constant of the particles.
         radius  -- the radii of the particles.
-        surface -- the only surface this species can exist on.
 
         """
+        createNewSpecies = False
+
         if surface == None:
-            # It has to be known on which surface this species can live.  
-            # If no surface specified, it can only live in the cytosol.
             surface = self.defaultSurface
         else:
             assert any( surface == s for s in self.surfaceList ), \
                    '%s not in surfaceList.' % ( surface )
 
-        if isinstance( id, Species ):
-            # Backward compatibility. Remove eventually, those default 
-            # arguments for D and radius and using id as a species is really 
-            # ugly.  This method used to be: def addSpecies( self, species ):
-            species = id
-            species.surface = surface
+            # Construct new id if species lives on a surface.
+            id = species.id + str( surface )
+
+            createNewSpecies = True
+
+        if D == None:
+            assert species.D != None, \
+                   'Diffusion constant of species %s not specified: ' % species
+            D = species.D
         else:
-            assert D and radius
-            species = Species( id, D, radius, surface ) 
+            createNewSpecies = True
+
+        if radius == None:
+            assert species.radius != None, \
+                   'Radius of species not specified: ' % species
+            radius = species.radius
+        else:
+            createNewSpecies = True
+
+        if createNewSpecies:
+            # Create a new species for internal use. Don't use the user 
+            # defined species at all. The new id is a concatenation of the 
+            # user defined id and the surface this species exists on.
+            species = Species( id , D, radius, surface ) 
+        else:
+            # Don't create a new species, use the one the user had defined.  
+            # Only set the surface to be the defaultSurface.
+            species.surface = self.defaultSurface
 
         assert not self.speciesList.has_key( species.id ), \
                'Species with id = %s has already been added.' % ( species.id )
@@ -642,6 +670,8 @@ class ParticleSimulatorBase( object ):
 
 
     def isSurfaceBindingReaction( self, rt ):
+        # Todo. This is not going to work for an absorption reaction with a 
+        # surface. Better to look up in interaction list.
         currentSurface = rt.reactants[0].surface
         targetSurface = rt.products[0].surface
 
@@ -677,8 +707,49 @@ class ParticleSimulatorBase( object ):
                      targetSurface2 == self.defaultSurface ) )
 
 
+    def convertSpeciesSurfaceTupleToSpecies( self, tuple ):
+        """Helper.
+
+        """
+        if isinstance( tuple, Species ):
+            # So it wasn't a tuple.
+            species = tuple
+            surface = self.defaultSurface
+            id = species.id
+        else:
+            # Unpack (species, surface)-tuple.
+            species = tuple[0]
+            surface = tuple[1]
+
+            # Note: see addSpecies for how id is constructed. 
+            id = species.id + str( surface )
+
+        try: 
+            # Retrieve species from self.speciesList.
+            return self.speciesList[ id ]
+        except KeyError:
+            raise RuntimeError( 'Species %s on surface %s '
+                                'does not exist: ' % ( species, surface ) )
+
+
     def addReaction( self, reactants, products, k ): 
-        self.addReactionType( ReactionType( reactants, products, k ) )
+        reactants = map( self.convertSpeciesSurfaceTupleToSpecies, reactants )
+        products  = map( self.convertSpeciesSurfaceTupleToSpecies, products )
+
+        for reactant in reactants:
+            assert reactant.radius
+
+        rt = ReactionType( reactants, products, k )
+
+        if( len( rt.products ) == 1 and self.isSurfaceBindingReaction( rt ) ):
+            # Surface binding is not a Poisson process, so this 
+            # reaction should not be added to the reaction list but to 
+            # the interaction list.
+            surface = rt.products[0].surface
+            self.interactionTypeMap[( rt.reactants[0], surface )] = rt
+            return
+        else:
+            self.addReactionType( rt )
 
 
     def addReactionType( self, rt ):
@@ -688,18 +759,10 @@ class ParticleSimulatorBase( object ):
             species1 = rt.reactants[0]
 
             if len( rt.products ) == 1:
-                if( self.isSurfaceBindingReaction( rt ) ):
-                    # Surface binding is not a Poisson process, so this 
-                    # reaction should not be added to the reaction list but to 
-                    # the interaction list.
-                    surface = rt.products[0].surface
-                    self.interactionTypeMap[( species1, surface )] = rt
-                    return
-                else:
-                    # Todo. Why this check, and why *2 here?
-                    if species1.radius * 2 < rt.products[0].radius:
-                        raise RuntimeError( 'radius of product must be smaller '
-                                            'than radius of reactant.' )
+                # Todo. Why this check, and why *2 here?
+                if species1.radius * 2 < rt.products[0].radius:
+                    raise RuntimeError( 'radius of product must be smaller '
+                                        'than radius of reactant.' )
             elif len( rt.products ) == 2:
                 if ( species1.radius < rt.products[0].radius or
                      species1.radius < rt.products[1].radius ):
@@ -741,10 +804,16 @@ class ParticleSimulatorBase( object ):
 
 
     def throwInParticles( self, species, n, surface=None ):
-        # Todo. Cleanup this method.
-        if not surface:
-            surface = species.surface
+        if surface == None or isinstance( surface, CuboidalRegion ):
+            # Species that is used internally is the same, but still some 
+            # checks are done which are usefull.
+            species = self.convertSpeciesSurfaceTupleToSpecies( species )  
+        else:
+            # Look up species that is used internally.
+            species = self.convertSpeciesSurfaceTupleToSpecies( (species,
+                                                                 surface ) )  
 
+        surface = species.surface
         log.info( '\tthrowing in %s %s particles to %s' % ( n, species.id, 
                                                             surface ) )
 
@@ -784,6 +853,9 @@ class ParticleSimulatorBase( object ):
 
         if not self.checkOverlap( pos, radius ):
             raise NoSpace( 'overlap check failed' )
+
+        # Look up species that is used internally.
+        species = self.convertSpeciesSurfaceTupleToSpecies( species )  
 
         particle = self.createParticle( species, pos )
         return particle

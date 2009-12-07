@@ -4,7 +4,9 @@ from egfrd import *
 #from vtklogger import VTKLogger
 
 '''
-A + A <-> B
+A     <-> B
+A + B <-> C
+C      -> 0
 '''
 
 def run( ):
@@ -25,7 +27,7 @@ def run( ):
     s = EGFRDSimulator( worldSize=L )
 
 
-    ''' Surfaces. 
+    ''' Adding surfaces. 
 
     Define the surfaces to add to the simulator.
 
@@ -48,114 +50,161 @@ def run( ):
     DNA = True
 
     if MEMBRANE:
-        membrane = s.addPlanarSurface( origin=[ L / 2, L / 2, 2 * L / 10 ],
-                                       vectorX=[ 1, 0, 0 ],
-                                       vectorY=[ 0, 1, 0 ],
-                                       Lx=(L / 2),
-                                       Ly=(L / 2),
-                                       Lz=radius,
-                                       name='membrane' )
+        m = s.addPlanarSurface( origin=[ L / 2, L / 2, 2 * L / 10 ],
+                                vectorX=[ 1, 0, 0 ],
+                                vectorY=[ 0, 1, 0 ],
+                                Lx=(L / 2),
+                                Ly=(L / 2),
+                                Lz=radius,
+                                name='m' )
 
     if MEMBRANE2:
-        membrane2 = s.addPlanarSurface( origin=[ L / 2, L / 2, 8 * L / 10 ],
-                                        vectorX=[ 1, 0, 0 ], 
-                                        vectorY=[ 0, 1, 0 ],
-                                        Lx=(L / 2),
-                                        Ly=(L / 2),
-                                        Lz=radius,
-                                        name='membrane2' )
+        m2 = s.addPlanarSurface( origin=[ L / 2, L / 2, 8 * L / 10 ],
+                                 vectorX=[ 1, 0, 0 ], 
+                                 vectorY=[ 0, 1, 0 ],
+                                 Lx=(L / 2),
+                                 Ly=(L / 2),
+                                 Lz=radius,
+                                 name='m2' )
 
     if DNA:
-        dna = s.addCylindricalSurface( origin=[ L / 2, L / 2, L / 2 ],
-                                       radius=radius,
-                                       orientation=[ 0, 1, 0 ],
-                                       size=(L / 2),
-                                       name='dna' )
+        d = s.addCylindricalSurface( origin=[ L / 2, L / 2, L / 2 ],
+                                     radius=radius,
+                                     orientation=[ 0, 1, 0 ],
+                                     size=(L / 2),
+                                     name='d' )
 
-    ''' Species.
+    ''' Defining species.
 
-    Specify which type of particles can exist on which surface.
-    
+    Define the type of particles that can exist.
+
     Usage:
-        s.addSpecies( id, D, radius )
-    See the docstring.
+        species = Species( 'name', D, radius )
 
-    If particles of type 'A' should be able to exist in the world as well as 
-    on one of the previously added surfaces, then 2 species should be defined. 
-    The diffusion constants and the radii of the 2 species can be different.
+    If no D or radius is specified, it has to be specified when adding it to a 
+    specific surface.
 
-    Both species should be created using addSpecies, the latter however requires 
-    an explicit 2nd argument to addSpecies referencing the surface it can 
-    exist on. They should have different ids.
+    '''
+    A = Species( 'A', D, radius )
+    B = Species( 'B', D, radius )
+    C = Species( 'C', D, radius )
 
-    A species can not exist on more than 1 surface.
 
-    There is a 3D surface called 'world' by default. Although it is not really 
-    a surface, all species and particles that have not been explicitly 
-    assigned a surface are assumed to be in the 'world'.
+    ''' Adding species to 3D space.
 
-    The method returns the surface it creates. Assign each species to a 
-    variable, so it can be used when defining reactions in the next steps.
+    Usage:
+        s.addSpecies( species )
+
+    When adding a species to the system without explicitly assigning the 
+    surface it can live on, it is assumed to be in the 'world'. The 'world' is 
+    a 3D space, also referred to as the 'bulk' or 'cytoplasm'.
 
     '''
     if WORLD:
-        Aw = s.addSpecies( 'Aw', D, radius )
-        Bw = s.addSpecies( 'Bw', D, radius )
+        s.addSpecies( A )
+        s.addSpecies( B )
+        s.addSpecies( C )
 
+
+    ''' Adding species to surfaces.
+
+    Specify which species can exist on which surface.
+
+    Usage:
+        s.addSpecies( species, surface, D, radius )
+    See the docstring.
+
+    Per surface a different diffusion constant D and radius can be specified. 
+    By default the ones for the 'world' are used. 
+
+    Note: if particles of species 'A' should be able to exist in the world as 
+    well as on one of the previously added surfaces, then it should be added 
+    twice. Ones with and ones without an explicit surface argument.
+
+    '''
     if MEMBRANE:
-        Am = s.addSpecies( 'Am', D, radius, membrane )
-        Bm = s.addSpecies( 'Bm', D, radius, membrane )
+        s.addSpecies( A, m )
+        s.addSpecies( B, m )
+        s.addSpecies( C, m )
 
     if MEMBRANE2:
-        Am2 = s.addSpecies( 'Am2', D, radius, membrane2 )
-        Bm2 = s.addSpecies( 'Bm2', D, radius, membrane2 )
+        # No species can live on membrane 2.
+        pass
 
     if DNA:
-        Ad = s.addSpecies( 'Ad', D, radius, dna )
-        Bd = s.addSpecies( 'Bd', D, radius, dna )
+        s.addSpecies( A, d )
+        s.addSpecies( B, d, D * 2 )
+        s.addSpecies( C, d, D * 2, radius * 2 )
 
 
-    ''' Reactions.
+    ''' Adding reactions in 3D.
 
     Usage:
         s.addReaction( [reactants], [products], rate )
 
-    The reactant and product species for every Reaction should be on the same 
-    surface.
-
-    Combinations of species which do not appear together as reactants in any 
-    reaction are made repulsive by default.
+    For now: a bimolecular reaction can only have 1 product species.
 
     '''
     kf = 1e2
     kb = 1e2
 
     if WORLD:
-        s.addReaction( [ Aw, Aw ],   [ Bw ],       kf )
-        s.addReaction( [ Bw ],       [ Aw, Aw ],   kb )
+        # A     <-> B
+        # A + B <-> C
+        # C      -> 0
+        s.addReaction( [ A    ], [ B    ], kf )
+        s.addReaction( [ B    ], [ A    ], kb )
+        s.addReaction( [ A, B ], [ C    ], kf )
+        s.addReaction( [ C    ], [ A, B ], kb )
+        s.addReaction( [ C    ], [      ], kf )
 
+
+    ''' Adding reactions on surfaces.
+
+    Usage:
+        s.addReaction( [reactants], [products], rate )
+    , where one reactant or product is a tuple: (species, surface).
+
+    Combinations of species which do not appear together as reactants in any 
+    reaction are made repulsive by default on every surface.
+
+    '''
     if MEMBRANE:
-        s.addReaction( [ Am, Am ],   [ Bm ],       kf )
-        s.addReaction( [ Bm ],       [ Am, Am ],   kb )
+        # A     <-> B
+        # A + B <-> C
+        # C      -> 0
+        s.addReaction( [ (A, m),          ], [ (B, m)           ], kf )
+        s.addReaction( [ (B, m),          ], [ (A, m)           ], kb )
+        s.addReaction( [ (A, m),  (B, m)  ], [ (C, m)           ], kf )
+        s.addReaction( [ (C, m)           ], [ (A, m),  (B, m)  ], kb )
+        s.addReaction( [ (C, m),          ], [                  ], kf )
 
     if MEMBRANE2:
-        s.addReaction( [ Am2, Am2 ], [ Bm2 ],      kf )
-        s.addReaction( [ Bm2 ],      [ Am2, Am2 ], kb )
+        # No particles can live on membrane2.
+        pass
 
     if DNA:
-        s.addReaction( [ Ad, Ad ],   [ Bd ],       kf )
-        s.addReaction( [ Bd ],       [ Ad, Ad ],   kb )
+        # A     <-> B
+        # A + B <-> C
+        # C      -> 0
+        s.addReaction( [ (A, d),          ], [ (B, d)           ], kf )
+        s.addReaction( [ (B, d),          ], [ (A, d)           ], kb )
+        s.addReaction( [ (A, d),  (B, d)  ], [ (C, d)           ], kf )
+        s.addReaction( [ (C, d)           ], [ (A, d),  (B, d)  ], kb )
+        s.addReaction( [ (C, d),          ], [                  ], kf )
 
 
     ''' Surface binding reactions.
 
     Usage:
         s.addReaction( [reactant], [product], rate ) )
+    , where product is a tuple: (species, surface).
 
-    The reactant species for every surface binding reaction should be a 
-    species that can only exist in the 'world'. The product species should 
-    have been added to the simulator with a second argument defining the 
-    surface it can live on.
+    The reactant species for every surface binding reaction is always a 
+    species that can only exist in the 'world', so no surface has to be 
+    specified there.
+
+    If a surface should be absorbive, specify (0, surface) as the product.
 
     When no surface binding reaction is defined for a combination of a species 
     and a surface, they are made repulsive by default.
@@ -165,39 +214,49 @@ def run( ):
     koff = 1e2
 
     if MEMBRANE and WORLD:
-        s.addReaction( [ Aw ],  [ Am ],  kon )
-        s.addReaction( [ Bw ],  [ Bm ],  kon )
+        # Species C can bind to the membrane. The membrane is reflective, by 
+        # default, to species A and B.
+        s.addReaction( [ C ],  [ (C, m)  ], kon )
 
     if MEMBRANE2 and WORLD:
-        s.addReaction( [ Am2 ], [ Am2 ], kon )
-        s.addReaction( [ Bm2 ], [ Bm2 ], kon )
+        # Membrane 2 absorbs all particles.
+        #
+        # To be implemented.
+        #s.addReaction( [ A ],  [ (0, m2) ], kon )
+        #s.addReaction( [ B ],  [ (0, m2) ], kon )
+        #s.addReaction( [ C ],  [ (0, m2) ], kon )
+        pass
 
     if DNA and WORLD:
-        s.addReaction( [ Aw ],  [ Ad ],  kon )
-        s.addReaction( [ Bw ],  [ Bd ],  kon )
+        # Species C can bind to the dna. The dna is reflective, by default, to 
+        # species A and B.
+        s.addReaction( [ C ],  [ (C, d)  ], kon )
 
 
     ''' Surface unbinding reactions.
 
     Usage:
         s.addReaction( [reactant], [product], k ) )
+    , where reactant is a tuple: (species, surface).
 
     Unbinding is a Poissonian reaction, from a surface to the 'world'.
 
-    The reactant species should have been added using s.addSpecies with a 2nd 
-    argument defining the surface it can exist on. The product species should  
-    always be a species that can only exist in the 'world'.
+    The product species for every surface binding reaction is always a 
+    species that can only exist in the 'world', so no surface has to be 
+    specified there.
 
     '''
     if MEMBRANE and WORLD:
-        s.addReaction( [ Am ], [ Aw ], koff )
-        s.addReaction( [ Bm ], [ Bw ], koff )
+        # Species C can unbind to the 'world'.
+        s.addReaction( [ (C, m)  ], [ C ], koff )
+
     if MEMBRANE2 and WORLD:
-        s.addReaction( [ Am2 ], [ Aw ], koff )
-        s.addReaction( [ Bm2 ], [ Bw ], koff )
+        # No particles can live on membrane2.
+        pass
+
     if DNA and WORLD:
-        s.addReaction( [ Ad ], [ Aw ], koff )
-        s.addReaction( [ Bd ], [ Bw ], koff )
+        # Species C can unbind to the 'world'.
+        s.addReaction( [ (C, d)  ], [ C ], koff )
 
 
     '''
@@ -209,14 +268,14 @@ def run( ):
             # Add world particles inside the two planes.
             # Note that a CuboidalRegion is defined by 2 corners.
             box1 = CuboidalRegion( [ 0, 0, 2 * L / 10 ], [ L, L, 8 * L / 10 ] )
-            s.throwInParticles( Bw, 2, box1 )
+            s.throwInParticles( C, 2, box1 )
         else:
             # Particles are added to world (3D) by default.
-            s.throwInParticles( Bw, 2 )
+            s.throwInParticles( C, 2 )
 
-    if MEMBRANE: s.throwInParticles( Bm, 2, membrane )
-    if MEMBRANE2: s.throwInParticles( Bm2, 2, membrane2 )
-    if DNA: s.throwInParticles( Bd, 2, dna )
+    if MEMBRANE: s.throwInParticles( C, 2, m )
+    if MEMBRANE2: pass
+    if DNA: s.throwInParticles( C, 2, d )
 
 
     '''
