@@ -135,7 +135,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.scheduler.step()
 
         if self.particleMatrix.size == 0:
-            raise Stop( '0 particles left' )
+            raise RuntimeError( '0 particles left' )
 
         nextTime = self.scheduler.getTopTime()
         self.dt = nextTime - self.t
