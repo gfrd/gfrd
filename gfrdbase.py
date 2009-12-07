@@ -48,6 +48,15 @@ class Species( object ):
         return self.id
 
 
+class DummySpecies( Species ):
+    """This is needed internally during initialization for the virtual product 
+    of a decay or surface absorption reaction.
+
+    """
+    def __init__( self, surface ):
+        Species.__init__( self, 'Dummy', None, 0, surface )
+
+
 class ReactionType( object ):
     def __init__( self, reactants=[], products=[], k=0.0 ):
         self.reactants = reactants
@@ -427,6 +436,7 @@ class ParticleSimulatorBase( object ):
     def initialize( self ):
         # Check if user specified a surface for each species that is a product 
         # of an interaction.
+        '''Todo.
         for interaction in self.interactionTypeMap.itervalues():
             product = interaction.products[0]
             if product.surface == self.defaultSurface:
@@ -435,6 +445,7 @@ class ParticleSimulatorBase( object ):
                                         product.id + ' seems to be ' +
                                         'the product of interaction: ' +
                                         str( interaction ) )
+        '''
 
 
     def getClosestSurface( self, pos, ignore ):
@@ -670,13 +681,10 @@ class ParticleSimulatorBase( object ):
 
 
     def isSurfaceBindingReaction( self, rt ):
-        # Todo. This is not going to work for an absorption reaction with a 
-        # surface. Better to look up in interaction list.
-        currentSurface = rt.reactants[0].surface
-        targetSurface = rt.products[0].surface
-
-        return( currentSurface == self.defaultSurface and
-                targetSurface != self.defaultSurface )
+        # A surface binding reaction that is a surface absorption reaction 
+        # doesn't have a product species. This check always works, but don't 
+        # call it before the interaction is added to the interactionTypeMap.
+        return any( [ rt == it for it in self.interactionTypeMap.values() ] )
 
 
     def isSurfaceUnbindingReaction( self, rt ):
@@ -721,6 +729,11 @@ class ParticleSimulatorBase( object ):
             species = tuple[0]
             surface = tuple[1]
 
+            if species == 0:
+                # This is the virtual product of a decay or surface absorption 
+                # reaction.
+                return DummySpecies( surface )
+
             # Note: see addSpecies for how id is constructed. 
             id = species.id + str( surface )
 
@@ -736,20 +749,29 @@ class ParticleSimulatorBase( object ):
         reactants = map( self.convertSpeciesSurfaceTupleToSpecies, reactants )
         products  = map( self.convertSpeciesSurfaceTupleToSpecies, products )
 
-        for reactant in reactants:
-            assert reactant.radius
-
         rt = ReactionType( reactants, products, k )
 
-        if( len( rt.products ) == 1 and self.isSurfaceBindingReaction( rt ) ):
-            # Surface binding is not a Poisson process, so this 
-            # reaction should not be added to the reaction list but to 
-            # the interaction list.
-            surface = rt.products[0].surface
-            self.interactionTypeMap[( rt.reactants[0], surface )] = rt
-            return
-        else:
-            self.addReactionType( rt )
+        if( len( rt.products ) == 1 ):
+            currentSurface = rt.reactants[0].surface
+            targetSurface = rt.products[0].surface
+
+            if( currentSurface == self.defaultSurface and
+                targetSurface != self.defaultSurface ):
+                # Remove DummySpecies from products list. Were needed for 
+                # surface absorption reaction.
+                rt.products = [ product for product in rt.products if not
+                                isinstance( product, DummySpecies ) ]
+                # Surface binding is not a Poisson process, so this reaction 
+                # should not be added to the reaction list but to the 
+                # interaction list.
+                self.interactionTypeMap[( rt.reactants[0], targetSurface )] = rt
+                return
+
+        # Remove DummySpecies from products list. Were needed for decay 
+        # reaction.
+        rt.products = [ product for product in rt.products if not
+                        isinstance( product, DummySpecies ) ]
+        self.addReactionType( rt )
 
 
     def addReactionType( self, rt ):

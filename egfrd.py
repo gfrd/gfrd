@@ -1234,6 +1234,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         log.debug( '        *fireSingleReaction: %s.' % ( rt ) )
 
         if len( rt.products ) == 0:
+            # Also works for surface absorption reaction.
             self.removeParticle( single.particle )
             self.lastReaction = Reaction( rt, [ single.particle ], [] )
 

@@ -220,11 +220,9 @@ def run( ):
 
     if MEMBRANE2 and WORLD:
         # Membrane 2 absorbs all particles.
-        #
-        # To be implemented.
-        #s.addReaction( [ A ],  [ (0, m2) ], kon )
-        #s.addReaction( [ B ],  [ (0, m2) ], kon )
-        #s.addReaction( [ C ],  [ (0, m2) ], kon )
+        s.addReaction( [ A ],  [ (0, m2) ], kon )
+        s.addReaction( [ B ],  [ (0, m2) ], kon )
+        s.addReaction( [ C ],  [ (0, m2) ], kon )
         pass
 
     if DNA and WORLD:
