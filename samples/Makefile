@@ -17,11 +17,7 @@ bd:
 
 .PHONY: dimer
 dimer:
-	echo 'Old.'
-
-.PHONY: gfrd
-gfrd:
-	echo 'Old.'
+	echo 'dimer is old'
 
 .PHONY: hardbody
 hardbody:
