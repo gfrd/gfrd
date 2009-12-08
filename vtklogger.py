@@ -234,7 +234,8 @@ class VTKLogger:
             boxes = [ self.sim.defaultSurface ]
         except:
             # Add dummy box to stop tensorGlyph from complaining.
-            boxes = [ DummyBox() ] 
+            boxes = [ Box( [ 0, 0, 0], [ 1, 0, 0], [ 0, 1, 0 ], [ 0, 0, 1 ], 
+                           1e-20, 1e-20, 1e-20 ) ]
 
         for box in boxes:
             tensor = numpy.concatenate( ( box.vectorX, box.vectorY, 
@@ -259,7 +260,8 @@ class VTKLogger:
                   isinstance( surface, Box ) ]
         if len( boxes ) == 0:
             # Add dummy box to stop tensorGlyph from complaining.
-            boxes = [ DummyBox() ] 
+            boxes = [ Box( [ 0, 0, 0], [ 1, 0, 0], [ 0, 1, 0 ], [ 0, 0, 1 ], 
+                           1e-20, 1e-20, 1e-20 ) ]
 
         for box in boxes:
             tensor = numpy.concatenate( ( box.vectorX, box.vectorY,
@@ -275,7 +277,7 @@ class VTKLogger:
 
         if len( cylinders ) == 0:
             # Add dummy cylinder to stop tensorGlyph from complaining.
-            cylinders = [ DummyCylinder() ] 
+            cylinders = [ Cylinder( [ 0, 0, 0 ], 1e-20, [ 0, 0, 1 ], 1e-20 ) ]
 
         for cylinder in cylinders:
             radius = cylinder.radius
@@ -327,16 +329,4 @@ class VTKLogger:
         if tensor != None:
             tensor = tensor * 2 * factor
             tensorList.append( tensor )
-
-
-class DummyCylinder( Cylinder ):
-    def __init__( self ):
-        Cylinder.__init__( self, [ 0, 0, 0 ], 1e-20, [ 0, 0, 1 ], 1e-20 ) 
-
-
-class DummyBox( Box ):
-    def __init__( self ):
-        Box.__init__( self, [ 0, 0, 0], [ 1, 0, 0], [ 0, 1, 0 ], [ 0, 0, 1 ], 
-                      1e-20, 1e-20, 1e-20 ) 
-
 
