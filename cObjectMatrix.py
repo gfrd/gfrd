@@ -185,30 +185,3 @@ class CylinderMatrix( ObjectMatrix ):
         self.impl.insert( key, shell.origin, shell.radius, shell.unitZ, 
                           shell.size )
 
-
-class BoxMatrix( ObjectMatrix ):
-    def __init__( self ):
-        ObjectMatrix.__init__( self )
-
-
-    def initialize( self ):
-        self.impl = object_matrix.BoxContainer( self.worldSize,
-                                                self.matrixSize )
-
-
-    def add( self, key, shell ):
-        # Todo. Do something like this.
-        #assert radius < self.cellSize * .5
-        assert not self.impl.contains( key )
-        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, 
-                          shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
-
-
-    def update( self, key, shell ):
-        assert self.impl.contains( key )
-        # object_matrix handles updates nicely.
-        self.impl.insert( key, shell.origin, shell.unitX, shell.unitY, 
-                          shell.unitZ, shell.Lx, shell.Ly, shell.Lz )
-
-
-

@@ -28,9 +28,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
     def __init__( self, worldSize ):
         self.sphereMatrix = SphereMatrix()
         self.cylinderMatrix = CylinderMatrix()
-        self.boxMatrix = BoxMatrix() # Not used.
-        self.objectMatrices = [ self.sphereMatrix, self.cylinderMatrix,
-                                self.boxMatrix ]
+        self.objectMatrices = [ self.sphereMatrix, self.cylinderMatrix ]
         #self.sm2 = pObjectMatrix()
 
         ParticleSimulatorBase.__init__( self, worldSize )
@@ -54,7 +52,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         self.sphereMatrix.setWorldSize( size )
         self.cylinderMatrix.setWorldSize( size )
-        self.boxMatrix.setWorldSize( size )
 
 
     def setUserMaxShellSize( self, size ):
@@ -98,7 +95,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.scheduler.clear()
         self.sphereMatrix.clear()
         self.cylinderMatrix.clear()
-        self.boxMatrix.clear()
 
         # Get particle data from particleMatrix, because we need to know the 
         # surface they are on.
@@ -275,12 +271,10 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         ParticleSimulatorBase.setMatrixSize( self, size )
         self.sphereMatrix.setMatrixSize( size )
         self.cylinderMatrix.setMatrixSize( size )
-        self.boxMatrix.setMatrixSize( size )
 
 
     def getMatrixCellSize( self ):
-        assert self.sphereMatrix.cellSize == self.cylinderMatrix.cellSize == \
-               self.boxMatrix.cellSize
+        assert self.sphereMatrix.cellSize == self.cylinderMatrix.cellSize
         return self.sphereMatrix.cellSize
 
 
@@ -294,8 +288,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 self.sphereMatrix.add( key, shell.origin, shell.radius )
             elif isinstance( shell, Cylinder ):
                 self.cylinderMatrix.add( key, shell )
-            #elif isinstance( shell, Box ):
-            #    self.boxMatrix.add( key, shell )
             else: raise KeyError( 'Objecttype does not exit' )
 
 
@@ -306,8 +298,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 self.sphereMatrix.update( key, shell.origin, shell.radius )
             elif isinstance( shell, Cylinder ):
                 self.cylinderMatrix.update( key, shell )
-            #elif isinstance( shell, Box ):
-            #    self.boxMatrix.update( key, shell )
             else: raise KeyError( 'Objecttype does not exit' )
 
 
@@ -318,8 +308,6 @@ class EGFRDSimulator( ParticleSimulatorBase ):
                 self.sphereMatrix.remove( key )
             elif isinstance( shell, Cylinder ):
                 self.cylinderMatrix.remove( key )
-            #elif isinstance( shell, Box ):
-            #    self.boxMatrix.remove( key )
             else: raise KeyError( 'Objecttype does not exit' )
 
 
