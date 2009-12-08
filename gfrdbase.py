@@ -48,13 +48,14 @@ class Species( object ):
         return self.id
 
 
-class DummySpecies( Species ):
+class DummySpecies( object ):
     """This is needed internally during initialization for the virtual product 
     of a decay or surface absorption reaction.
 
     """
     def __init__( self, surface ):
-        Species.__init__( self, 'Dummy', None, 0, surface )
+        self.radius = 0
+        self.surface = surface
 
 
 class ReactionType( object ):
