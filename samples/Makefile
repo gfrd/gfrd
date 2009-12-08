@@ -5,7 +5,7 @@
 
 
 .PHONY: all
-all : bd dimer gfrd hardbody irreversible mapk pushpull rebind reversible single surfaces tf
+all : bd dimer hardbody irreversible mapk pushpull rebind reversible single surfaces tf
 
 DATA=data/run/files.pvd data/run/static.pvd data/run/files/
 PYTHONPATH_NEW=${PYTHONPATH}:../../
