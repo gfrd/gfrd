@@ -10,7 +10,6 @@ from bd import BDSimulator
 
 INF = numpy.inf
 
-
 class VTKLogger:
     """Logger that can be used to visualize data with Kitware ParaView.
 
@@ -57,7 +56,6 @@ class VTKLogger:
     the Glyph.
 
     When doing Brownian Dynamics, don't show shells.
-    Todo. Doesn't work anymore.
 
     extraParticleStep=True means that for each timestep an extra step is  
     recorded where only the active particle has been updated (it's shell
@@ -77,9 +75,15 @@ class VTKLogger:
 
         # Filename stuff.
         self.name = name
-        if os.path.exists( 'data/' + self.name ):
-            shutil.rmtree( 'data/' + self.name )
-        os.makedirs( 'data/' + self.name + '/files' )
+
+        self.fileNameNumberOfSteps = 'data/' + self.name + '/numberOfSteps.dat'
+        if os.path.exists( self.fileNameNumberOfSteps ):
+            # Simulation with the same name has been run before. Retrieve 
+            # number of steps.
+            outFile = open( self.fileNameNumberOfSteps, 'r' )
+            self.numberOfStepsPreviousRun = int( outFile.read() )
+        else:
+            os.makedirs( 'data/' + self.name + '/files' )
 
         self.fileList = []
         self.staticList = []
@@ -110,7 +114,7 @@ class VTKLogger:
         if not self.brownian:
             spheres, cylinders = self.getShellDataFromScheduler( )
         else:
-            spheres, cylinders = [], []
+            spheres, cylinders = self.getDummyData(), self.getDummyCylinders()
 
         # Write to buffer or file.
         if self.bufferSize:
@@ -169,10 +173,12 @@ class VTKLogger:
 
     def stop( self ):
         self.log()
-        for newIndex, entry in enumerate( self.buffer ):
-            self.writelog( entry[0], newIndex, entry[2:] )
-        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'files.pvd', 
-                                  self.fileList )
+
+        # Write contents of buffer.
+        for index, entry in enumerate( self.buffer ):
+            if index % 10 == 0:
+                print 'vtklogger writing step %s from buffer' % index
+            self.writelog( entry[0], index, entry[2:] )
 
         # Surfaces don't move.
         self.makeSnapshot( 'cylindricalSurfaces', 
@@ -180,8 +186,45 @@ class VTKLogger:
         self.makeSnapshot( 'planarSurfaces', self.getPlanarSurfaceData() )
         self.makeSnapshot( 'cuboidalSurfaces', self.getCuboidalSurfaceData() )
 
+        # Fill with dummy files up to number of steps of previous run. This 
+        # should have Paraview complain less.
+        dummyData = ( self.getDummyData(), self.getDummyData(),
+                      self.getDummyCylinders() )
+
+        # Overwrite, so transition to dummy data is more smooth.
+        self.previousSpheres = self.getDummyData()
+        self.previousCylinders = self.getDummyCylinders()
+
+        if self.numberOfStepsPreviousRun > self.i:
+            print ( 'vtklogger writing dummy files for step %d to %d' % 
+                    ( self.i, self.numberOfStepsPreviousRun ) )
+            for index in range( self.i, self.numberOfStepsPreviousRun ):
+                if index % 10 == 0:
+                    print 'vtklogger writing step %s from buffer' % index
+                self.writelog( index, index, dummyData )
+
+        # Write number of steps to file. Needed for next run, maybe.
+        numberOfSteps = self.i - 1
+        if self.bufferSize:
+            numberOfSteps = min( self.bufferSize, numberOfSteps )
+        outFile = open( self.fileNameNumberOfSteps, 'w' )
+        outFile.write( str( numberOfSteps ) )
+        outFile.close()
+
+        # Finally, write PVD files.
+        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'files.pvd', 
+                                  self.fileList )
+
         self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'static.pvd', 
                                   self.staticList )
+
+
+    def getDummyData( self ):
+        return ( [], [], [], [] )
+
+
+    def getDummyCylinders( self ):
+        return self.processCylinders( [], [] )
 
 
     def getParticleData( self ):
