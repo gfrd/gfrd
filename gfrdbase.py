@@ -20,10 +20,6 @@ from log import *
 
 from reaction_types import *
 
-class NoSpace( Exception ):
-    pass
-
-
 class Species( object ):
     def __init__( self, id, D=None, radius=None, surface=None ):
         self.id = id

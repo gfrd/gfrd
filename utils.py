@@ -82,6 +82,10 @@ class NeverGetHere( Exception ):
     pass
 
 
+class NoSpace( Exception ):
+    pass
+
+
 def Mtom3( rate ):
     return rate / ( 1000 * N_A )
 
