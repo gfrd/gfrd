@@ -1,5 +1,6 @@
 
 import os
+import shutil
 #import re
 #import logging
 import numpy
@@ -76,8 +77,9 @@ class VTKLogger:
 
         # Filename stuff.
         self.name = name
-        if not os.path.exists( 'data/' + self.name + '/files' ):
-            os.makedirs( 'data/' + self.name + '/files' )
+        if os.path.exists( 'data/' + self.name ):
+            shutil.rmtree( 'data/' + self.name )
+        os.makedirs( 'data/' + self.name + '/files' )
 
         self.fileList = []
         self.staticList = []
