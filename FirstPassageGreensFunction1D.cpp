@@ -66,7 +66,8 @@ const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 
 // Calculates the probability density of finding the particle at location r at 
 // time t.
-const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) const
+const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t)
+const
 {
     const Real L(this->getL());
     const Real r0(this->getr0());
@@ -89,7 +90,7 @@ const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) con
 	}
     }
     else if ( r < EPSILON || (L-r) < EPSILON || L < 0 )
-    {	
+    {
 	return 0.0;
     }
 
@@ -124,7 +125,8 @@ const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) con
 
 // Calculates the probability density of finding the particle at location z at 
 // timepoint t, given that the particle is still in the domain.
-const Real FirstPassageGreensFunction1D::calcpcum (const Real r, const Real t) const
+const Real FirstPassageGreensFunction1D::calcpcum (const Real r, const Real t)
+const
 {
     return prob_r (r, t)/p_survival (t);
 }
@@ -145,7 +147,8 @@ double FirstPassageGreensFunction1D::drawT_f (double t, void *p)
     {
 	if ( n >= terms )
 	{
-	    std::cerr << "Too many terms needed for DrawTime. N: " << n << std::endl;
+	    std::cerr << "Too many terms needed for DrawTime. N: "
+	              << n << std::endl;
 	    break;
 	}
 	prev_term = term;
@@ -270,7 +273,9 @@ const Real FirstPassageGreensFunction1D::leavea(const Real t) const
 // and right (z=L) boundary. Although not completely accurate, it returns an 
 // ESCAPE for an escape through the right boundary and a REACTION for an 
 // escape through the left boundary.
-const EventType FirstPassageGreensFunction1D::drawEventType( const Real rnd, const Real t ) const
+const EventType
+FirstPassageGreensFunction1D::drawEventType( const Real rnd, const Real t )
+const
 {
     const Real L(this->getL());
     const Real r0(this->getr0());
@@ -390,8 +395,8 @@ for (double t=0; t<0.1; t += 0.0001)
 
 	    if( fabs( high ) >= t_guess * 1e6 )
 	    {
-		std::cerr << "Couldn't adjust high. F(" << high <<
-		    ") = " << value << std::endl;
+		std::cerr << "Couldn't adjust high. F(" << high << ") = "
+		          << value << std::endl;
 		throw std::exception();
 	    }
 	}
@@ -404,14 +409,14 @@ for (double t=0; t<0.1; t += 0.0001)
 	Real value_prev( 2 );
 	do
 	{
-	    if( fabs( low ) <= t_guess * 1e-6 || fabs(value-value_prev) < EPSILON*this->t_scale )
+	    if( fabs( low ) <= t_guess * 1e-6 ||
+	        fabs(value-value_prev) < EPSILON*this->t_scale )
 	    {
-		std::cerr << "Couldn't adjust low. F(" << low <<
-		    ") = " << value << 
-		    " t_guess: " << t_guess << " diff: " << (value - value_prev) <<
-		    " value: " << value << " value_prev: " << value_prev <<
-		    " t_scale: " << this->t_scale <<
-		    std::endl;
+		std::cerr << "Couldn't adjust low. F(" << low << ") = "
+		          << value << " t_guess: " << t_guess << " diff: "
+		          << (value - value_prev) << " value: " << value
+		          << " value_prev: " << value_prev << " t_scale: "
+		          << this->t_scale << std::endl;
 		return low;
 	    }
 
@@ -434,7 +439,7 @@ for (double t=0; t<0.1; t += 0.0001)
     // incl typecast?
     gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
     const Real t( findRoot( F, solver, low, high, EPSILON*t_scale, EPSILON,
-	"FirstPassageGreensFunction1D::drawTime" ) );
+                            "FirstPassageGreensFunction1D::drawTime" ) );
 
     // return the drawn time
     return t;
@@ -475,7 +480,8 @@ double FirstPassageGreensFunction1D::drawR_f (double z, void *p)
 
 // Draws the position of the particle at a given time, assuming that the 
 // particle is still in the domain
-const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) const
+const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t)
+const
 {
     THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
     THROW_UNLESS( std::invalid_argument, t >= 0.0 );
@@ -494,7 +500,8 @@ const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) co
     {
 	// if the initial condition is at the boundary, raise an error
 	// The particle can only be at the boundary in the ABOVE cases
-	THROW_UNLESS( std::invalid_argument, EPSILON <= r0 && r0 <= (L-EPSILON) );
+	THROW_UNLESS( std::invalid_argument,
+	              EPSILON <= r0 && r0 <= (L-EPSILON) );
     }
     // else the normal case
     // From here on the problem is well defined
@@ -549,7 +556,7 @@ for (double x=0; x<2*a; x += 2*a/100)
     // incl typecast?
     gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
     const Real r( findRoot( F, solver, 0.0, L, L*EPSILON, EPSILON,
-	"FirstPassageGreensFunction1D::drawR" ) );
+                            "FirstPassageGreensFunction1D::drawR" ) );
 
     // return the drawn time
     return r*(this->l_scale);

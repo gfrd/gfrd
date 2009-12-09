@@ -90,13 +90,15 @@ public:
 	if ( this->L < 0.0 )
 	{
 	    // if the domain had zero size    
-	    THROW_UNLESS( std::invalid_argument, 0.0 <= r0 && r0 <= EPSILON * l_scale );
+	    THROW_UNLESS( std::invalid_argument,
+	                  0.0 <= r0 && r0 <= EPSILON * l_scale );
 	    this->r0 = 0.0;
 	}
 	else
 	{
 	    // The normal case
-	    THROW_UNLESS( std::invalid_argument, 0.0 <= r0 && r0 <= this->L * l_scale );
+	    THROW_UNLESS( std::invalid_argument,
+	                  0.0 <= r0 && r0 <= this->L * l_scale );
 	    this->r0 = r0;
 	}
     }
