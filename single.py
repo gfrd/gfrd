@@ -282,15 +282,29 @@ class CylindricalSurfaceSingle( NonInteractionSingle ):
         return self.shellList[0].size
     def setRadius( self, size ):
         assert size - self.getMinRadius() >= 0.0 # Still fine.
+
+        # Test size before setting new self.shellList[0].size.
+        if size > self.getRadius():
+            domainIsGettingBigger = True
+        else:
+            domainIsGettingBigger = False
+
         # Heads up. A larger shell means a larger CylindricalSurfaceSingle's 
         # size.
         self.shellList[0].size = size
         # Domain extends from 0 to L, not 0 to a, so twice as big.
         L = 2 * self.getMobilityRadius()
-        self.domains[0].L = L
-        # Todo. r0 is always in the middle for now. We could use
-        # determineOptimalCylinder. 
-        self.domains[0].r0 = L / 2
+
+        if domainIsGettingBigger:
+            # Update L first, then r0.
+            self.domains[0].L = L
+            # Todo. r0 is always in the middle for now. We could use
+            # determineOptimalCylinder.
+            self.domains[0].r0 = L / 2
+        else:
+            # Update r0 first, then L.
+            self.domains[0].r0 = L / 2
+            self.domains[0].L = L
     radius = property( getRadius, setRadius )
 
 
