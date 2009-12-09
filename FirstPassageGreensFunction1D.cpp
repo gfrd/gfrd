@@ -20,7 +20,8 @@
 #include "Defs.hpp"
 
 
-// Calculates the probability of finding the particle inside the domain at time t
+// Calculates the probability of finding the particle inside the domain at 
+// time t
 const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 {
 	THROW_UNLESS( std::invalid_argument, t >= 0.0 );
@@ -30,7 +31,9 @@ const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 	const Real r0(this->getr0());
 
 	if ( L < 0 || fabs (L-r0) < EPSILON || r0 < EPSILON )
-	{	return 0.0;	// The survival probability of a zero domain is zero?
+	{
+		// The survival probability of a zero domain is zero?
+		return 0.0;
 	}
 
 	Real sum = 0, term = 0, prev_term = 0;
@@ -40,8 +43,10 @@ const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 	Real n=1;
 
 	do
-	{	if (n >= MAX_TERMEN )
-		{	std::cerr << "Too many terms for p_survival. N: " << n << std::endl;
+	{
+		if (n >= MAX_TERMEN )
+		{
+			std::cerr << "Too many terms for p_survival. N: " << n << std::endl;
 			break;
 		}
 
@@ -51,15 +56,16 @@ const Real FirstPassageGreensFunction1D::p_survival (const Real t) const
 		sum += term;
 		n++;
 	}
+	// Is 1 a good measure or will this fail at some point?
 	while (fabs(term/sum) > EPSILON*1.0 ||
 		fabs(prev_term/sum) > EPSILON*1.0 ||
 		n < MIN_TERMEN );
-		// Is 1 a good measure or will this fail at some point?
 
 	return sum*2.0;
 }
 
-// Calculates the probability density of finding the particle at location r at time t.
+// Calculates the probability density of finding the particle at location r at 
+// time t.
 const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) const
 {
 	const Real L(this->getL());
@@ -69,16 +75,22 @@ const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) con
 	THROW_UNLESS( std::invalid_argument, 0 <= r && r <= L );
 	THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 
-        if (t == 0 || D == 0)   // if there was no time or no movement
-        {       if (r == r0)    // the probability density function is a delta function
-                {       return INFINITY;
+	// if there was no time or no movement
+        if (t == 0 || D == 0)
+        {
+		// the probability density function is a delta function
+		if (r == r0)
+                {
+			return INFINITY;
                 }
                 else
-                {       return 0.0;
+                {      
+			return 0.0;
                 }
         }
 	else if ( r < EPSILON || (L-r) < EPSILON || L < 0 )
-	{	return 0.0;
+	{	
+		return 0.0;
 	}
 
 	const Real expo(-D*t/(L*L));
@@ -88,8 +100,10 @@ const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) con
 	Real sum = 0, term = 0, prev_term = 0;
 
 	do
-	{	if (n >= MAX_TERMEN )
-               {       std::cerr << "Too many terms for prob_r. N: " << n << std::endl;
+	{
+		if (n >= MAX_TERMEN )
+                {
+			std::cerr << "Too many terms for prob_r. N: " << n << std::endl;
                         break;
                 }
 
@@ -100,26 +114,31 @@ const Real FirstPassageGreensFunction1D::prob_r (const Real r, const Real t) con
 		sum += term;
 		n++;	
 	}
+	// Is 1E3 a good measure for the probability density?!
 	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL ||
 		fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
 		n <= MIN_TERMEN);
-		// Is 1E3 a good measure for the probability density?!
 
 	return sum*2.0/L;
 }
 
-// Calculates the probability density of finding the particle at location z at timepoint t, given
-// that the particle is still in the domain.
+// Calculates the probability density of finding the particle at location z at 
+// timepoint t, given that the particle is still in the domain.
 const Real FirstPassageGreensFunction1D::calcpcum (const Real r, const Real t) const
-{	return prob_r (r, t)/p_survival (t);
+{
+	return prob_r (r, t)/p_survival (t);
 }
 
 double FirstPassageGreensFunction1D::drawT_f (double t, void *p)
-{	struct drawT_params *params = (struct drawT_params *)p;// casts p to type 'struct drawT_params *'
+{	
+	// casts p to type 'struct drawT_params *'
+	struct drawT_params *params = (struct drawT_params *)p;
 	Real sum = 0, term = 0, prev_term = 0;
 	Real Xn, exponent;
-	int    terms = params->terms;		// the maximum number of terms in the params table
-	Real   tscale = params->tscale;		// the timescale used
+	// the maximum number of terms in the params table
+	int    terms = params->terms;
+	// the timescale used
+	Real   tscale = params->tscale;
 
 	int n=0;
 	do
@@ -139,7 +158,8 @@ double FirstPassageGreensFunction1D::drawT_f (double t, void *p)
                 fabs(prev_term/sum) > EPSILON*tscale ||
                 n <= MIN_TERMEN );
 
-	return 1.0 - 2.0*sum - params->rnd;		// the intersection with the random number
+	// the intersection with the random number
+	return 1.0 - 2.0*sum - params->rnd;
 }
 
 // Calculates the amount of flux leaving the left boundary at time t
@@ -152,11 +172,15 @@ const Real FirstPassageGreensFunction1D::leaves(const Real t) const
         const Real r0(this->getr0());
 
         if ( L < 0 || r0 < EPSILON )
-        {       return INFINITY;	// The flux of a zero domain is zero? Also if the particle started on
-					// the left boundary
+	{
+		// The flux of a zero domain is zero? Also if the particle 
+		// started on the left boundary
+                return INFINITY;
         }
-	else if ( t < EPSILON*this->t_scale )   // if t=0.0
-        {       return 0.0;                     // the flux must be zero
+	else if ( t < EPSILON*this->t_scale )
+        {
+		// if t=0.0 the flux must be zero
+		return 0.0;
         }
 
 
@@ -168,8 +192,10 @@ const Real FirstPassageGreensFunction1D::leaves(const Real t) const
         Real n=1;
 
         do
-        {       if (n >= MAX_TERMEN )
-                {       std::cerr << "Too many terms for p_survival. N: " << n << std::endl;
+        {
+		if (n >= MAX_TERMEN )
+                {
+			std::cerr << "Too many terms for p_survival. N: " << n << std::endl;
                         break;
                 }
 
@@ -179,10 +205,10 @@ const Real FirstPassageGreensFunction1D::leaves(const Real t) const
                 sum += term;
                 n++;
         }
+	// Is PDENS_TYPICAL a good measure or will this fail at some point?
         while (fabs(term/sum) > EPSILON*PDENS_TYPICAL ||
                 fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
                 n < MIN_TERMEN );
-                // Is PDENS_TYPICAL a good measure or will this fail at some point?
 
         return D_L_sq*2.0*M_PI*sum;
 }
@@ -197,11 +223,15 @@ const Real FirstPassageGreensFunction1D::leavea(const Real t) const
         const Real r0(this->getr0());
 
         if ( L < 0 || fabs (L-r0) < EPSILON )
-        {       return INFINITY;	// The flux of a zero domain is zero? Also if the particle started on
-					// the right boundary
+        {
+		// The flux of a zero domain is zero? Also if the particle 
+		// started on the right boundary.
+		return INFINITY;
         }
-	else if ( t < EPSILON*this->t_scale )	// if t=0.0
-	{	return 0.0;			// the flux must be zero
+	else if ( t < EPSILON*this->t_scale )
+	{
+		// if t=0.0 the flux must be zero
+	 	return 0.0;
 	}
 
 
@@ -224,30 +254,36 @@ const Real FirstPassageGreensFunction1D::leavea(const Real t) const
                 sum += term;
                 n++;
         }
+	// Is PDENS_TYPICAL a good measure or will this fail at some point?
         while (fabs(term/sum) > EPSILON*PDENS_TYPICAL ||
                 fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
                 n < MIN_TERMEN );
-                // Is PDENS_TYPICAL a good measure or will this fail at some point?
 
         return -D_L_sq*2.0*M_PI*sum;
 }
 
-// This draws an eventtype of time t based on the flux through the left (z=0) and right (z=L) boundary
-// Although not completely accurate, it returns an ESCAPE for an escape through the right boundary and
-// a REACTION for an escape through the left boundary
+// This draws an eventtype of time t based on the flux through the left (z=0) 
+// and right (z=L) boundary. Although not completely accurate, it returns an 
+// ESCAPE for an escape through the right boundary and a REACTION for an 
+// escape through the left boundary.
 const EventType FirstPassageGreensFunction1D::drawEventType( const Real rnd, const Real t ) const
 {
         const Real L(this->getL());
         const Real r0(this->getr0());
 
         THROW_UNLESS( std::invalid_argument, rnd < 1.0 && rnd >= 0.0 );
-        THROW_UNLESS( std::invalid_argument, t > 0.0 );         // if t=0 nothing has happened->no event!!
+	// if t=0 nothing has happened->no event!!
+        THROW_UNLESS( std::invalid_argument, t > 0.0 );
 
-        if ( fabs( r0 - L ) < EPSILON*L )	// if the particle started on the right boundary
-        {       return ESCAPE;
+        if ( fabs( r0 - L ) < EPSILON*L )
+        {
+		// if the particle started on the right boundary
+		return ESCAPE;
         }
-	else if ( r0 < EPSILON )		// if the particle started on the left boundary
-	{	return REACTION;
+	else if ( r0 < EPSILON )
+	{
+		// if the particle started on the left boundary
+		return REACTION;
 	}
 
 	const Real leaves_s (this->leaves(t));
@@ -256,10 +292,12 @@ const EventType FirstPassageGreensFunction1D::drawEventType( const Real rnd, con
         const Real fluxratio (leaves_s/flux_total);
 
         if (rnd > fluxratio )
-        {       return ESCAPE;
+        {       
+		return ESCAPE;
         }
         else
-        {       return REACTION;
+        {       
+		return REACTION;
         }
 }
 
@@ -273,35 +311,45 @@ const Real FirstPassageGreensFunction1D::drawTime (const Real rnd) const
 	const Real r0(this->getr0());
 
 	if (D == 0.0 )
-	{	return INFINITY;
+	{	
+		return INFINITY;
 	}
-	else if (L < 0 || r0 < EPSILON || r0 > (L-EPSILON))		// if the domain had size zero
-	{	return 0.0;
+	else if (L < 0 || r0 < EPSILON || r0 > (L-EPSILON))
+	{
+		// if the domain had size zero
+		return 0.0;
 	}
 
 	const Real expo(-D/(L*L));
 	const Real r0_L(r0/L);
 
-	struct drawT_params parameters;	// the structure to store the numbers to calculate the numbers for 1-S
+	// the structure to store the numbers to calculate the numbers for 1-S
+	struct drawT_params parameters;
 	Real nPI;
 	Real Xn, exponent;
 	int n = 0;
 
-	// produce the coefficients and the terms in the exponent and put them in the params structure
+	// produce the coefficients and the terms in the exponent and put them 
+	// in the params structure
 	do
 	{
-		nPI = ((Real)(n+1))*M_PI;		// 
+		nPI = ((Real)(n+1))*M_PI;			//
 		Xn = sin(nPI*r0_L) * (1.0 - cos(nPI)) / nPI; 
 		exponent = nPI*nPI*expo;
 
-		parameters.Xn[n] = Xn;			// store the coefficients in the structure
-		parameters.exponent[n]=exponent;	// also store the values for the exponent
+		// store the coefficients in the structure
+		parameters.Xn[n] = Xn;	
+		// also store the values for the exponent
+		parameters.exponent[n]=exponent;
 		n++;
 	}
-	while (n<MAX_TERMEN);	// modify this later to include a cutoff when changes are small
+	// modify this later to include a cutoff when changes are small
+	while (n<MAX_TERMEN);
 
-	parameters.rnd = rnd;			// store the random number for the probability
-	parameters.terms = MAX_TERMEN;		// store the number of terms used
+	// store the random number for the probability
+	parameters.rnd = rnd;
+	// store the number of terms used
+	parameters.terms = MAX_TERMEN;
 	parameters.tscale = this->t_scale;
 
 //debugging
@@ -319,16 +367,21 @@ for (double t=0; t<0.1; t += 0.0001)
 	// Find a good interval to determine the first passage time in
 	const Real dist( std::min(r0, L-r0));
 
-	const Real t_guess( dist * dist / ( 2. * D ) );   // construct a guess: msd = sqrt (2*d*D*t)
+	// construct a guess: msd = sqrt (2*d*D*t)
+	const Real t_guess( dist * dist / ( 2. * D ) );
 	Real value( GSL_FN_EVAL( &F, t_guess ) );
 	Real low( t_guess );
 	Real high( t_guess );
 
-	// scale the interval around the guess such that the function straddles
-	if( value < 0.0 )		// if the guess was too low
+	if( value < 0.0 )
 	{
+		// scale the interval around the guess such that the function 
+		// straddles if the guess was too low
 		do
-		{	high *= 10;	// keep increasing the upper boundary until the function straddles
+		{	
+			// keep increasing the upper boundary until the 
+			// function straddles
+			high *= 10;
 			value = GSL_FN_EVAL( &F, high );
 
 			if( fabs( high ) >= t_guess * 1e6 )
@@ -340,9 +393,11 @@ for (double t=0; t<0.1; t += 0.0001)
 		}
 		while ( value <= 0.0 );
 	}
-	else				// if the guess was too high
+	else
 	{
-		Real value_prev( 2 );	// initialize with 2 so the test below survives the first iteration
+		// if the guess was too high initialize with 2 so the test 
+		// below survives the first iteration
+		Real value_prev( 2 );
 		do			
 		{
 			if( fabs( low ) <= t_guess * 1e-6 || fabs(value-value_prev) < EPSILON*this->t_scale )
@@ -357,33 +412,43 @@ for (double t=0; t<0.1; t += 0.0001)
 			}
 
 			value_prev = value;	
-			low *= .1;	// keep decreasing the lower boundary until the function straddles
-			value = GSL_FN_EVAL( &F, low );	// get the accompanying value
+			// keep decreasing the lower boundary until the 
+			// function straddles
+			low *= .1;
+			// get the accompanying value
+			value = GSL_FN_EVAL( &F, low );
 
 		}
 		while ( value >= 0.0 );
 	}
 
-	// find the intersection on the y-axis between the random number and the function
-	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
-	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
-									   // incl typecast?
+	// find the intersection on the y-axis between the random number and 
+	// the function
+	// define a new solver type brent
+	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
+	// make a new solver instance
+	// incl typecast?
+	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 	const Real t( findRoot( F, solver, low, high, EPSILON*t_scale, EPSILON,
 		"FirstPassageGreensFunction1D::drawTime" ) );
 
-	return t;				// return the drawn time
+	// return the drawn time
+	return t;
 }
 
 double FirstPassageGreensFunction1D::drawR_f (double z, void *p)
-{	struct drawR_params *params = (struct drawR_params *)p;
+{	
+	struct drawR_params *params = (struct drawR_params *)p;
 	double sum = 0, term = 0, prev_term = 0;
 	double S_Cn_An, n_l;
 	int    terms = params->terms;
 
 	int n=0;
 	do
-	{	if (n >= terms )
-                {       std::cerr << "Too many terms for DrawR. N: " << n << std::endl;
+	{
+		if (n >= terms )
+                {
+			std::cerr << "Too many terms for DrawR. N: " << n << std::endl;
                         break;
                 }
 		prev_term = term;
@@ -395,15 +460,17 @@ double FirstPassageGreensFunction1D::drawR_f (double z, void *p)
 		sum += term;
 		n++;
 	}
-	while (fabs(term/sum) > EPSILON ||		// A lengthscale of 1 if implied here
+	// A lengthscale of 1 if implied here
+	while (fabs(term/sum) > EPSILON ||
                 fabs(prev_term/sum) > EPSILON ||
                 n <= MIN_TERMEN );
 
-	return sum - params->rnd;		// find the intersection with the random number
+	// find the intersection with the random number
+	return sum - params->rnd;
 }
 
-// Draws the position of the particle at a given time, assuming that the particle is still in the
-// domain
+// Draws the position of the particle at a given time, assuming that the 
+// particle is still in the domain
 const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) const
 {
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
@@ -413,9 +480,11 @@ const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) co
 	const Real D(this->getD());
 	const Real r0(this->getr0());
 
-
-	if (D == 0.0 || L < 0.0 || t == 0.0)	// if there was no movement or the domain was zero
-	{	return r0*(this->l_scale);	// scale the result back to 'normal' size
+	// if there was no movement or the domain was zero
+	if (D == 0.0 || L < 0.0 || t == 0.0)
+	{	
+		// scale the result back to 'normal' size
+		return r0*(this->l_scale);
 	}
 	else
 	{	// if the initial condition is at the boundary, raise an error
@@ -426,7 +495,8 @@ const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) co
 	// From here on the problem is well defined
 
 
-	struct drawR_params parameters;	// structure to store the numbers to calculate numbers for 1-S
+	// structure to store the numbers to calculate numbers for 1-S
+	struct drawR_params parameters;
 	Real S_Cn_An;
 	Real nPI;
 	int n=0;
@@ -436,22 +506,27 @@ const Real FirstPassageGreensFunction1D::drawR (const Real rnd, const Real t) co
 
 //std::cout << S << std::endl;
 
-	// produce the coefficients and the terms in the exponent and put them in the params structure
+	// produce the coefficients and the terms in the exponent and put them 
+	// in the params structure
 	do
 	{
-		nPI = ((Real)(n+1))*M_PI;			// 
+		nPI = ((Real)(n+1))*M_PI;			//
 		S_Cn_An = S * exp(nPI*nPI*expo) * sin(nPI*r0_L) / nPI;
 
-		parameters.S_Cn_An[n]= S_Cn_An;		// also store the values for the exponent
+		// also store the values for the exponent
+		parameters.S_Cn_An[n]= S_Cn_An;
 		parameters.n_l[n]    = nPI/(L);
 		n++;
 	}
 	while (n<MAX_TERMEN);
 
-	parameters.rnd = rnd ;			// store the random number for the probability
-	parameters.terms = MAX_TERMEN;		// store the number of terms used
+	// store the random number for the probability
+	parameters.rnd = rnd ;
+	// store the number of terms used
+	parameters.terms = MAX_TERMEN;
 
-	// find the intersection on the y-axis between the random number and the function
+	// find the intersection on the y-axis between the random number and 
+	// the function
 	gsl_function F;
 	F.function = &drawR_f;
 	F.params = &parameters;
@@ -463,12 +538,15 @@ for (double x=0; x<2*a; x += 2*a/100)
 }
 */
 
-	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
-	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
-									   // incl typecast?
+	// define a new solver type brent
+	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
+	// make a new solver instance
+	// incl typecast?
+	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 	const Real r( findRoot( F, solver, 0.0, L, L*EPSILON, EPSILON,
 		"FirstPassageGreensFunction1D::drawR" ) );
 
-	return r*(this->l_scale);		// return the drawn time
+	// return the drawn time
+	return r*(this->l_scale);
 }
 

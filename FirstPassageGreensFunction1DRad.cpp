@@ -19,30 +19,41 @@
 
 #include "FirstPassageGreensFunction1DRad.hpp"
 
+// this is the appropriate definition of the function in gsl
 double FirstPassageGreensFunction1DRad::tan_f (double x, void *p)
-		// this is the appropriate definition of the function in gsl
-{	struct tan_f_params *params = (struct tan_f_params *)p;	//  casts the void naar struct pointer
+{	
+	//  casts the void naar struct pointer
+	struct tan_f_params *params = (struct tan_f_params *)p;
 	const Real L = (params->L);
 	const Real h = (params->h);
 	const Real h_L (h*L);
 	if ( h_L < 1 )
-	{	return  1/tan(x) + (h_L)/x;		// h = k/D, h=h1/k1
+	{	
+		// h = k/D, h=h1/k1
+		return  1/tan(x) + (h_L)/x;
 	}
 	else
-	{	return  tan(x) + x/(h_L);		// h = k/D, h=h1/k1
+	{	
+		// h = k/D, h=h1/k1
+		return  tan(x) + x/(h_L);
 	}
 }
 
 // Calculates the roots of tan(aL)=-ak/h
 const Real FirstPassageGreensFunction1DRad::a_n(const int n) const
 {
-	const Real L(this->getL());			// L=length of domain=2*a
-	const Real h(this->getk()/this->getD());	// h=k/D
+	// L=length of domain=2*a
+	const Real L(this->getL());
+	// h=k/D
+	const Real h(this->getk()/this->getD());
 	Real upper, lower;
 
 	if ( h*L < 1 )
-	{	lower = (n-1)*M_PI + 1E-10;	// 1E-10 to make sure that he doesn't include the transition
-		upper =  n   *M_PI - 1E-10;	// (asymptotic) from infinity to -infinity
+	{	
+	   	// 1E-10 to make sure that he doesn't include the transition 
+		lower = (n-1)*M_PI + 1E-10;
+		// (asymptotic) from infinity to -infinity
+		upper =  n   *M_PI - 1E-10;
 	}
 	else
 	{	lower = (n-1)*M_PI + M_PI_2 + 1E-10;
@@ -55,10 +66,12 @@ const Real FirstPassageGreensFunction1DRad::a_n(const int n) const
 	F.function = &FirstPassageGreensFunction1DRad::tan_f;
 	F.params = &params;
 
+	// define a new solver type brent
+	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
 
-	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
-	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
-									   // incl typecast?
+	// make a new solver instance
+	// incl typecast?
+	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 	const Real a( findRoot( F, solver, lower, upper, 1.0*EPSILON, EPSILON,
 		"FirstPassageGreensFunction1DRad::root_tan" ) );
 	gsl_root_fsolver_free( solver );
@@ -80,7 +93,8 @@ const Real FirstPassageGreensFunction1DRad::An (const Real a_n) const
 // r is here still in the domain from 0 - L
 // The root An is also from this domain
 const Real FirstPassageGreensFunction1DRad::Bn (const Real a_n) const
-{	const Real h(this->getk()/this->getD());
+{	
+	const Real h(this->getk()/this->getD());
 	const Real L(this->getL());
 	const Real Anr = a_n*L;
 	const Real hAn = h/a_n;
@@ -90,13 +104,15 @@ const Real FirstPassageGreensFunction1DRad::Bn (const Real a_n) const
 
 // The root An is from the domain from 0 - L
 const Real FirstPassageGreensFunction1DRad::Cn (const Real a_n, const Real t) const
-{	const Real D(this->getD());
+{
+	const Real D(this->getD());
 
 	return std::exp(-D*a_n*a_n*t);
 }
 
-// Calculates the probability of finding the particle inside the domain at time t, the survival probability
-// The domein is from -r to r (r0 is in between!!)
+// Calculates the probability of finding the particle inside the domain at
+// time t, the survival probability The domein is from -r to r (r0 is in
+// between!!)
 const Real FirstPassageGreensFunction1DRad::p_survival (const Real t) const
 {
 	const Real D(this->getD());
@@ -104,7 +120,10 @@ const Real FirstPassageGreensFunction1DRad::p_survival (const Real t) const
 	THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 
 	if (t == 0 || D == 0)
-        {       return 1.0;      // if there was no time or no movement the particle was always in the domain
+        {
+		// if there was no time or no movement the particle was always
+		// in the domain
+		return 1.0;
         }
 
 
@@ -113,22 +132,25 @@ const Real FirstPassageGreensFunction1DRad::p_survival (const Real t) const
 	int n = 1;
 
 	do
-	{	An = this->a_n(n);
+	{	
+		An = this->a_n(n);
 		term_prev = term;
 		term = Cn(An, t) * this->An(An) * Bn(An);
 		sum += term;
 		n++;
 	}
+	// Is 1.0 a good measure for the scale of probability or will this
+	// fail at some point?
 	while ( fabs(term/sum) > EPSILON*1.0 ||
 		fabs(term_prev/sum) > EPSILON*1.0 ||
 		n <= MIN_TERMEN);
-		// Is 1.0 a good measure for the scale of probability or will this fail at some point?
 
 	return 2.0*sum;
 }
 
 
-// Calculates the probability density of finding the particle at location r at time t.
+// Calculates the probability density of finding the particle at location r at
+// time t.
 const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) const
 {
 	const Real L(this->getL());
@@ -139,17 +161,24 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 	THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 	THROW_UNLESS( std::invalid_argument, 0 <= r && r <= L);
 
-	if (t == 0 || D == 0)	// if there was no time or no movement
-	{	if (r == r0)	// the probability density function is a delta function
-		{	return INFINITY;
+	// if there was no time or no movement
+	if (t == 0 || D == 0)
+	{	
+		// the probability density function is a delta function
+		if (r == r0)
+		{
+			return INFINITY;
 		}
 		else
-		{	return 0.0;
+		{
+			return 0.0;
 		}
 	}
 
-	if ( fabs (r - L) < EPSILON*L )	// if you're looking on the boundary
-	{	return 0.0;
+	// if you're looking on the boundary
+	if ( fabs (r - L) < EPSILON*L )
+	{
+		return 0.0;
 	}
 
 	Real root_n, An_r;
@@ -157,8 +186,10 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 	int n=1;
 
 	do
-	{	if ( n >= MAX_TERMEN )
-                {       std::cerr << "Too many terms needed for GF1DRad::prob_r. N: " << n << std::endl;
+	{
+		if ( n >= MAX_TERMEN )
+                {
+			std::cerr << "Too many terms needed for GF1DRad::prob_r. N: " << n << std::endl;
                         break;
                 }
 
@@ -171,20 +202,22 @@ const Real FirstPassageGreensFunction1DRad::prob_r (const Real r, const Real t) 
 
 		n++;
 	}
+	// PDENS_TYPICAL is now 1e3, is this any good?!
 	while (fabs(term/sum) > EPSILON*PDENS_TYPICAL || 
 		fabs(prev_term/sum) > EPSILON*PDENS_TYPICAL ||
 		n <= MIN_TERMEN );
-		// PDENS_TYPICAL is now 1e3, is this any good?!
 
 	return 2.0*sum;
 }
 
-// Calculates the probability density of finding the particle at location z at timepoint t, given
-// that the particle is still in the domain.
+// Calculates the probability density of finding the particle at location z at
+// timepoint t, given that the particle is still in the domain.
 const Real FirstPassageGreensFunction1DRad::calcpcum (const Real r, const Real t) const
 {
-	const Real r_corr(r/this->l_scale);		// BEWARE: HERE THERE IS SCALING OF R!
-	return prob_r (r_corr, t)/p_survival (t);	// p_survival is unscaled!
+	// BEWARE: HERE THERE IS SCALING OF R!
+	const Real r_corr(r/this->l_scale);
+	// p_survival is unscaled!
+	return prob_r (r_corr, t)/p_survival (t);
 }
 
 // Calculates the total probability flux leaving the domain at time t
@@ -196,8 +229,10 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 	int n=1;
 
 	do
-	{	if ( n >= MAX_TERMEN )
-                {       std::cerr << "Too many terms needed for GF1DRad::flux_tot. N: " << n << std::endl;
+	{
+		if ( n >= MAX_TERMEN )
+                {
+			std::cerr << "Too many terms needed for GF1DRad::flux_tot. N: " << n << std::endl;
                         break;
                 }
 
@@ -214,21 +249,25 @@ const Real FirstPassageGreensFunction1DRad::flux_tot (const Real t) const
 	return sum*2.0*D;
 }
 
-// Calculates the probability flux leaving the domain through the radiative boundary at time t
+// Calculates the probability flux leaving the domain through the radiative
+// boundary at time t
 const Real FirstPassageGreensFunction1DRad::flux_rad (const Real t) const
 {
 	return this->getk()*prob_r(0, t);
 }
 
-// Calculates the flux leaving the domain through the radiative boundary as a fraction of the
-// total flux. This is the probability that the particle left the domain through the radiative
-// boundary instead of the absorbing boundary.
+// Calculates the flux leaving the domain through the radiative boundary as a
+// fraction of the total flux. This is the probability that the particle left
+// the domain through the radiative boundary instead of the absorbing
+// boundary.
 const Real FirstPassageGreensFunction1DRad::fluxRatioRadTot (const Real t) const
-{	return flux_rad (t)/flux_tot (t);
+{
+	return flux_rad (t)/flux_tot (t);
 }
 
-// Determine which event has occured, an escape or a reaction. Based on the fluxes through the
-// boundaries at the given time. Beware: if t is not a first passage time you still get an answer!
+// Determine which event has occured, an escape or a reaction. Based on the
+// fluxes through the boundaries at the given time. Beware: if t is not a
+// first passage time you still get an answer!
 const EventType
 FirstPassageGreensFunction1DRad::drawEventType( const Real rnd, const Real t ) const
 {
@@ -236,24 +275,30 @@ FirstPassageGreensFunction1DRad::drawEventType( const Real rnd, const Real t ) c
 	const Real r0(this->getr0());
 
 	THROW_UNLESS( std::invalid_argument, rnd < 1.0 && rnd >= 0.0 );
-        THROW_UNLESS( std::invalid_argument, t > 0.0 );		// if t=0 nothing has happened->no event!!
+	// if t=0 nothing has happened->no event!!
+        THROW_UNLESS( std::invalid_argument, t > 0.0 );
 
 	if ( k == 0 || fabs( r0 - L ) < EPSILON*L )
-	{	return ESCAPE;
+	{
+		return ESCAPE;
 	}
 
 	const Real fluxratio (this->fluxRatioRadTot(t));
 
 	if (rnd > fluxratio )
-	{	return ESCAPE;
+	{
+		return ESCAPE;
 	}
 	else
-	{	return REACTION;
+	{
+		return REACTION;
 	}
 }
 
 double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
-{	struct drawT_params *params = (struct drawT_params *)p;// casts p naar type 'struct drawT_params *'
+{
+	// casts p naar type 'struct drawT_params *'
+	struct drawT_params *params = (struct drawT_params *)p;
 	Real sum = 0, term = 0, prev_term = 0;
 	Real Xn, exponent;
 	int terms = params->terms;
@@ -261,8 +306,10 @@ double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
 
 	int n=0;
 	do
-	{	if ( n >= terms )
-		{	std::cerr << "Too many terms needed for GF1DRad::DrawTime. N: " << n << std::endl;
+	{
+		if ( n >= terms )
+		{
+			std::cerr << "Too many terms needed for GF1DRad::DrawTime. N: " << n << std::endl;
 			break;
 		}
 		prev_term = term;
@@ -277,7 +324,8 @@ double FirstPassageGreensFunction1DRad::drawT_f (double t, void *p)
                 fabs(prev_term/sum) > EPSILON*1.0 ||
                 n <= MIN_TERMEN );	
 
-	return 1.0 - 2.0*sum - params->rnd;		// find the intersection with the random number
+	// find the intersection with the random number
+	return 1.0 - 2.0*sum - params->rnd;
 }
 
 // Draws the first passage time from the propendity function
@@ -291,40 +339,48 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 	THROW_UNLESS( std::invalid_argument, 0.0 <= rnd && rnd < 1.0 );
 
 	if ( D == 0.0 || L == INFINITY )
-	{	return INFINITY;
+	{
+		return INFINITY;
 	}
 
 	if ( rnd <= EPSILON || L < 0.0 || fabs(r0 - L) < EPSILON*L )
-	{	return 0.0;
+	{
+		return 0.0;
 	}
 
 
 	const Real h(k/D);
 
-	struct drawT_params parameters;	// the structure to store the numbers to calculate the numbers for 1-S
+	// the structure to store the numbers to calculate the numbers for 1-S
+	struct drawT_params parameters;
 	double An = 0;
 	double tmp0, tmp1, tmp2, tmp3;
 	double Xn, exponent;
 
 
-	// produce the coefficients and the terms in the exponent and put them in the params structure
-	// This is not very efficient at this point, coefficients should be calculated on demand->TODO
+	// produce the coefficients and the terms in the exponent and put them
+	// in the params structure. This is not very efficient at this point,
+	// coefficients should be calculated on demand->TODO
 	for (int n=0; n<MAX_TERMEN; n++)
 	{
-		An = a_n (n+1);			// get the n-th root of tan(alfa*L)=alfa/-k
-		tmp0 = An * An;			// An^2
-		tmp1 = An * r0;			// An * z'
-		tmp2 = An * L;			// An * L
-		tmp3 = h / An;			// h / An
+		An = a_n (n+1);	// get the n-th root of tan(alfa*L)=alfa/-k
+		tmp0 = An * An;	// An^2
+		tmp1 = An * r0;	// An * z'
+		tmp2 = An * L;	// An * L
+		tmp3 = h / An;	// h / An
 		Xn = (An*cos(tmp1) + h*sin(tmp1))*(sin(tmp2)-tmp3*cos(tmp2)+tmp3)/(L*(tmp0+h*h)+h); 
 		exponent = -D*tmp0;
 
-		parameters.Xn[n] = Xn;			// store the coefficients in the structure
-		parameters.exponent[n]=exponent;	// also store the values for the exponent
+		// store the coefficients in the structure
+		parameters.Xn[n] = Xn;
+		// also store the values for the exponent
+		parameters.exponent[n]=exponent;
 
 	}
-	parameters.rnd = rnd;			// store the random number for the probability
-	parameters.terms = MAX_TERMEN;		// store the number of terms used
+	// store the random number for the probability
+	parameters.rnd = rnd;
+	// store the number of terms used
+	parameters.terms = MAX_TERMEN;
 	parameters.tscale = this->t_scale;
 
 	// Define the function for the rootfinder
@@ -334,18 +390,24 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
 
 
         // Find a good interval to determine the first passage time in
-        const Real dist(L-r0);			// get the distance to absorbing boundary (disregard rad BC)
-        const Real t_guess( dist * dist / ( 2. * D ) );   // construct a guess: msd = sqrt (2*d*D*t)
+	// get the distance to absorbing boundary (disregard rad BC)
+        const Real dist(L-r0);
+	// construct a guess: msd = sqrt (2*d*D*t)
+        const Real t_guess( dist * dist / ( 2. * D ) );
         Real value( GSL_FN_EVAL( &F, t_guess ) );
         Real low( t_guess );
         Real high( t_guess );
 
 
         // scale the interval around the guess such that the function straddles
-        if( value < 0.0 )               // if the guess was too low
+        if( value < 0.0 )
         {
+		// if the guess was too low
                 do
-                {       high *= 10;     // keep increasing the upper boundary until the function straddles
+                {
+			// keep increasing the upper boundary until the
+			// function straddles
+			high *= 10;
                         value = GSL_FN_EVAL( &F, high );
 
                         if( fabs( high ) >= t_guess * 1e6 )
@@ -357,9 +419,12 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
                 }
                 while ( value <= 0.0 );
         }
-        else                            // if the guess was too high
+        else
         {
-                Real value_prev( 2 );	// initialize with 2 so the test below survives the first iteration
+		// if the guess was too high
+		// initialize with 2 so the test below survives the first
+		// iteration
+                Real value_prev( 2 );
                 do
                 {
                         if( fabs( low ) <= t_guess * 1e-6 || fabs(value-value_prev) < EPSILON*1.0 )
@@ -373,25 +438,34 @@ const Real FirstPassageGreensFunction1DRad::drawTime (const Real rnd) const
                                 return low;
                         }
                         value_prev = value;
-		        low *= .1;      // keep decreasing the lower boundary until the function straddles
-                        value = GSL_FN_EVAL( &F, low );     // get the accompanying value
+			// keep decreasing the lower boundary until the
+			// function straddles
+		        low *= .1;
+			// get the accompanying value
+                        value = GSL_FN_EVAL( &F, low );
                 }
                 while ( value >= 0.0 );
         }
 
 
-	// find the intersection on the y-axis between the random number and the function
-	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
-	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
-									   // incl typecast?
+	// find the intersection on the y-axis between the random number and
+	// the function
+	// define a new solver type brent
+	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
+	// make a new solver instance
+	// incl typecast?
+	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 	const Real t( findRoot( F, solver, low, high, t_scale*EPSILON, EPSILON,
 		"FirstPassageGreensFunction1DRad::drawTime" ) );
 
-	return t;				// return the drawn time
+	// return the drawn time
+	return t;
 }
 
 double FirstPassageGreensFunction1DRad::drawR_f (double z, void *p)
-{	struct drawR_params *params = (struct drawR_params *)p;// casts p naar type 'struct drawR_params *'
+{
+	// casts p naar type 'struct drawR_params *'
+	struct drawR_params *params = (struct drawR_params *)p;
 	Real sum = 0, term = 0, prev_term = 0;
 	Real An, S_Cn_An, b_An;
 	int    terms = params->terms;
@@ -412,11 +486,13 @@ double FirstPassageGreensFunction1DRad::drawR_f (double z, void *p)
 		sum += term;
 		n++;
 	}
-	while (fabs(term/sum) > EPSILON*1.0 ||		// the function returns a probability (scale is 1)
+	// the function returns a probability (scale is 1)
+	while (fabs(term/sum) > EPSILON*1.0 ||
                 fabs(prev_term/sum) > EPSILON*1.0 ||
                 n <= MIN_TERMEN );
 
-	return sum - params->rnd;		// het snijpunt vinden met het random getal
+	// het snijpunt vinden met het random getal
+	return sum - params->rnd;
 }
 
 const Real FirstPassageGreensFunction1DRad::drawR (const Real rnd, const Real t) const
@@ -429,13 +505,18 @@ const Real FirstPassageGreensFunction1DRad::drawR (const Real rnd, const Real t)
         THROW_UNLESS( std::invalid_argument, t >= 0.0 );
 
 	if (t == 0.0 || D == 0)
-	{	return r0*this->l_scale;	// the trivial case
+	{
+		// the trivial case
+		return r0*this->l_scale;
 	}
-	if ( L < 0.0 )			// if the domain had zero size
-	{	return 0.0;
+	if ( L < 0.0 )
+	{
+		// if the domain had zero size
+		return 0.0;
 	}
 
-	struct drawR_params parameters;	// the structure to store the numbers to calculate the numbers for 1-S
+	// the structure to store the numbers to calculate the numbers for 1-S
+	struct drawR_params parameters;
 	double An = 0;
 	double S_Cn_An;
 	double tmp0, tmp1;
@@ -443,35 +524,43 @@ const Real FirstPassageGreensFunction1DRad::drawR (const Real rnd, const Real t)
 	const Real S = 2.0/p_survival(t);
 
 
-	// produce the coefficients and the terms in the exponent and put them in the params structure
+	// produce the coefficients and the terms in the exponent and put them
+	// in the params structure
 	for (int n=0; n<MAX_TERMEN; n++)
 	{
-		An = a_n (n+1);			// get the n-th root of tan(alfa*L)=alfa/-k
-		tmp0 = An * An;			// An^2
-		tmp1 = An * r0;			// An * z'
+		An = a_n (n+1);	// get the n-th root of tan(alfa*L)=alfa/-k
+		tmp0 = An * An;	// An^2
+		tmp1 = An * r0;	// An * z'
 		S_Cn_An = S * exp(-D*tmp0*t) * (An*cos(tmp1) + h*sin(tmp1)) / (L*(tmp0 + h*h) + h);
 
-		parameters.An[n]     = An;	// store the coefficients in the structure
-		parameters.S_Cn_An[n]= S_Cn_An;	// also store the values for the exponent
+		// store the coefficients in the structure
+		parameters.An[n]     = An;
+		// also store the values for the exponent
+		parameters.S_Cn_An[n]= S_Cn_An;
 		parameters.b_An[n]   = h/An;
 
 	}
-	parameters.rnd = rnd;			// store the random number for the probability
-	parameters.terms = MAX_TERMEN;		// store the number of terms used
+	// store the random number for the probability
+	parameters.rnd = rnd;
+	// store the number of terms used
+	parameters.terms = MAX_TERMEN;
 
 
-	// find the intersection on the y-axis between the random number and the function
+	// find the intersection on the y-axis between the random number and
+	// the function
 	gsl_function F;
 	F.function = &FirstPassageGreensFunction1DRad::drawR_f;
 	F.params = &parameters;
 
-
-	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent ); // define a new solver type brent
-	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );  // make a new solver instance
-									   // incl typecast?
+	// define a new solver type brent
+	const gsl_root_fsolver_type* solverType( gsl_root_fsolver_brent );
+	// make a new solver instance
+	// incl typecast?
+	gsl_root_fsolver* solver( gsl_root_fsolver_alloc( solverType ) );
 	const Real z( findRoot( F, solver, 0.0, L, EPSILON*L, EPSILON,
 		"FirstPassageGreensFunction1DRad::drawR" ) );
 
-	return z*this->l_scale;				// return the drawn place
+	// return the drawn place
+	return z*this->l_scale;
 }
 
