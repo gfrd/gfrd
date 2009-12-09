@@ -9,9 +9,6 @@ from pair import *
 from multi import *
 from shape import *
 
-from itertools import izip
-from vtklogger import VTKLogger
-
 from log import *
 from utils import *
 

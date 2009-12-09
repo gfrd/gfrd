@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from egfrd import *
-#from vtklogger import VTKLogger
+from vtklogger import VTKLogger
 
 '''
 A     <-> B
