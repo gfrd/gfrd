@@ -11,7 +11,7 @@
 
 PDFLATEX=pdflatex -output-directory=../build
 
-greensFunctions.pdf: greensFunctions.tex greensFunction1DAbsAbs.pdf greensFunction1DAbsInf.pdf greensFunction1DRadAbs.pdf greensFunction1DRadInf.pdf
+greensFunctions.pdf: greensFunctions.tex greensFunction1DAbsAbs.pdf greensFunction1DAbsInf.pdf greensFunction1DRadAbs.pdf greensFunction1DRadInf.pdf greensFunction2DRadAbs.pdf
 	$(PDFLATEX) greensFunctions.tex
 
 greensFunction1DAbsAbs.pdf: greensFunction1DAbsAbs.tex include/greensFunction1DAbsAbs.include.tex 
@@ -27,5 +27,5 @@ greensFunction1DRadInf.pdf: greensFunction1DRadInf.tex include/greensFunction1DR
 	$(PDFLATEX) greensFunction1DRadInf.tex
 
 greensFunction2DRadAbs.pdf: greensFunction2DRadAbs.tex include/greensFunction2DRadAbs.include.tex
-	$(PDFLATEX) greensFunction1DRadAbs.tex
+	$(PDFLATEX) greensFunction2DRadAbs.tex
 
