@@ -13,7 +13,7 @@ from surface import *
 from gfrdbase import *
 import _gfrd
 
-DEFAULT_DT_FACTOR = 1e-3 # 1e-5
+DEFAULT_DT_FACTOR = 1e-5
 
 def calculateBDDt( speciesList, factor ):
     # Todo. Should also depend on reaction rates. dt * k << 1.
