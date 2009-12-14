@@ -83,6 +83,7 @@ class VTKLogger:
             outFile = open( self.fileNameNumberOfSteps, 'r' )
             self.numberOfStepsPreviousRun = int( outFile.read() )
         else:
+            self.numberOfStepsPreviousRun = 0
             os.makedirs( 'data/' + self.name + '/files' )
 
         self.fileList = []
