@@ -111,11 +111,14 @@ Visualization with Paraview
     directory of the new simulation. Then click apply in the Object Inspector
     window. The new files.pvd is now added to the pipeline, but doesn't do
     anything yet.
-  - Right click on Objects in the pipeline browser, then Change Input. In
-    the middle window that appears, called Select Sources, select the new
-    files.pvd file you just added. It might be a bit hard to find. Click Ok.
-    Objects is now rewired to use the new files.pvd. 
-  - Right click the old files.pvd, and delete it.
+  - Left click on the 'plus' next to files.pvd in the pipeline browser, then   
+    right click on Objects below files.pvd, then Change Input. In the middle 
+    window that appears, called Select Sources, select the new files.pvd file 
+    you just added. It might be a bit hard to find. Click Ok. Objects is now 
+    rewired to use the new files.pvd. 
+  - Right click the old files.pvd, and delete it. Note that this is only 
+    possible if you actually rewired Objects to a new files.pvd file in the 
+    previous step, otherwise this options is grayed out.
   - If the definition of the surfaces also changed: open and apply the new
     static.pvd, rewire Surfaces to it and delete the old static.pvd.
   - Save the new pipeline. File > Save State.
