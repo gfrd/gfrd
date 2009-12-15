@@ -63,7 +63,7 @@ class VTKLogger:
 
     """
 
-    def __init__( self, sim, name, bufferSize=None, brownian=False, 
+    def __init__( self, sim, name='vtkdata', bufferSize=None, brownian=False, 
                   extraParticleStep=True ):
         self.sim = sim
         self.brownian = brownian
