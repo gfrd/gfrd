@@ -74,9 +74,10 @@ class VTKLogger:
         self.buffer = []
 
         # Filename stuff.
+        assert len( name ) > 0
         self.name = name
 
-        self.fileNameNumberOfSteps = 'data/' + self.name + '/numberOfSteps.dat'
+        self.fileNameNumberOfSteps = self.name + '/numberOfSteps.dat'
         if os.path.exists( self.fileNameNumberOfSteps ):
             # Simulation with the same name has been run before. Retrieve 
             # number of steps.
@@ -84,7 +85,10 @@ class VTKLogger:
             self.numberOfStepsPreviousRun = int( outFile.read() )
         else:
             self.numberOfStepsPreviousRun = 0
-            os.makedirs( 'data/' + self.name + '/files' )
+
+        filesDirectory = self.name + '/files'
+        if not os.path.exists( filesDirectory ):
+            os.makedirs( filesDirectory ) 
 
         self.fileList = []
         self.staticList = []
@@ -163,7 +167,7 @@ class VTKLogger:
         """
         doc = self.vtk_writer.createDoc( data )
         fileName = 'files/' + type + str( index ) + '.vtu'
-        self.vtk_writer.writeDoc( doc, 'data/' + self.name + '/' + fileName )
+        self.vtk_writer.writeDoc( doc, self.name + '/' + fileName )
 
         # Store filename and time in fileList, used by vtk_wrtie.writePVD().
         if time:
@@ -213,10 +217,10 @@ class VTKLogger:
         outFile.close()
 
         # Finally, write PVD files.
-        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'files.pvd', 
+        self.vtk_writer.writePVD( self.name + '/' + 'files.pvd', 
                                   self.fileList )
 
-        self.vtk_writer.writePVD( 'data/' + self.name + '/' + 'static.pvd', 
+        self.vtk_writer.writePVD( self.name + '/' + 'static.pvd', 
                                   self.staticList )
 
 
