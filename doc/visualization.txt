@@ -1,42 +1,50 @@
 
-Visualization with Paraview
-===========================
+Visualization
+=====================================
+This information can also be found in the file
+[visualization.txt](http://github.com/gfrd/gfrd/tree/master/doc/visualization.txt) 
+in the
+[doc](http://github.com/gfrd/gfrd/tree/master/doc) directory of the code.
 
-* Note:
-  - Right now this is not real-time. First you run your simulation, then you
-    use Paraview to visualize it.
+Notes
+-------------------------------------
+* Right now this is not real-time. First you run your simulation, then you use 
+  Paraview to visualize it.
 
 
+Setting up the simulation
+-------------------------------------
+### Option 1
+Let a vtklogger write visualization data for the last 100 steps.
 
+* Setup the vtklogger like this in your simulation script (also see 
+  <egfrdDir>/samples/surfaces/run.py):
 
-=== Setting up the simulation ===
-== Option 1
-* Let a vtklogger write visualization data for the last 100 steps. Setup the 
-  vtklogger like this in your simulation script (also see 
-  <egfrd_dir>/samples/surfaces/run.py):
+        s.initialize()
+        vtklogger = VTKLogger( s, 'myVisualizationDataDirectory', 100 )
+        while(True):
+            try:
+                vtklogger.log()
+                s.step()
+            except RuntimeError, message:
+                print 'Error.', message
+                break
+        vtklogger.stop()
+        s.stop( s.t )
+<p>
 
-    s.initialize()
-    vtklogger = VTKLogger( s, 'my_visualization_data_directory', 100 )
-    while(True):
-        try:
-            vtklogger.log()
-            s.step()
-        except RuntimeError, message:
-            print 'Error.', message
-            break
-    vtklogger.stop()
-    s.stop( s.t )
-
-* Replace 'my_visualization_data_directory' by a descriptive name for each 
+* Replace 'myVisualizationDataDirectory' by a descriptive name for each 
   simulation that you run. It can be a nested directory structure, like 
-  'data/10000_steps/run1', and is automatically created.
+  'data/10000steps/run1', and is automatically created.
 
 * This stores all data in a buffer during the simulation, and only writes the 
   last 100 steps after the simulation has finished. 
   
-== Option 2
-* Let a vtklogger write visualization data for all steps. This is done the 
-  same way as option 1, except remove the last argument to VTKLogger.
+### Option 2
+Let a vtklogger write visualization data for all steps.
+
+* This is done the same way as option 1, except remove the last argument to 
+  VTKLogger.
 
 * This writes the visualization data files directly during the simulation. See 
   below.
@@ -44,10 +52,11 @@ Visualization with Paraview
 
 
 
-=== Running the simulation ===
+Running the simulation
+-------------------------------------
 * Run the simulation script. 
 
-  PYTHONPATH=../../ LOGLEVEL=INFO python run.py
+  PYTHONPATH=../../ python run.py
 
 * This should produce the files static.pvd and files.pvd inside the 
   visualization data directory specified in your simulation script. The former 
@@ -67,23 +76,24 @@ Visualization with Paraview
 
 
 
-=== Configuring Paraview ===
+Configuring Paraview
+-------------------------------------
 * Install Paraview. http://paraview.org/
 
-* Copy the plugins <egfrd_dir>/paraview/tensorGlyph.xml and
-  <egfrd_dir>/paraview/tensorGlyphCustomSource.xml to
+* Copy the plugins <egfrdDir>/paraview/tensorGlyph.xml and
+  <egfrdDir>/paraview/tensorGlyphCustomSource.xml to
   /home/<username>/.config/ParaView/ParaView<VERSION>/Plugins/
   replacing <VERSION> by the version of your Paraview installation (for
   example 3.6). These 2 files are needed to show cylinders of different sizes
   and different orientations correctly.
 
-* In <egfrd_dir>/paraview/pipeline.pvsm search for and replace
+* In <egfrdDir>/paraview/pipeline.pvsm search for and replace
   /full/path/to/some/files.pvd and /full/path/to/some/static.pvd by the full
   paths to those files that were created by the simulation. So you should get 
   something like:
-  /home/<username>/<egfrd_dir>/simulations/<my_simulation>/<my_visualization_data_directory>/files.pvd
+  /home/<username>/<egfrdDir>/simulations/<mySimulation>/<myVisualizationDataDirectory>/files.pvd
   and
-  /home/<username>/<egfrd_dir>/simulations/<my_simulation>/<my_visualization_data_directory>/static.pvd.
+  /home/<username>/<egfrdDir>/simulations/<mySimulation>/<myVisualizationDataDirectory>/static.pvd.
 
   Note that Paraview will crash if these files don't exist. And they have are
   to be absolute paths, using ~ for home directory, or ./../ for the egfrd
@@ -101,15 +111,17 @@ Visualization with Paraview
 
 
 
-=== Visualizing the data ===
-* Go to File > Load State, and select <egfrd_dir>/paraview/pipeline.pvsm.
+Visualizing the data
+-------------------------------------
+* Go to File > Load State, and select <egfrdDir>/paraview/pipeline.pvsm.
 
 * Click the play button. You should see an animation of your simulation. Yeah!  
 
 
 
 
-=== Tweaking the pipeline ===
+Tweaking the pipeline
+-------------------------------------
 * From now on you can make changes to the pipeline from inside Paraview. Here
   is an example of what to do when you want to use data from a completely
   different simulation.
@@ -126,7 +138,7 @@ Visualization with Paraview
     possible if you actually rewired Objects to a new files.pvd file in the 
     previous step, otherwise this options is grayed out.
   - If the definition of the surfaces also changed: open and apply the new
-    static.pvd, rewire Surfaces to it and delete the old static.pvd.
+      static.pvd, rewire Surfaces to it and delete the old static.pvd.
   - Save the new pipeline. File > Save State.
 
 * If you run a new simulation that writes to the same visualization data 

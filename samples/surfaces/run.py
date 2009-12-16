@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 
+'''
+To run this script:
+
+PYTHONPATH=../../ python run.py
+'''
+
 from egfrd import *
 from vtklogger import VTKLogger
 
 '''
+The reaction network:
+
 A     <-> B
 A + B <-> C
 C      -> 0

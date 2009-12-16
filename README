@@ -1,15 +1,17 @@
 GFRD Simulator
+==============
 
 Original code by Koichi Takahashi.
-Adapted by Thomas Miedema and Laurens Bossen.
+Adapted by Thomas Miedema, Laurens Bossen and Thomas Sokolowski.
 
 Copyright (C) 2005-2008 The E-Cell Project
-Copyright (C) 2009 Fom Institute Amolf, The Netherlands.
+
+Copyright (C) 2009 Fom Institute AMOLF, The Netherlands.
 
 
 
 About this package
-========================
+------------------------
 
 This package is started of from version 0.3 of the E-Cell Particle Dynamics
 Prototype (epdp):
@@ -29,13 +31,13 @@ K. Takahashi, S. Tanase-Nicola, P.R. ten Wolde, 2009 (in preparation).
 
 
 Building this package
-========================
+------------------------
 
 See INSTALL.
 
 
 History of the Code
-========================
+------------------------
 
 Koichi Takahashi initially stated development of the code in 2005 to
 implement his prototype of Greens Function Reaction Dynamics
@@ -66,21 +68,21 @@ in study of various biochemical systems including dual-phosphorylation
 pathways[4].
 
 Thomas Miedema and Laurens Bossen, while masters students in the group of
-Pieter Rein ten Wolde at Amolf, added support for reaction-diffusion on
+Pieter Rein ten Wolde at AMOLF, added support for reaction-diffusion on
 and with 1D and 2D surfaces. Laurens implemented the 1D and 2D Greens
 functions in C++, Thomas implemented the algorithm in Python.
 
 Some features planned to be added are; interactions between
 membrane proteins and proteins in solution.
 
-[1] Green's-function reaction dynamics: a particle-based approach for
+- [1] Green's-function reaction dynamics: a particle-based approach for
     simulating biochemical networks in time and space; 
     van Zon and ten Wolde, J. Chem. Phys. 123 (2005).
-[2] Simulating biochemical networks at the particle level and in
+- [2] Simulating biochemical networks at the particle level and in
     time and space: Green's function reaction dynamics; 
     van Zon and ten Wolde, Phys. Rev. Lett. 94 (2005).
-[3] First-Passage Monte Carlo Algorithm: Diffusion without All the Hops,
+- [3] First-Passage Monte Carlo Algorithm: Diffusion without All the Hops,
     Opplestrup et al., Phys. Rev. Lett. 97 (2006).
-[4] Takahashi, Tanase-Nicola and ten Wolde, in preparation.
+- [4] Takahashi, Tanase-Nicola and ten Wolde, in preparation.
 
 

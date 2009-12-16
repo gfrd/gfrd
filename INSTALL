@@ -1,7 +1,4 @@
 
-:author: Koichi Takahashi
-
-
 Prerequisites
 -------------------------
 
@@ -24,12 +21,14 @@ libboost-test-dev, python-scipy.
 
 
 In addition to above, optionally,
+
 6. python-matplotlib if you want to use the plotting scripts in the samples.
 7. Pychecker if you want to run 'make pycheck'.
+8. Paraview if you want to visualize your data.
 
 
-A note on GSL version
-++++++++++++++++++++++++++++++
+### A note on GSL version
+
 
 GSL version 1.10 and earlier has at least two bugs that can cause abnormal
 program exits when a Bessel function is evaluated with specific argument
@@ -74,3 +73,8 @@ Go to subdirectories under doc/samples, and read README files
 included about how to run the samples.
 
 
+Visualization
+-------------------------
+A number of plugins and scripts are provided with this package that can be
+used to visualize your data using Paraview. In the file doc/visualization.txt
+it is explained how to set this up.
