@@ -1,0 +1,26 @@
+
+\subsection{1D Abs Abs with drift $v\neq 0$}
+
+\paragraph{Green's function}
+\begin{align}
+  v(z,t|z',t'=0) &= \frac{2}{b-a}e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(z-z')vt \right]}
+  \sum_{n=1}^{\infty}
+  e^{-D_1n^2\pi^2 t} \sin\left(\frac{z-a}{b-a}n\pi\right) \sin\left(\frac{z'-a}{b-a}n\pi\right).
+\end{align}
+
+\paragraph{Survival probability}
+\begin{align}
+  S_z(t) = \int_a^b vdz
+  = 2e^{-\frac{1}{4D_1t}\left[ v^2t^2 - 2(z-z')vt \right]}
+    \sum_{n=1}^{\infty} \frac{ e^{-D_1\left(\frac{n\pi}{b-a}\right)^2 t} \left[ e^{\frac{va}{2D_1}} + (-1)^ne^{\frac{vb}{2D_1}}\right] }{ \frac{v^2}{4D_1^2}(b-a)^2 + n^2\pi^2 }
+    n\pi \sin\left(\frac{z'-a}{b-a}n\pi \right).
+\end{align}
+
+\paragraph{Propensity function}
+\begin{align}
+  q_{z=0}(t) &= \left.D_1 \pd{v}{z}\right|_{z=0} = \frac{2 D_1}{(b-a)^2} e^{-\frac{1}{4D_1 t}\left[ v^2t^2 - 2(a-z')vt \right]}
+  \sum_{n=1}^{\infty} e^{-D_1\left(\frac{n\pi}{b-a}\right)^2 t} n\pi \sin\left(\frac{z'-a}{b-a}n\pi\right),\\
+  q_{z=L}(t) &= \left.- D_1 \pd{v}{z}\right|_{z=L} = \frac{2 D_1}{(b-a)^2} e^{-\frac{1}{4D_1 t}\left[ v^2t^2 - 2(b-z')vt \right]}
+  \sum_{n=1}^{\infty} (-1)^{n+1} e^{-D_1\left(\frac{n\pi}{b-a}\right)^2 t} n\pi \sin\left(\frac{z'-a}{b-a}n\pi\right).
+\end{align}
+

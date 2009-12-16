@@ -1,0 +1,21 @@
+
+\subsection{1D Abs Inf with drift $v\neq 0$}
+
+\paragraph{Green's function\footnote{\textsc{Smoluchowski}, Phys.Z. 17, 557-587 (1916), eq. (52)--(54).}}
+\begin{align}
+  v(z,t|z',t'=0) = \frac{1}{4\sqrt{\pi D_1t}}
+  \left[ e^{-(z-z'-vt)^2/(4 D_1 t)} + e^{v/D-(z+z'-vt)^2/(4 D_1 t)} \right].
+\end{align}
+
+\paragraph{Survival probability}
+\begin{align}
+  S_{z=0}(t) = \int_0^\infty v dz =
+  \text{erf}(\frac{z'}{2\sqrt{D_1 t}}).
+\end{align}
+
+\paragraph{Propensity functions}
+\begin{align}
+  q_{z=0}(t) = -\frac{d}{dt} S_{z=0}(t)=
+  \frac{z'}{2\sqrt{\pi D_1 t^3}} e^{-z'^2/4Dt}.
+\end{align}
+

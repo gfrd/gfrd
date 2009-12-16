@@ -1,0 +1,43 @@
+
+\subsection{1D Rad Abs with drift $v\neq 0$}
+
+Solution on an interval $[a,b]$, initial condition $v(z,z',t'=0)=\delta (z-z')$.
+
+\newcommand{\rn}{\rho_n}
+
+\paragraph{Green's function}
+\begin{align}
+  v(z,t|z',t'=0) &= 2e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(z-z')vt \right]}
+  \sum_{n=0}^{\infty}
+  e^{-D_1\rn^2t} \frac{ F_n(z')F_n(z) }
+  {h + \left[\rn^2 + h^2\right](b-a)}, \\
+  F_n(z) &= h\sin\left(\rn(z-a)\right) +  \rn\cos\left(\rn(z-a)\right)  , \\
+  h &= \frac{v/2 + k_+}{D_1}, \\
+  \tan\left(\rn(b-a)\right)&= -\frac{\rn}{h}.
+\end{align}
+
+\paragraph{Survival probability}
+\begin{align}
+  S_z(t) = \int_a^b vdz
+  = 2e^{-\frac{1}{4D_1t}\left[ v^2t^2 - 2(z-z')vt \right]}
+    \sum_{n=0}^{\infty} \frac{ e^{-D_1\rn^2t} }{ \frac{v^2}{4D_1^2} + \rn^2 }
+    \frac{F_n(z')
+    \left[ e^{\frac{vb}{2D_1}} \sin(\rn)\left( \frac{hv}{2D_1} + \rn^2 \right) + e^{\frac{vb}{2D_1}}\frac{k_+}{D_1}\rn \right] }
+    {h + \left[\rn^2 + h^2\right](b-a)}.
+\end{align}
+
+\paragraph{Propensity function}
+\begin{align}
+  q_{z=0}(t) = k_+ v|_{z=0} = 2k_+ e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(z-z')vt \right]} 
+  \sum_{n=0}^{\infty} e^{-D_1\rn^2t}
+  \frac{ \rn F_n(z')} {h + \left[\rn^2 + h^2\right](b-a)},
+\end{align}
+\begin{align}
+  q_{z=L}(t) &= \left.- D_1 \pd{v}{z}\right|_{z=L} \\
+  &=  -2D_1 e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(b-z')vt \right]} 
+    \sum_{n=0}^{\infty} e^{-D_1\rn^2t}
+    \frac{F_n(z') \left[\frac{1}{h}\rn^3 + h\rn\right]\cos\left(\rn (b-a)\right)
+ }
+  {h + \left[\rn^2 + h^2\right](b-a)}.
+\end{align}
+
