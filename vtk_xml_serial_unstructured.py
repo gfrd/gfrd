@@ -211,8 +211,8 @@ class VTK_XML_Serial_Unstructured:
             if time:
                 # Problem with adding real time is that TimestepValues is not 
                 # updated in Proxy group="misc" in .pvsm file after a reload.
-                #time = str( time )
-                time = str( index )
+                time = repr( time )
+                #time = str( index )
                 dataSet.setAttribute( "timestep", time )
             dataSet.setAttribute( "group", "" )
             dataSet.setAttribute( "part", type ) # Use ExtractBlock.

@@ -87,8 +87,10 @@ class VTKLogger:
             self.numberOfStepsPreviousRun = 0
 
         filesDirectory = self.name + '/files'
-        if not os.path.exists( filesDirectory ):
-            os.makedirs( filesDirectory ) 
+        if os.path.exists( filesDirectory ):
+            # Todo. Writing dummy files instead of removing these files?
+            shutil.rmtree( filesDirectory )
+        os.makedirs( filesDirectory ) 
 
         self.fileList = []
         self.staticList = []
@@ -200,6 +202,9 @@ class VTKLogger:
         self.previousSpheres = self.getDummyData()
         self.previousCylinders = self.getDummyCylinders()
 
+        # Todo. Remove files of previous run instead of writing these dummy 
+        # files? 
+        '''
         if self.numberOfStepsPreviousRun > self.i:
             print ( 'vtklogger writing dummy files for step %d to %d' % 
                     ( self.i, self.numberOfStepsPreviousRun ) )
@@ -207,6 +212,7 @@ class VTKLogger:
                 if index % 10 == 0:
                     print 'vtklogger writing step %s from buffer' % index
                 self.writelog( index, index, dummyData )
+        '''
 
         # Write number of steps to file. Needed for next run, maybe.
         numberOfSteps = self.i - 1
