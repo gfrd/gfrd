@@ -118,11 +118,11 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         event = self.scheduler.getTopEvent()
         self.t, self.lastEvent = event.getTime(), event.getArg()
 
-        log.info( '\n\n    %d: t = %.3g dt = %.3g\n    %s.\n    '
+        log.info( '\n\n    %d: t = %s dt = %s\n    %s.\n    '
                   'Reactions = %d, unbindings = %d, bindings = %d, '
                   'rejectedmoves = %d.' %
-                  ( self.stepCounter, self.t, self.dt, self.lastEvent,
-                    self.reactionEvents, self.unbindingEvents,
+                  ( self.stepCounter, repr( self.t ), repr( self.dt ), 
+                    self.lastEvent, self.reactionEvents, self.unbindingEvents,
                     self.bindingEvents, self.rejectedMoves ) )
 
         self.scheduler.step()
@@ -145,14 +145,23 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
     def stop( self, t ):
-        log.info( '    Stop at %.3g.' % t )
+        '''Request for stop at time t.
 
-        if feq( self.t, t ):
+        '''
+        log.info( '    Stop at %s.' % repr( t ) )
+
+        nextEventTime = self.scheduler.getTopEvent().getTime()
+        if self.t == t:
+            # Todo. Why return here?
             return
-        if t >= self.scheduler.getTopEvent().getTime():
-            raise RuntimeError( 'Stop time >= next event time.' )
+        if t >= nextEventTime:
+            # There is an event in the scheduler that needs to be handled 
+            # first.
+            raise RuntimeError( 'Stop time %s >= next event time %s. ' % 
+                                ( repr( t ), repr( nextEventTime ) ) )
         if t < self.t:
-            raise RuntimeError( 'Stop time < current time.' )
+            raise RuntimeError( 'Stop time %s < current time %s.' %
+                                ( repr( t ), repr( self.t ) ) )
 
         self.t = t
         scheduler = self.scheduler
