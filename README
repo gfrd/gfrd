@@ -69,11 +69,23 @@ pathways[4].
 
 Thomas Miedema and Laurens Bossen, while masters students in the group of
 Pieter Rein ten Wolde at AMOLF, added support for reaction-diffusion on
-and with 1D and 2D surfaces. Laurens implemented the 1D and 2D Greens
+and with 1D and 2D surfaces. Laurens implemented the 1D and 2D Green's
 functions in C++, Thomas implemented the algorithm in Python.
 
-Some features planned to be added are; interactions between
-membrane proteins and proteins in solution.
+In 2009 Thomas Sokolowski and Nils Becker joined the project. Thomas S.
+will extend the scheme to be able to simulate active transport processes
+via molecular motors. This requires the calculation of new Green's
+functions starting from the diffusion-drift equation. Nils B. recently
+started working on the interplay of DNA sliding and 3D diffusion.
+
+List of features planned to be added:
+
+- interactions between membrane proteins and proteins in solution
+- diffusion-drift movement on one-dimensional structures to simulate
+  active transport
+- interaction of particles with arbitrary 2-dimensional manifolds
+
+References:
 
 - [1] Green's-function reaction dynamics: a particle-based approach for
     simulating biochemical networks in time and space; 
@@ -83,6 +95,7 @@ membrane proteins and proteins in solution.
     van Zon and ten Wolde, Phys. Rev. Lett. 94 (2005).
 - [3] First-Passage Monte Carlo Algorithm: Diffusion without All the Hops,
     Opplestrup et al., Phys. Rev. Lett. 97 (2006).
-- [4] Takahashi, Tanase-Nicola and ten Wolde, in preparation.
+- [4] Spatio-temporal correlations can drastically change the response of a
+    MAPK pathway; Takahashi, Tanase-Nicola, ten Wolde, arXiv:0907.0514v1 (2009)
 
 
