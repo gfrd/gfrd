@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 __author__    = 'Laurens Bossen'
-__license__   = 'Don\'t touch my shit'
 __copyright__ = ''
 
 
