@@ -18,7 +18,7 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
 
     def tearDown( self ):
         pass
-    
+
     def test_Instantiation( self ):
         D = 1e-12
         kf = 1e-8
@@ -34,17 +34,16 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
         kf = 1e-8
         L = 2e-7
         r0 = 5e-8
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
-	
+        gf.setr0 ( r0 )
+
         t = gf.drawTime( 0.5 )
         self.failIf( t <= 0.0 or t >= numpy.inf )
 
         t = gf.drawTime( 0.0 )
         self.failIf( t < 0.0 or t >= numpy.inf )
-	
 
         t = gf.drawTime( 1 - 1e-16 )
         self.failIf( t <= 0.0 or t >= numpy.inf )
@@ -55,51 +54,54 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
         kf = 1e-8
         L = 0
         r0 = L
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = gf.drawTime( 0.5 )
         self.assertEqual( 0.0, t )
+
 
     def test_DrawTime_a_near_sigma( self ):
         D = 1e-12
         kf = 1e-8
         L = 2e-14
         r0 = L/2
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
-	print "drawTime...a near sigma"
+        print "drawTime...a near sigma"
         t = gf.drawTime( 0.5 )
-	print "done"
+        print "done"
         self.failIf( t <= 0.0 or t >= numpy.inf )
+
 
     def test_DrawTime_r0_equal_a( self ):
         D = 1e-12
         kf = 1e-8
         L = 2e-7
         r0 = L
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = gf.drawTime( 0.5 )
         self.assertEqual( 0.0, t )
+
 
     def test_DrawTime_r0_equal_sigma_kf_zero( self ):
         D = 1e-12
         kf = 0.0 # note this
         L = 1e-7
         r0 = 0
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = gf.drawTime( 0.5 )
         self.failIf( t < 0.0 or t >= numpy.inf )
@@ -110,10 +112,10 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
         kf = 1e-8
         L = 20e-7
         r0 = 1e-12
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = gf.drawTime( 0.5 )
         self.failIf( t < 0.0 or t >= numpy.inf )
@@ -127,7 +129,7 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
 
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = gf.drawTime( 0.5 )
         eventType = gf.drawEventType( 0.5, t )
@@ -143,12 +145,12 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
     def no_test_DrawEventType_smallt( self ):
         D = 1e-12
         kf = 1e-8
-        L = 2e-6 
+        L = 2e-6
         r0 = L/2
 
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = gf.drawTime( 0.001 )
 
@@ -167,10 +169,10 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
         kf = 1e-8
         L = 2e-7
         r0 = L/2
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = 1e-3
 
@@ -192,10 +194,10 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
         kf = 1e-8
         L = 1e-7
         r0 = L/2
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         t = 0.0
 
@@ -210,41 +212,42 @@ class FirstPassageGreensFunction1DRadTestCase( unittest.TestCase ):
         r0 = 0
 
         t = 1e-3
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
 
         r = gf.drawR( 0.5, t )
         self.failIf( r < 0 or r > L )
+
 
     def test_DrawR_squeezed( self ):
 
         D = 1e-12
         kf = 1e-8
         L = 0.02e-8
-        
+
         gf = mod.FirstPassageGreensFunction1DRad( D, kf  )
         gf.setL( L )
 
         t = 1e-6
         r0 = 0
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
         r = gf.drawR( 0.5, t )
         self.failIf( r < 0 or r > L )
 
         # near s
         r0 = 0.0001e-8
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
         r = gf.drawR( 0.5, t )
         self.failIf( r < 0 or r > L )
 
         # near a
         r0 = L - 0.0001e-8
-	gf.setr0 ( r0 )
+        gf.setr0 ( r0 )
         r = gf.drawR( 0.5, t )
         self.failIf( r < 0 or r > L )
 
-        
+
 if __name__ == "__main__":
     unittest.main()
