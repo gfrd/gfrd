@@ -7,7 +7,12 @@ import numpy
 import _gfrd as mod
 
 class FirstPassageGreensFunction2DTestCase( unittest.TestCase ):
+    """These are the same tests as in FirstPassageGreensFunction_test, except 
+    for the p_int_r... important ones.
 
+    Todo. Recheck, added some tests to FirstPassageGreensFunction_test.
+
+    """
     def setUp(self):
         pass
 
