@@ -13,7 +13,7 @@ class FirstPassageGreensFunction2DTestCase( unittest.TestCase ):
 
     def tearDown(self):
         pass
-    
+
     def test_instantiation( self ):
         D = 1e-12
         gf = mod.FirstPassageGreensFunction2D( D )
@@ -38,7 +38,7 @@ class FirstPassageGreensFunction2DTestCase( unittest.TestCase ):
         a = 0.0
         gf = mod.FirstPassageGreensFunction2D( D )
         gf.seta( a )
-        
+
         t = gf.drawTime( 0.5 )
         self.assertEqual( 0.0, t )
         r = gf.drawR( 0.5, t )

@@ -32,7 +32,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
 
 
     def test_DrawTime( self ):
-	print "DrawT0"
+        print "DrawT0"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -53,7 +53,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
 
 
     def test_DrawTime_a_equal_sigma( self ):
-	print "DrawT1"
+        print "DrawT1"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -67,7 +67,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
         self.assertEqual( 0.0, t )
 
     def test_DrawTime_a_near_sigma( self ):
-	print "DrawT2"
+        print "DrawT2"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -81,7 +81,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
         self.failIf( t <= 0.0 or t >= numpy.inf )
 
     def test_DrawTime_r0_equal_a( self ):
-	print "DrawT3"
+        print "DrawT3"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -96,7 +96,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
 
     
     def test_DrawTime_r0_equal_sigma_kf_zero( self ):
-	print "DrawT4"
+        print "DrawT4"
         D = 1e-12
         kf = 0.0 # note this
         sigma = 1e-8
@@ -108,11 +108,11 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
 
         t = gf.drawTime( 0.5, r0 )
         self.failIf( t < 0.0 or t >= numpy.inf )
-	print "DrawT4 end"
+        print "DrawT4 end"
     
 
     def no_test_DrawTime_r0_equal_sigma_kf_large( self ):
-	print "DrawT5"
+        print "DrawT5"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -124,11 +124,11 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
 
         t = gf.drawTime( 0.5, r0 )
         self.failIf( t < 0.0 or t >= numpy.inf )
-	print "DrawT5 end"
+        print "DrawT5 end"
 
 
     def test_DrawEventType( self ):
-	print "DrawEvent"
+        print "DrawEvent"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -172,7 +172,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
 
 
     def test_DrawR( self ):
-	print "DrawR"
+        print "DrawR"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -257,7 +257,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
 
 
     def test_DrawTheta( self ):
-	print "DrawTheta"
+        print "DrawTheta"
         D = 1e-12
         kf = 1e-8
         sigma = 1e-8
@@ -415,7 +415,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
         self.failIf( abs( maxerror ) > 1e-10 )
 
     def test_psurvival_is_pleaves_plus_pleavea( self ):
-	print "p_survival"
+        print "p_survival"
         D = 1e-12
         sigma = 1e-8
         kf = 1e-8
@@ -428,12 +428,12 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
         gf = mod.FirstPassagePairGreensFunction2D( D, kf, sigma )
         gf.seta( a )
 
-        surv = 1 - gf.p_survival( t, r0 )	## the amount of probability that left the system
-        pleaves = 0.5 * t * gf.leaves( t, r0 )	## linearize the flux and calculate the integral,
-        pleavea = 0.5 * t * gf.leavea( t, r0 )	## so the amount of probability left through this interface
+        surv = 1 - gf.p_survival( t, r0 )        ## the amount of probability that left the system
+        pleaves = 0.5 * t * gf.leaves( t, r0 )        ## linearize the flux and calculate the integral,
+        pleavea = 0.5 * t * gf.leavea( t, r0 )        ## so the amount of probability left through this interface
         #print 'pll', surv, pleaves, pleavea
         self.failIf( surv <= 0.0 )
-        #self.failIf( pleavea <= 0.0 or pleaves <= 0.0 )	# This fails for small times!!
+        #self.failIf( pleavea <= 0.0 or pleaves <= 0.0 )        # This fails for small times!!
         self.assertAlmostEqual( surv, pleaves + pleavea )
 
     # Todo!
@@ -452,7 +452,7 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
         gf.seta( a )
 
         for i in range( 5 ):
-            psurv = 1.0 - gf.p_survival( t, r0 )	## Do the same as above.
+            psurv = 1.0 - gf.p_survival( t, r0 )        ## Do the same as above.
             pleaves = 0.5 * t * gf.leaves( t, r0 ) 
             pleavea = 0.5 * t * gf.leavea( t, r0 )
             self.assertNotEqual( 1.0, psurv )
@@ -472,13 +472,13 @@ class FirstPassagePairGreensFunction2DTestCase( unittest.TestCase ):
         gf.seta( a )
         maxerror = 0
         
-        for n in range(20):		## n cannot be so large -> limitation in order Bessel functions
+        for n in range(20):                ## n cannot be so large -> limitation in order Bessel functions
             for i in range(1000):
                 alpha = gf.getAlpha( n, i )
                 error = abs( gf.f_alpha( alpha, n ) )
                 maxerror = max( error, maxerror )
 
-	print maxerror
+        print maxerror
         self.failIf( abs( maxerror ) > 1e-8 )
      
 
