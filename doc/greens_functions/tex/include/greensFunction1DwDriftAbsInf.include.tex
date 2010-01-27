@@ -1,21 +1,26 @@
 
 \subsection{1D Abs Inf with drift $v\neq 0$}
 
-\paragraph{Green's function\footnote{\textsc{Smoluchowski}, Phys.Z. 17, 557-587 (1916), eq. (52)--(54).}}
+Absorbing boundary at $z=a$.
+
+\paragraph{Green's function}
 \begin{align}
-  v(z,t|z',t'=0) = \frac{1}{4\sqrt{\pi D_1t}}
-  \left[ e^{-(z-z'-vt)^2/(4 D_1 t)} + e^{v/D-(z+z'-vt)^2/(4 D_1 t)} \right].
+  p(z,t|z',t'=0) = \frac{1}{\sqrt{4 \pi D_1t}}
+  \left[ e^{-(z-z'-vt)^2/(4 D_1 t)} - e^{-(z+z'-2a+vt)^2/(4 D_1 t)} \right].
 \end{align}
 
 \paragraph{Survival probability}
 \begin{align}
-  S_{z=0}(t) = \int_0^\infty v dz =
-  \text{erf}(\frac{z'}{2\sqrt{D_1 t}}).
+  S_{z=a}(t) = \int_a^\infty p dz =
+  \erf \left(\frac{z'+vt-a}{\sqrt{4 D_1 t}} \right).
 \end{align}
 
 \paragraph{Propensity functions}
 \begin{align}
-  q_{z=0}(t) = -\frac{d}{dt} S_{z=0}(t)=
-  \frac{z'}{2\sqrt{\pi D_1 t^3}} e^{-z'^2/4Dt}.
+  q_{z=a}(t) = -\frac{d}{dt} S_{z=a}(t)=
+  \frac{z'+vt-a}{\sqrt{4 \pi D_1 t^3}} e^{-(z'+vt-a)^2/(4D_1t)}.
 \end{align}
 
+\vspace{1cm}
+\noindent \textit{For the case 1D Refl Inf with drift see:}\\
+\textit{\textsc{Smoluchowski}, Phys.Z. 17, p. 557-587, 1916, eq. (52)--(54)}.
