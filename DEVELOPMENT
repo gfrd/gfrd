@@ -1,0 +1,80 @@
+
+Setting up git.
+
+01. $ sudo apt-get install git (Ubuntu)  or  $ sudo yum install git (Fedora)
+02. $ git config --global user.name <your_name> (Settings are stored in $HOME/.gitconfig.)
+03. $ git config --global user.email <your_email_address>
+
+
+
+Cloning the gfrd repository.
+
+01. $ git clone git://github.com/gfrd/gfrd.git (Creates a branch master which tracks origin/master, the latest stable release version of gfrd. Don't modify this branch except with git pull after a new version has been released.)
+
+
+
+Tracking development.
+
+01. $ git branch common-develop origin/develop (Creates a branch common-develop which tracks origin/develop, the latest development version of gfrd. Don't modify this branch except with git pull, but pull often.)
+
+
+
+Committing changes.
+
+01. $ git checkout common-develop
+02. $ git pull (Updates common-develop to the latest version of origin/develop.)
+03. $ git branch someNewFeatureBranch (Creates a nice clean branch for you to work on.)  
+04. <edit edit>
+05. $ make check (Runs tests to see if you didn't break anything.)
+06. $ git add <files_that_contain_changes_that_you_want_to_commit> (Adds the changes from these files to the staging area.)
+07. $ git commit (Commits only the changes from the staging area, not any other changes you also made. That's the power of Git for you right there.)
+08. Write a nice commit message. Start with presssing i, save and exit with :wq.
+
+
+
+If you prefer to reuse an existing local development branch, and you are sure it does not contain unwanted commits or changes, then replace step 03. by:
+
+03a. $ git checkout yourLocalDevelopmentBranch
+03b. $ git rebase common-develop (This pulls in new commits from common-develop and replays any local commits you had here on top of it.)
+
+
+
+Sharing changes.
+
+08. Email Thomie (miedema@amolf.nl) with a pull request. Specify url or directory (at Amolf) and branch (someNewFeatureBranch).
+09. Wait till Thomie has merged your changes into origin/develop.
+10. $ git branch -d someNewFeatureBranch (Deletes someNewFeatureBranch. Will refuse if you have commits here that are *not* also in a different branch, so safe.)
+
+
+
+Sharing changes if you know how to solve possible merge conflicts.
+
+08. $ git checkout common-develop
+09. $ git pull (Updates common-develop to the latest version of origin/develop.)
+10. $ git checkout yourLocalDevelopmentBranch
+11. $ git rebase common-develop (This pulls in new commits from common-develop and replays your new commits on top of it.)
+12. Solve any merge conflicts.
+13. $ make check (Runs tests to see if you didn't break anything.)
+14. Email Thomie (miedema@amolf.nl) with a pull request. Specify directory and branch.
+15. Wait till Thomie has approved your changes and merged them into origin/develop.
+
+
+
+Extras:
+
+01. $ git config --global core.editor <your editor of choice> (Specifies which editor to use for commit messages. Vim by default.)
+02. $ git config --global color.diff always (Makes git diff nicely colored.)
+03. Add this to your .bashrc (Sets your bash prompt to show which branch you are in, only if you are in a git repository.)
+
+if [ -f /etc/bash_completion.d/git ]; then
+  source /etc/bash_completion.d/git
+  export PS1='\W$(__git_ps1 "(%s)")$ '
+fi
+
+
+
+References:
+
+01. http://git-scm.com/
+02. http://gweezlebur.com/2009/01/19/my-git-workflow.html
+03. http://nvie.com/archives/323 
