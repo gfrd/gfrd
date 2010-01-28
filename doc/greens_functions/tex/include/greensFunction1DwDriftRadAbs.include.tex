@@ -1,13 +1,13 @@
 
 \subsection{1D Rad Abs with drift $v\neq 0$}
 
-Solution on an interval $[a,b]$, initial condition $v(z,z',t'=0)=\delta (z-z')$.
+Solution on an interval $[a,b]$, initial condition $p(z,z',t'=0)=\delta (z-z')$.
 
 \newcommand{\rn}{\rho_n}
 
 \paragraph{Green's function}
 \begin{align}
-  v(z,t|z',t'=0) &= 2e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(z-z')vt \right]}
+  p(z,t|z',t'=0) &= 2e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(z-z')vt \right]}
   \sum_{n=0}^{\infty}
   e^{-D_1\rn^2t} \frac{ F_n(z')F_n(z) }
   {h + \left[\rn^2 + h^2\right](b-a)}, \\
@@ -18,7 +18,7 @@ Solution on an interval $[a,b]$, initial condition $v(z,z',t'=0)=\delta (z-z')$.
 
 \paragraph{Survival probability}
 \begin{align}
-  S_z(t) = \int_a^b vdz
+  S_z(t) = \int_a^b pdz
   = 2e^{-\frac{1}{4D_1t}\left[ v^2t^2 - 2(z-z')vt \right]}
     \sum_{n=0}^{\infty} \frac{ e^{-D_1\rn^2t} }{ \frac{v^2}{4D_1^2} + \rn^2 }
     \frac{F_n(z')
@@ -28,7 +28,7 @@ Solution on an interval $[a,b]$, initial condition $v(z,z',t'=0)=\delta (z-z')$.
 
 \paragraph{Propensity function}
 \begin{align}
-  q_{z=0}(t) = k_+ v|_{z=0} = 2k_+ e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(z-z')vt \right]} 
+  q_{z=0}(t) = k_+ p|_{z=0} = 2k_+ e^{-\frac{1}{4D_1t}\left[v^2t^2 - 2(z-z')vt \right]} 
   \sum_{n=0}^{\infty} e^{-D_1\rn^2t}
   \frac{ \rn F_n(z')} {h + \left[\rn^2 + h^2\right](b-a)},
 \end{align}
