@@ -71,6 +71,7 @@ if [ -f /etc/bash_completion.d/git ]; then
   export PS1='\W$(__git_ps1 "(%s)")$ '
 fi
 
+04. If you prefer to use Mercurial over Git see the Hg-Git mercurial plugin. http://hg-git.github.com/
 
 
 References:
