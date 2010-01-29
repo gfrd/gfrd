@@ -3,7 +3,7 @@
 '''
 To run this script:
 
-PYTHONPATH=../../ python run.py
+PYTHONPATH=../../ python example.py
 '''
 
 from egfrd import *

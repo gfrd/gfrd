@@ -13,7 +13,7 @@ Setting up the simulation
 Let a vtklogger write visualization data for the last 100 steps.
 
 * Setup the vtklogger like this in your simulation script (also see 
-  <egfrdDir>/samples/surfaces/run.py):
+  <egfrdDir>/example/example.py):
 
         s.initialize()
         vtklogger = VTKLogger( s, 'myVisualizationDataDirectory', 100 )
