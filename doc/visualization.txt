@@ -2,9 +2,9 @@
 Visualization
 =====================================
 This information can also be found in the file
-[visualization.txt](http://github.com/gfrd/gfrd/tree/master/doc/visualization.txt) 
+[visualization.txt](http://github.com/gfrd/gfrd/tree/develop/doc/visualization.txt) 
 in the
-[doc](http://github.com/gfrd/gfrd/tree/master/doc) directory of the code.
+[doc](http://github.com/gfrd/gfrd/tree/develop/doc) directory of the code.
 
 Notes
 -------------------------------------
