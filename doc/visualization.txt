@@ -1,19 +1,14 @@
-
 Visualization
-=====================================
-This information can also be found in the file
-[visualization.txt](http://github.com/gfrd/gfrd/tree/develop/doc/visualization.txt) 
-in the
-[doc](http://github.com/gfrd/gfrd/tree/develop/doc) directory of the code.
+=============
 
 Notes
--------------------------------------
+-----
 * Right now this is not real-time. First you run your simulation, then you use 
   Paraview to visualize it.
 
 
 Setting up the simulation
--------------------------------------
+-------------------------
 ### Option 1
 Let a vtklogger write visualization data for the last 100 steps.
 
@@ -31,7 +26,6 @@ Let a vtklogger write visualization data for the last 100 steps.
                 break
         vtklogger.stop()
         s.stop( s.t )
-<p>
 
 * Replace 'myVisualizationDataDirectory' by a descriptive name for each 
   simulation that you run. It can be a nested directory structure, like 
@@ -53,7 +47,7 @@ Let a vtklogger write visualization data for all steps.
 
 
 Running the simulation
--------------------------------------
+----------------------
 * Run the simulation script. 
 
   PYTHONPATH=../../ python run.py
@@ -77,7 +71,7 @@ Running the simulation
 
 
 Configuring Paraview
--------------------------------------
+--------------------
 * Install Paraview. http://paraview.org/
 
 * Copy the plugins <egfrdDir>/paraview/tensorGlyph.xml and
@@ -112,7 +106,7 @@ Configuring Paraview
 
 
 Visualizing the data
--------------------------------------
+--------------------
 * Go to File > Load State, and select <egfrdDir>/paraview/pipeline.pvsm.
 
 * Click the play button. You should see an animation of your simulation. Yeah!  
@@ -121,7 +115,7 @@ Visualizing the data
 
 
 Tweaking the pipeline
--------------------------------------
+---------------------
 * From now on you can make changes to the pipeline from inside Paraview. Here
   is an example of what to do when you want to use data from a completely
   different simulation.

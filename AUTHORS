@@ -1,12 +1,15 @@
 
 
-E-Cell Particle Dynamics Prototype
+GFRD Simulator
+==============
 
 Copyright (C) 2005-2008 The E-Cell Project
 
+Copyright (C) 2009 FOM Institute AMOLF, The Netherlands.
 
 
-This package was written by 
+
+E-Cell Particle Dynamics Prototype (epdp) by Koichi Takahashi.
 
 Koichi Takahashi <shafi@e-cell.org>
 
@@ -14,4 +17,5 @@ Koichi Takahashi <shafi@e-cell.org>
 object_matrix was originally written by 
 
 Moriyoshi Koizumi <mozo@sfc.keio.ac.jp>
+
 
