@@ -5,7 +5,7 @@
 
 
 .PHONY: all
-all : bd dimer hardbody irreversible mapk pushpull rebind reversible single surfaces tf
+all : bd dimer example hardbody irreversible mapk pushpull rebind reversible single tf
 
 DATA=data/run/files.pvd data/run/static.pvd data/run/files/
 PYTHONPATH_NEW=${PYTHONPATH}:../../
@@ -17,7 +17,13 @@ bd:
 
 .PHONY: dimer
 dimer:
-	echo 'dimer is old'
+	echo
+	cd dimer && echo 'dimer is old'
+
+.PHONY: example
+example:
+	echo
+	cd example && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=$(PYTHONPATH_NEW) python example.py
 
 .PHONY: hardbody
 hardbody:
@@ -54,12 +60,6 @@ reversible:
 single:
 	echo
 	cd single && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=${PYTHONPATH_NEW} python run.py single.0.out 5e-4 3e-8 100
-
-
-.PHONY: surfaces
-surfaces:
-	echo
-	cd surfaces && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=$(PYTHONPATH_NEW) python run.py
 
 
 .PHONY: tf
