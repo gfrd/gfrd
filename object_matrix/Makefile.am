@@ -1,5 +1,5 @@
 
-SUBDIRS = boost.python tests #src
+SUBDIRS = boost.python #tests #src
 
 EXTRA_DIST = src tests
 

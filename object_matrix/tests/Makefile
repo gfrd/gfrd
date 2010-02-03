@@ -5,6 +5,14 @@ LDFLAGS=
 
 all: vmap_test object_container_test cylinder_container_test array_helper_test filters_test position_test
 
+check:
+	./vmap_test
+	./object_container_test
+	./cylinder_container_test
+	./array_helper_test
+	./filters_test
+	./position_test
+
 clean:
 	rm -f *.o *.so *.lo *.loT
 	rm -f vmap_test object_container_test array_helper_test filters_test \
