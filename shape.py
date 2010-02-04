@@ -38,7 +38,7 @@ class Cylinder( Shape ):
         self.unitZ = normalize( numpy.array( orientationZ ) )
         # Size is the half length of the cylinder!
         # Formerly known as Lz.
-        self.size = size                            
+        self.size = numpy.array( size )
         self.vectorZ = self.unitZ * size # Extra.
 
         # Select basis vector in which self.unitZ is smallest.
