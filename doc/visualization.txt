@@ -15,6 +15,8 @@ Let a vtklogger write visualization data for the last 100 steps.
 * Setup the vtklogger like this in your simulation script (also see 
   <egfrdDir>/example/example.py):
 
+	{% highlight python %}
+
         s.initialize()
         vtklogger = VTKLogger( s, 'myVisualizationDataDirectory', 100 )
         while(True):
@@ -26,6 +28,8 @@ Let a vtklogger write visualization data for the last 100 steps.
                 break
         vtklogger.stop()
         s.stop( s.t )
+
+	{% endhighlight %}
 
 * Replace 'myVisualizationDataDirectory' by a descriptive name for each 
   simulation that you run. It can be a nested directory structure, like 
