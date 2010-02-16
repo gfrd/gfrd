@@ -1,9 +1,8 @@
-#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_MODULE "DynamicPriorityQueue"
 
 #include <boost/mpl/list.hpp>
+#include <boost/test/included/unit_test.hpp>
 #include <boost/test/test_case_template.hpp>
-#include <boost/test/auto_unit_test.hpp>
-
 
 #include "DynamicPriorityQueue.hpp"
 
@@ -109,6 +108,81 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( testPushPop, DPQ, both )
     BOOST_CHECK( dpq.check() );
     BOOST_CHECK( dpq.isEmpty() );
 }
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( testSecond01, DPQ, both )
+{
+    DPQ dpq;
+
+    BOOST_CHECK_THROW( dpq.peekSecond(), std::out_of_range );
+
+    dpq.push( 4 );
+
+    BOOST_CHECK_EQUAL( 4, dpq.getTop() );
+    BOOST_CHECK_THROW( dpq.peekSecond(), std::out_of_range );
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( testSecond2, DPQ, both )
+{
+    {
+        DPQ dpq;
+
+        dpq.push( 1 );
+        dpq.push( 4 );
+
+        BOOST_CHECK_EQUAL( 1, dpq.getTop() );
+        BOOST_CHECK_EQUAL( 4, dpq.peekSecond() );
+    }
+
+
+    {
+        DPQ dpq;
+
+        dpq.push( 4 );
+        dpq.push( 1 );
+
+        BOOST_CHECK_EQUAL( 1, dpq.getTop() );
+        BOOST_CHECK_EQUAL( 4, dpq.peekSecond() );
+    }
+}
+
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( testSecondN, DPQ, both )
+{
+    DPQ dpq;
+
+    dpq.push( 2 );
+    dpq.push( 4 );
+    dpq.push( 1 );
+    dpq.push( 5 );
+
+
+    BOOST_CHECK_EQUAL( 1, dpq.getTop() );
+    BOOST_CHECK_EQUAL( 2, dpq.peekSecond() );
+
+    dpq.replaceTop( 3 );
+
+    BOOST_CHECK( dpq.check() );
+    BOOST_CHECK_EQUAL( 2, dpq.getTop() );
+    BOOST_CHECK_EQUAL( 3, dpq.peekSecond() );
+
+    dpq.popTop();
+    BOOST_CHECK_EQUAL( 3, dpq.getTop() );
+    BOOST_CHECK_EQUAL( 4, dpq.peekSecond() );
+    dpq.popTop();
+    BOOST_CHECK_EQUAL( 4, dpq.getTop() );
+    BOOST_CHECK_EQUAL( 5, dpq.peekSecond() );
+    dpq.popTop();
+
+    BOOST_CHECK_EQUAL( 5, dpq.getTop() );
+    dpq.popTop();
+
+    BOOST_CHECK( dpq.isEmpty() );
+    BOOST_CHECK( dpq.check() );
+}
+
+
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( testReplaceTop, DPQ, both )
 {

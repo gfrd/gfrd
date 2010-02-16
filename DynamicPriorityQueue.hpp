@@ -39,14 +39,17 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+
 //#define HAVE_TR1_UNORDERED_MAP
 
 #if HAVE_UNORDERED_MAP
 #include <unordered_map>
 #elif HAVE_TR1_UNORDERED_MAP
 #include <tr1/unordered_map>
-#elif HAVE_EXT_HASH_MAP
-#include <ext/hash_map>
+#elif HAVE_BOOST_UNORDERED_MAP_HPP
+#include <boost/unordered_map.hpp>
 #else
 #include <map>
 #endif /* HAVE_UNORDERED_MAP */
@@ -66,7 +69,7 @@ public:
     typedef std::vector< ID >      IDVector;
     typedef IDVector::size_type    Index;
 
-#if HAVE_UNORDERED_MAP || HAVE_TR1_UNORDERED_MAP || HAVE_EXT_HASH_MAP
+#if HAVE_UNORDERED_MAP || HAVE_TR1_UNORDERED_MAP || HAVE_BOOST_UNORDERED_MAP_HPP
 
     class IDHasher
         : 
@@ -83,14 +86,14 @@ public:
 
     };
 
-#endif // HAVE_UNORDERED_MAP || HAVE_TR1_UNORDERED_MAP
+#endif // HAVE_UNORDERED_MAP || HAVE_TR1_UNORDERED_MAP || HAVE_BOOST_UNORDERED_MAP_HPP
 
 #if HAVE_UNORDERED_MAP
     typedef std::unordered_map<const ID, Index, IDHasher> IndexMap;
 #elif HAVE_TR1_UNORDERED_MAP
     typedef std::tr1::unordered_map<const ID, Index, IDHasher> IndexMap;
-#elif HAVE_EXT_HASH_MAP
-    typedef __gnu_cxx::hash_map<const ID, Index, IDHasher> IndexMap;
+#elif HAVE_BOOST_UNORDERED_MAP_HPP
+    typedef boost::unordered_map<const ID, Index, IDHasher> IndexMap;
 #else 
     typedef std::map<const ID, Index> IndexMap;
 #endif
@@ -120,8 +123,8 @@ public:
 
         if( i == this->indexMap.end() )
         {
-            throw std::out_of_range( "PersistentIDPolicy::getIndex():"
-				     " Key not found." );
+            throw std::out_of_range(
+                ( boost::format( "%s: Key not found (%s)" ) % __PRETTY_FUNCTION__ % boost::lexical_cast< std::string >( id ) ).str() );
         }
 
         return (*i).second;
@@ -302,6 +305,13 @@ public:
         return this->itemVector[ getTopIndex() ];
     }
 
+
+    const Item& peekSecond() const
+    {
+        return this->itemVector[ peekSecondIndex() ];
+    }
+
+
     Item& get( const ID id )
     {
         return this->itemVector[ getIndex( id ) ];
@@ -367,6 +377,33 @@ public:
     const Index getTopIndex() const 
     {
         return this->heap[0];
+    }
+
+    const Index peekSecondIndex() const 
+    {
+        if( getSize() <= 1 )
+        {
+            throw std::out_of_range( "DynamicPriorityQueue::peekSecondIndex():"
+                                     " Item count less than 2." );
+        }
+
+        const Index index1( this->heap[1] );
+
+        if ( getSize() == 2 )
+        {
+            return index1;
+        }
+
+        const Index index2( this->heap[2] );
+        if( this->comp( this->itemVector[ index1 ], 
+                        this->itemVector[ index2 ] ) )
+        {
+            return index1;
+        }
+        else
+        {
+            return index2;
+        }
     }
 
     inline void popByIndex( const Index index );
