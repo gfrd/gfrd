@@ -240,8 +240,8 @@ class Pair( object ):
         """Return a ( dt, single ) tuple.
 
         """
-        return min( ( ( single.drawReactionTime(), single ) 
-                      for single in self.singles ) )
+        return min( ( single.drawReactionTime(), single ) 
+                    for single in self.singles )
 
 
     def checkNewpos( self, pos1, pos2 ):
