@@ -53,18 +53,18 @@ def run( ):
 
     '''
     WORLD = True
-    MEMBRANE = True
+    MEMBRANE1 = True
     MEMBRANE2 = True
     DNA = True
 
-    if MEMBRANE:
-        m = s.addPlanarSurface( origin=[ L / 2, L / 2, 2 * L / 10 ],
+    if MEMBRANE1:
+        m1 = s.addPlanarSurface(origin=[ L / 2, L / 2, 2 * L / 10 ],
                                 vectorX=[ 1, 0, 0 ],
                                 vectorY=[ 0, 1, 0 ],
                                 Lx=(L / 2),
                                 Ly=(L / 2),
                                 Lz=radius,
-                                name='m' )
+                                name='m1')
 
     if MEMBRANE2:
         m2 = s.addPlanarSurface( origin=[ L / 2, L / 2, 8 * L / 10 ],
@@ -130,10 +130,10 @@ def run( ):
     twice. Ones with and ones without an explicit surface argument.
 
     '''
-    if MEMBRANE:
-        s.addSpecies( A, m )
-        s.addSpecies( B, m )
-        s.addSpecies( C, m )
+    if MEMBRANE1:
+        s.addSpecies( A, m1 )
+        s.addSpecies( B, m1 )
+        s.addSpecies( C, m1 )
 
     if MEMBRANE2:
         # No species can live on membrane 2.
@@ -189,15 +189,15 @@ def run( ):
     reaction are made repulsive by default on every surface.
 
     '''
-    if MEMBRANE:
+    if MEMBRANE1:
         # A     <-> B
         # A + B <-> C
         # C      -> 0
-        s.addReaction( [ (A, m),          ], [ (B, m)           ], kf_1 )
-        s.addReaction( [ (B, m),          ], [ (A, m)           ], kb_1 )
-        s.addReaction( [ (A, m),  (B, m)  ], [ (C, m)           ], kf_2 )
-        s.addReaction( [ (C, m)           ], [ (A, m),  (B, m)  ], kb_2 )
-        s.addReaction( [ (C, m),          ], [                  ], kf_1 )
+        s.addReaction( [ (A, m1),          ], [ (B, m1)           ], kf_1 )
+        s.addReaction( [ (B, m1),          ], [ (A, m1)           ], kb_1 )
+        s.addReaction( [ (A, m1),  (B, m1) ], [ (C, m1)           ], kf_2 )
+        s.addReaction( [ (C, m1)           ], [ (A, m1),  (B, m1) ], kb_2 )
+        s.addReaction( [ (C, m1),          ], [                   ], kf_1 )
 
     if MEMBRANE2:
         # No particles can live on membrane2.
@@ -233,10 +233,10 @@ def run( ):
     # Molecule + surface.
     kon = kf_2
 
-    if MEMBRANE and WORLD:
+    if MEMBRANE1 and WORLD:
         # Species C can bind to the membrane. The membrane is reflective, by 
         # default, to species A and B.
-        s.addReaction( [ C ],  [ (C, m)  ], kon )
+        s.addReaction( [ C ],  [ (C, m1)  ], kon )
 
     if MEMBRANE2 and WORLD:
         # Membrane 2 absorbs all particles.
@@ -267,9 +267,9 @@ def run( ):
     # Unimolecular.
     koff = kb_1
 
-    if MEMBRANE and WORLD:
+    if MEMBRANE1 and WORLD:
         # Species C can unbind to the 'world'.
-        s.addReaction( [ (C, m)  ], [ C ], koff )
+        s.addReaction( [ (C, m1)  ], [ C ], koff )
 
     if MEMBRANE2 and WORLD:
         # No particles can live on membrane2.
@@ -285,7 +285,7 @@ def run( ):
 
     '''
     if WORLD:
-        if MEMBRANE and MEMBRANE2:
+        if MEMBRANE1 and MEMBRANE2:
             # Add world particles inside the two planes.
             # Note that a CuboidalRegion is defined by 2 corners.
             box1 = CuboidalRegion( [ 0, 0, 2 * L / 10 ], [ L, L, 8 * L / 10 ] )
@@ -294,7 +294,7 @@ def run( ):
             # Particles are added to world (3D) by default.
             s.throwInParticles( C, 2 )
 
-    if MEMBRANE: s.throwInParticles( C, 2, m )
+    if MEMBRANE1: s.throwInParticles( C, 2, m1 )
     if MEMBRANE2: pass
     if DNA: s.throwInParticles( C, 2, d )
 
