@@ -158,22 +158,25 @@ def run( ):
     (Order of magnitude kf: 1e-18)
 
     '''
-    # Just some made up reaction constants.
     sigma = 2 * radius
     D_tot = D
     tau = sigma * sigma / D_tot
-    kf = 100 * sigma * D_tot
-    kb = 0.1 / tau
+    # Bimolecular. 
+    kf_2 = 100 * sigma * D_tot
+    kb_2 = 0.1 / tau
+    # Unimolecular.
+    kf_1 = 0.1 / tau
+    kb_1 = 0.1 / tau
 
     if WORLD:
         # A     <-> B
         # A + B <-> C
         # C      -> 0
-        s.addReaction( [ A    ], [ B    ], kf )
-        s.addReaction( [ B    ], [ A    ], kb )
-        s.addReaction( [ A, B ], [ C    ], kf )
-        s.addReaction( [ C    ], [ A, B ], kb )
-        s.addReaction( [ C    ], [      ], kf )
+        s.addReaction( [ A    ], [ B    ], kf_1 )
+        s.addReaction( [ B    ], [ A    ], kb_1 )
+        s.addReaction( [ A, B ], [ C    ], kf_2 )
+        s.addReaction( [ C    ], [ A, B ], kb_2 )
+        s.addReaction( [ C    ], [      ], kf_1 )
 
 
     ''' Adding reactions on surfaces.
@@ -190,11 +193,11 @@ def run( ):
         # A     <-> B
         # A + B <-> C
         # C      -> 0
-        s.addReaction( [ (A, m),          ], [ (B, m)           ], kf )
-        s.addReaction( [ (B, m),          ], [ (A, m)           ], kb )
-        s.addReaction( [ (A, m),  (B, m)  ], [ (C, m)           ], kf )
-        s.addReaction( [ (C, m)           ], [ (A, m),  (B, m)  ], kb )
-        s.addReaction( [ (C, m),          ], [                  ], kf )
+        s.addReaction( [ (A, m),          ], [ (B, m)           ], kf_1 )
+        s.addReaction( [ (B, m),          ], [ (A, m)           ], kb_1 )
+        s.addReaction( [ (A, m),  (B, m)  ], [ (C, m)           ], kf_2 )
+        s.addReaction( [ (C, m)           ], [ (A, m),  (B, m)  ], kb_2 )
+        s.addReaction( [ (C, m),          ], [                  ], kf_1 )
 
     if MEMBRANE2:
         # No particles can live on membrane2.
@@ -204,11 +207,11 @@ def run( ):
         # A     <-> B
         # A + B <-> C
         # C      -> 0
-        s.addReaction( [ (A, d),          ], [ (B, d)           ], kf )
-        s.addReaction( [ (B, d),          ], [ (A, d)           ], kb )
-        s.addReaction( [ (A, d),  (B, d)  ], [ (C, d)           ], kf )
-        s.addReaction( [ (C, d)           ], [ (A, d),  (B, d)  ], kb )
-        s.addReaction( [ (C, d),          ], [                  ], kf )
+        s.addReaction( [ (A, d),          ], [ (B, d)           ], kf_1 )
+        s.addReaction( [ (B, d),          ], [ (A, d)           ], kb_1 )
+        s.addReaction( [ (A, d),  (B, d)  ], [ (C, d)           ], kf_2 )
+        s.addReaction( [ (C, d)           ], [ (A, d),  (B, d)  ], kb_2 )
+        s.addReaction( [ (C, d),          ], [                  ], kf_1 )
 
 
     ''' Surface binding reactions.
@@ -227,8 +230,8 @@ def run( ):
     and a surface, they are made repulsive by default.
 
     '''
-    kon = kf
-    koff = kb
+    # Molecule + surface.
+    kon = kf_2
 
     if MEMBRANE and WORLD:
         # Species C can bind to the membrane. The membrane is reflective, by 
@@ -261,6 +264,9 @@ def run( ):
     specified there.
 
     '''
+    # Unimolecular.
+    koff = kb_1
+
     if MEMBRANE and WORLD:
         # Species C can unbind to the 'world'.
         s.addReaction( [ (C, m)  ], [ C ], koff )
