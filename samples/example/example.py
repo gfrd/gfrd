@@ -227,8 +227,8 @@ def run( ):
     and a surface, they are made repulsive by default.
 
     '''
-    kon = kon
-    koff = koff
+    kon = kf
+    koff = kb
 
     if MEMBRANE and WORLD:
         # Species C can bind to the membrane. The membrane is reflective, by 
