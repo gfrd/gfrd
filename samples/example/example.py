@@ -152,9 +152,18 @@ def run( ):
 
     For now: a bimolecular reaction can only have 1 product species.
 
+    Units for the rate of a bimolecular reaction:
+        [kf] = meters^3 / (molecules * second)
+
+    (Order of magnitude kf: 1e-18)
+
     '''
-    kf = 1e2
-    kb = 1e2
+    # Just some made up reaction constants.
+    sigma = 2 * radius
+    D_tot = D
+    tau = sigma * sigma / D_tot
+    kf = 100 * sigma * D_tot
+    kb = 0.1 / tau
 
     if WORLD:
         # A     <-> B
@@ -218,8 +227,8 @@ def run( ):
     and a surface, they are made repulsive by default.
 
     '''
-    kon = 1e2
-    koff = 1e2
+    kon = kon
+    koff = koff
 
     if MEMBRANE and WORLD:
         # Species C can bind to the membrane. The membrane is reflective, by 
