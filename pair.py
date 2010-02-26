@@ -502,7 +502,7 @@ class CylindricalSurfacePair( Pair ):
         # a_R can be used as is for cartesian domain.
         # Domain extends from 0 to L, not 0 to a, so twice as big. Same as for  
         # CylindricalSurfaceSingle.
-        L = 2 * self.a_r
+        L = 2 * self.a_R
         # Todo. r0 is always in the middle for now. We could use
         # determineOptimalCylinder. 
         r0 = L / 2
