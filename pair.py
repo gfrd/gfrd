@@ -240,7 +240,7 @@ class Pair( object ):
         """Return a ( dt, single ) tuple.
 
         """
-        return min( ( single.drawReactionTime(), single ) 
+        return min( ( single.drawReactionTime()[0], single )
                     for single in self.singles )
 
 
