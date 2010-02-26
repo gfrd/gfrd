@@ -5,7 +5,7 @@
 
 
 .PHONY: all
-all : bd dimer example hardbody irreversible mapk pushpull rebind reversible single tf
+all : bd example hardbody irreversible mapk pushpull rebind reversible single tf
 
 DATA=data/run/files.pvd data/run/static.pvd data/run/files/
 PYTHONPATH_NEW=${PYTHONPATH}:../../
@@ -18,7 +18,7 @@ bd:
 .PHONY: dimer
 dimer:
 	echo
-	cd dimer && echo 'dimer is old'
+	cd dimer && rm -rf $(DATA) && LOGLEVEL=ERROR PYTHONPATH=$(PYTHONPATH_NEW) python dimer.py
 
 .PHONY: example
 example:

@@ -85,6 +85,9 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         self.isDirty = True
         #self.initialize()
 
+        self.single_steps = {EventType.ESCAPE:0, EventType.REACTION:0}
+        self.pair_steps = {0:0,1:0,2:0,3:0}
+        self.multi_steps = {EventType.ESCAPE:0, EventType.REACTION:0, 2:0}
 
     def initialize( self, a=None ):
         ParticleSimulatorBase.initialize( self )
@@ -644,6 +647,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # 0. Reaction.
         if single.eventType == EventType.REACTION:
             self.propagateSingle( single )
+            self.single_steps[single.eventType] += 1
             log.info( '    ' + str( single.eventType ) )
 
             try:
@@ -681,6 +685,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
             # Propagate this particle to the exit point on the shell.
             self.propagateSingle( single )
+
+        self.single_steps[single.eventType] += 1
 
         if single.eventType == EventType.REACTION:
             # Reactions and interactions make use of the same eventType, but 
@@ -1369,6 +1375,8 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Formerly known as the impure function Pair.determineNextEvent().
         dtSingleReaction, reactingSingle = pair.drawSingleReactionTime( )
         dtEscape, activeDomain = pair.drawEscapeOrReactionTime( )
+        assert type(dtSingleReaction).__name__ == 'float'
+        assert type(dtEscape).__name__ == 'float'
 
         if dtSingleReaction < dtEscape:
             # This stands for *single* reaction.
@@ -1404,6 +1412,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         #  1. All other cases
         # First handle *single* reaction case.
         if pair.eventType == EventType.REACTION:
+            self.pair_steps[3] += 1
             reactingsingle = pair.reactingSingle
             log.info( '    Pair SINGLE REACTION' )
             if reactingsingle == pair.single1:
@@ -1451,6 +1460,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
         if eventType == EventType.REACTION:
+            self.pair_steps[0] += 1
             if len( pair.rt.products ) == 1:
                 species3 = pair.rt.products[0]
 
@@ -1485,6 +1495,12 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # Escaping through a_r or escaping through a_R. Make use of escape flag 
         # magic.
         if eventType == EventType.ESCAPE:
+            if pair.activeDomain == pair.domains[0]:
+                # CoM
+                self.pair_steps[2] += 1
+            else:
+                # IV
+                self.pair_steps[1] += 1
             self.propagatePair( pair )
         else:
             raise SystemError( 'Bug: invalid eventType.' )
@@ -1722,6 +1738,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
     def fireMulti( self, multi ):
         sim = multi.sim
+        self.multi_steps[2] += 1  # multi_steps[2]: total multi steps
         sim.step()
         #sim.sync()
 
@@ -1731,12 +1748,14 @@ class EGFRDSimulator( ParticleSimulatorBase ):
             self.burstMulti( multi )
             self.reactionEvents += 1
             self.lastReaction = sim.lastReaction
+            self.multi_steps[EventType.REACTION] += 1
             return -INF
 
         if sim.escaped:
             log.info( '    Multi particle escaped.' )
 
             self.burstMulti( multi )
+            self.multi_steps[EventType.ESCAPE] += 1
             return -INF
 
         #log.info( '    multi stepped %d steps, duration %.3g, dt = %.3g' %
@@ -1881,3 +1900,34 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
 
 
+    #
+    # statistics reporter
+    #
+
+    def print_report(self, out=None):
+        report = '''
+t = %g
+steps = %d 
+\tSingle:\t%d\t(escape: %d, reaction: %d)
+\tPair:\t%d\t(escape r: %d, R: %d, reaction pair: %d, single: %d)
+\tMulti:\t%d\t(escape: %d, reaction: %d)
+total reactions = %d
+rejected moves = %d
+'''\
+            % (self.t, self.stepCounter,
+               numpy.array(self.single_steps.values()).sum(),
+               self.single_steps[EventType.ESCAPE],
+               self.single_steps[EventType.REACTION],
+               numpy.array(self.pair_steps.values()).sum(),
+               self.pair_steps[1],
+               self.pair_steps[2],
+               self.pair_steps[0],
+               self.pair_steps[3],
+               self.multi_steps[2], # total multi steps
+               self.multi_steps[EventType.ESCAPE],
+               self.multi_steps[EventType.REACTION],
+               self.reactionEvents,
+               self.rejectedMoves
+               )
+
+        print >> out, report
