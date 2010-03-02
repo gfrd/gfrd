@@ -1,3 +1,5 @@
+<!-- Adapted from ArbitrarySourceGlyph in 
+     Servers/ServerManager/Resources/filters.xml -->
 
 <ServerManagerConfiguration>
   <ProxyGroup name="sources">
@@ -97,7 +99,8 @@
         command="SetInputArrayToProcess"
         number_of_elements="5"
         element_types="0 0 0 0 2"
-        label="Vectors">
+	default_values="1"
+	label="Vectors">  <!-- default value=1 so normals go to the right place -->
           <ArrayListDomain name="array_list" attribute_type="Vectors"
                input_domain_name="input_array3">
             <RequiredProperties>
