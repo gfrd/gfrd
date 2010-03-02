@@ -47,10 +47,22 @@
            </DataTypeDomain>
            <InputArrayDomain name="input_array1" attribute_type="point"
                              number_of_components="9" optional="1"/>
-			    <!-- Do not uncomment.
+                            <!-- Do not uncomment.
+                                 See vtk_xml_serial_unstructured.
+
+            # I think there is a bug actually in VTK somewhere, when using
+            tensorGlyph.xml to make a vtkTensorGlyph object with both a Tensor 
+            array and a Scalar array. When you select a Tensor or a Scalar 
+            array from the dropdown menu and click 'apply',
+            SetInputArrayToProcess is called with idx = 0 both times. This is 
+            wrong.
+             1. First element Tensor array gets overwritten.
+             2. Scalar value is never written (which is accessed using
+                GetInputArrayToProcess with an idx of 1).
+
            <InputArrayDomain name="input_array2" attribute_type="point"
                              number_of_components="1" optional="1"/>
-			   -->
+                           -->
            <InputArrayDomain name="input_array3" attribute_type="point"
                              number_of_components="3" optional="1"/>
            <Documentation>
@@ -75,7 +87,7 @@
         </Documentation>
       </StringVectorProperty>
 
-			    <!-- Do not uncomment.
+                            <!-- Do not uncomment.
       <StringVectorProperty 
           name="SelectInputScalars" 
           command="SetInputArrayToProcess"
@@ -92,15 +104,15 @@
           This property indicates the name of the scalar array
         </Documentation>
       </StringVectorProperty>
-			   -->
+                           -->
 
      <StringVectorProperty 
         name="SelectInputVectors" 
         command="SetInputArrayToProcess"
         number_of_elements="5"
         element_types="0 0 0 0 2"
-	default_values="1"
-	label="Vectors">  <!-- default value=1 so normals go to the right place -->
+        default_values="1"
+        label="Vectors">  <!-- default value=1 so normals go to the right place -->
           <ArrayListDomain name="array_list" attribute_type="Vectors"
                input_domain_name="input_array3">
             <RequiredProperties>

@@ -130,8 +130,8 @@ class VTK_XML_Serial_Unstructured:
             # SetInputArrayToProcess is called with idx = 0 both times. This 
             # is wrong.
             # 1. First element Tensor array gets overwritten.
-            # 2. Scalar value is never written ( which is accessed using 
-            # GetInputArrayToProcess with an idx of 1.
+            # 2. Scalar value is never written (which is accessed using 
+            # GetInputArrayToProcess with an idx of 1).
             
             # The workaround here uses an additional Vector array ( 
             # vtkTensorGlyph doesn't have a vector array ), which when it gets 
