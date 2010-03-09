@@ -428,8 +428,8 @@ class PlanarSurfacePair( Pair ):
 
         # Green's function for interparticle vector inside absorbing sphere.  
         # This exact solution is used for drawing times.
-        self.pgf = FirstPassagePairGreensFunction2D( self.D_tot, self.rt.k, 
-                                                     self.sigma )
+        self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
+                                                   self.sigma )
         # Todo.
         self.a_r = min( a_r, MAX_DOMAIN_SIZE_FACTOR * self.sigma )
         ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, 
@@ -466,7 +466,8 @@ class PlanarSurfacePair( Pair ):
 
 
     def drawNewIV( self, dt ):
-        r, theta = self.domains[1].drawPosition( self.pgf, dt )
+        gf = self.choosePairGreensFunction( dt )
+        r, theta = self.domains[1].drawPosition( gf, dt )
         assert r > self.sigma and r <= self.a_r
         return r, theta
 
