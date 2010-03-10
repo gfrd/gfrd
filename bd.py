@@ -122,9 +122,10 @@ class BDSimulatorCoreBase( object ):
             I = _gfrd.I_bd( sigma, self.dt, D )
             p = rt.k * self.dt / ( I * 4.0 * numpy.pi )
             if not 0.0 <= p < 1.0:
-                raise RuntimeError( 'Invalid acceptance ratio (%s) for '
-                                    'reaction %s. rt.k = %.3g, I = %.3g' %
-                                    ( p, rt, rt.k, I ) )
+                log.error( 'Invalid acceptance ratio (%s) for '
+                           'reaction %s. rt.k = %.3g, I = %.3g' %
+                           ( p, rt, rt.k, I ) )
+                p = 1.0
             self.P_acct[rt] = p
             return p
 
