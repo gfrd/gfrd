@@ -1571,7 +1571,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
 
         # Assume the first neighbor is is also the closest neighbor, although 
         # after burstNonMultis we can not be sure.
-        single2 = bursted.pop(0)
+        single2 = bursted[0]
 
         if isinstance( single2, Multi ):
             # Don't try to make a pair with a multi.
