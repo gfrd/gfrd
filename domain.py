@@ -246,12 +246,12 @@ class CompositeDomain( Domain ):
         assert self.escape == False
         try:
             rnd = numpy.random.uniform()
-            log.debug( '        *Radial2D drawTime. ' ) #+ str( self.gf ) )
+            log.debug( '        *Radial2D drawTime. ' + self.gf.__class__.__name__ )
             dt = self.gf.drawTime( rnd, self.r0 )
         except Exception, e:
             raise RuntimeError( 'gf.drawTime() failed; %s; rnd = %g, '
-                                'sigma = %g, r0 = %g, a = %g' %
-                                ( str( e ), rnd, self.sigma, self.r0, self.a ) )
+                                'sigma = %g, r0 = %g, a = %g, %s' %
+                                ( str( e ), rnd, self.sigma, self.r0, self.a, self.gf.dump() ) )
         self.check_dt = dt
         self.check_gf = self.gf
         return dt
@@ -263,12 +263,12 @@ class CompositeDomain( Domain ):
         """
         try:
             rnd = numpy.random.uniform()
-            log.debug( '        *Radial2D drawEventType. ' ) #+ str( self.gf ) )
+            log.debug( '        *Radial2D drawEventType. ' + self.gf.__class__.__name__ )
             eventType = self.gf.drawEventType( rnd, self.r0, dt )
         except Exception, e:
             raise RuntimeError( 'gf.drawEventType() failed; %s; sigma = %g;'
-                                'r0 = %g; a = %g; dt = %g' %
-                                ( str( e ), self.sigma, self.r0, self.a, dt ) )
+                                'r0 = %g; a = %g; dt = %g, %s' %
+                                ( str( e ), self.sigma, self.r0, self.a, dt, self.gf.dump() ) )
         if eventType == EventType.ESCAPE:
             self.escape = True
         return eventType     # 0 (REACTION) or 1 (ESCAPE r)
@@ -294,7 +294,7 @@ class CompositeDomain( Domain ):
         """
         try:
             rnd = numpy.random.uniform()
-            log.debug( '        *Radial2D drawR_pair. ' ) #+ str( self.gf ) )
+            log.debug( '        *Radial2D drawR_pair. ' + self.gf.__class__.__name__ )
             r = gf.drawR( rnd, self.r0, dt )
             # redraw; shouldn't happen often
             while r >= self.a or r <= self.sigma: 
@@ -316,7 +316,7 @@ class CompositeDomain( Domain ):
         """
         try:
             rnd = numpy.random.uniform()
-            log.debug( '        *Radial2D drawTheta_pair. ' )#+ str( self.gf ) )
+            log.debug( '        *Radial2D drawTheta_pair. ' + self.gf.__class__.__name__ )
             theta = gf.drawTheta( rnd, r, self.r0, dt )
         except Exception, e:
             raise RuntimeError( 'gf.drawTheta() failed; %s; rnd = %g, r = %g, '
