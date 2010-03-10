@@ -95,6 +95,8 @@ class Particle( object ):
                    ( pos[0] * factor, pos[1] * factor, pos[2] * factor ) 
         except KeyError:
             return 'None'
+        except IndexError:
+            return 'None'
 
 
     def __str__( self ):
