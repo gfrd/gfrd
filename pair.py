@@ -386,7 +386,7 @@ class SphericalPair( Pair ):
                 #log.debug( '\tGF: only a' )
                 pgf = FirstPassageNoCollisionPairGreensFunction( self.D_tot )
                 pgf.seta( self.a_r ) # Don't forget.
-                
+
             else:
                 # distant from both a and sigma;
                 # use FreePairGreensFunction (has no a).
@@ -423,7 +423,7 @@ class PlanarSurfacePair( Pair ):
         a_R, a_r = self.determineRadii()
 
         # Green's function for centre of mass inside absorbing sphere.
-        sgf = FirstPassageGreensFunction( self.D_geom )
+        sgf = FirstPassageGreensFunction2D( self.D_geom )
         comDomain = RadialDomain( a_R, sgf )
 
         # Green's function for interparticle vector inside absorbing sphere.  
@@ -470,6 +470,47 @@ class PlanarSurfacePair( Pair ):
         r, theta = self.domains[1].drawPosition( gf, dt )
         assert r > self.sigma and r <= self.a_r
         return r, theta
+
+
+    def choosePairGreensFunction( self, dt ):
+        """Decide if we need to use an approximate Green's function for drawing 
+        positions. Really needed for small dt for example.
+
+        """
+        distanceFromSigma = self.pairDistance - self.sigma
+        distanceFromShell = self.a_r - self.pairDistance
+
+        thresholdDistance = Pair.CUTOFF_FACTOR * \
+                            math.sqrt( 4.0 * self.D_tot * dt )
+
+        if distanceFromSigma < thresholdDistance:
+            if distanceFromShell < thresholdDistance:
+                # near both a and sigma;
+                # Todo. FirstPassagePairGreensFunction2D.
+                #log.debug( '\tGF: normal' )
+                pgf = self.pgf
+                pgf.seta( self.a_r ) # Don't forget.
+            else:
+                # near sigma;
+                # Todo. BasicPairGreensFunction2D (has no a).
+                #log.debug( '\tGF: only sigma' )
+                pgf = BasicPairGreensFunction( self.D_tot, self.rt.k, 
+                                                self.sigma )
+        else:
+            if distanceFromShell < thresholdDistance:
+                # near a;
+                # Todo. FirstPassageNoCollisionPairGreensFunction2D.
+                #log.debug( '\tGF: only a' )
+                pgf = FirstPassageNoCollisionPairGreensFunction( self.D_tot )
+                pgf.seta( self.a_r ) # Don't forget.
+
+            else:
+                # distant from both a and sigma;
+                # Todo. FreePairGreensFunction2D (has no a).
+                #log.debug( '\tGF: free' )
+                pgf = FreePairGreensFunction( self.D_tot )
+
+        return pgf
 
 
     def __str__( self ):
