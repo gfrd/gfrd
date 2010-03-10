@@ -431,7 +431,10 @@ class PlanarSurfacePair( Pair ):
         self.pgf = FirstPassagePairGreensFunction( self.D_tot, self.rt.k, 
                                                    self.sigma )
         # Todo.
-        self.a_r = min( a_r, MAX_DOMAIN_SIZE_FACTOR * self.sigma )
+        distanceToSigma = self.pairDistance - self.sigma
+        max_a = self.pairDistance + MAX_DOMAIN_SIZE_FACTOR * distanceToSigma
+        self.a_r = min(a_r, max_a)
+
         ivDomain = CompositeDomain( self.sigma, self.pairDistance, self.a_r, 
                                     self.pgf )
 
