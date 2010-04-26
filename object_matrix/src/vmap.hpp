@@ -340,7 +340,7 @@ public:
 	     * index (the .second) and store the new object in the container 
 	     * at that index. */
             racntnr_[(*ir.first).second] = v.second;
-            return make_pair(iterator(ir.first, racntnr_), false);
+            return std::make_pair(iterator(ir.first, racntnr_), false);
         }
 	/* Add object at end of vector container. */
         racntnr_.push_back(v.second);
@@ -349,7 +349,7 @@ public:
 	/* Make a new iterator given the iterator to the inserted 
 	 * (key-index)-pair in the mapper and a reference to the container.  
 	 * Also return false or true to signal update or not.  */
-        return make_pair(iterator(ir.first, racntnr_), true);
+        return std::make_pair(iterator(ir.first, racntnr_), true);
     }
 
     size_type size() const
