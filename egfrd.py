@@ -1643,7 +1643,7 @@ class EGFRDSimulator( ParticleSimulatorBase ):
         # may be possible.
 
         closest, closestShellDistance = DummySingle(), INF
-        for b in bursted:
+        for b in bursted[1:]:
             if isinstance( b, Single ):
                 d = self.distance( com, b.pos ) - \
                     b.getMinRadius() * MINIMAL_SINGLE_RADIUS_FACTOR
